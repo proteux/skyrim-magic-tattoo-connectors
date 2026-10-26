@@ -1,0 +1,4 @@
+connectors/*/dist/
+shared/tools/*/bin/
+shared/tools/*/obj/
+*.pex

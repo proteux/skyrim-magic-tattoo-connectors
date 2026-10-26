@@ -1,0 +1,3 @@
+[submodule "vendor/magic-tattoos-framework"]
+	path = vendor/magic-tattoos-framework
+	url = https://github.com/levchimik/magic-tattoos-framework.git

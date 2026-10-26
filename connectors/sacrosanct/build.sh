@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Build the Sacrosanct connector. Usage: build.sh [live|staging|package|uninstall-live|uninstall-staging], default live
+# See shared/build-common.sh for the steps and the environment overrides.
+set -euo pipefail
+
+CONNECTOR_DIR="$(cd "$(dirname "$0")" && pwd)"
+ESP_BASE="MTF_Plugin_Sacrosanct"
+PLUGIN_ID="proteux-mtf.sacrosanct"
+MOD_NAME="MTF Plugin - Sacrosanct"
+AUTHOR="Proteux"
+DESCRIPTION="Magic Tattoos Framework conditions and effects for Sacrosanct - Vampires of Skyrim: thirst, rank, hemomancy, Wassail and Vampire Lord state, plus wards and feeding."
+
+source "$CONNECTOR_DIR/../../shared/build-common.sh" "$@"

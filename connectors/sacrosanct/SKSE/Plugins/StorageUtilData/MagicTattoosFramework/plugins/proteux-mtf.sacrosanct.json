@@ -1,0 +1,142 @@
+{
+  "schemaversion": 2,
+  "pluginid": "proteux-mtf.sacrosanct",
+  "pluginlabel": "Sacrosanct",
+  "conditions": [
+    {
+      "id": "vampire",
+      "label": "Is a vampire",
+      "description": "Triggers while the actor is a vampire."
+    },
+    {
+      "id": "vampire.lord",
+      "label": "Vampire Lord form",
+      "description": "Triggers while the actor is transformed into a Vampire Lord."
+    },
+    {
+      "id": "thirst",
+      "label": "Thirst stage",
+      "description": "Triggers while the player vampire's thirst is {param1} ({param2}).",
+      "param": {
+        "label": "Stage",
+        "default": "starved",
+        "menu": [
+          { "id": "sated", "label": "Sated" },
+          { "id": "thirsty", "label": "Thirsty" },
+          { "id": "parched", "label": "Parched" },
+          { "id": "starved", "label": "Blood Starved" }
+        ]
+      },
+      "param2": {
+        "label": "Match",
+        "default": "exactly",
+        "menu": [
+          { "id": "exactly", "label": "Exactly" },
+          { "id": "or_worse", "label": "Or thirstier" },
+          { "id": "or_better", "label": "Or better fed" }
+        ]
+      }
+    },
+    {
+      "id": "fed.recent",
+      "label": "Fed recently",
+      "description": "Triggers while the player vampire has fed within the last {param1} hours.",
+      "param": { "label": "Hours", "min": 1, "max": 72, "default": 6, "format": "{0} h" }
+    },
+    {
+      "id": "rank",
+      "label": "Vampire rank",
+      "description": "Triggers while the player vampire's rank is {param1} or higher.",
+      "param": {
+        "label": "At least",
+        "default": "blooded",
+        "menu": [
+          { "id": "fledgeling", "label": "Fledgeling" },
+          { "id": "blooded", "label": "Blooded" },
+          { "id": "mistwalker", "label": "Mistwalker" },
+          { "id": "nightstalker", "label": "Nightstalker" },
+          { "id": "nightlord", "label": "Nightlord" },
+          { "id": "nightmaster", "label": "Nightmaster" }
+        ]
+      }
+    },
+    {
+      "id": "rank.progress",
+      "label": "Rank progress",
+      "description": "Triggers while the player vampire is at least {param1}% of the way to the next rank.",
+      "param": { "label": "Progress", "min": 0, "max": 100, "default": 50, "format": "{0}%" }
+    },
+    {
+      "id": "hemomancy",
+      "label": "Hemomancy stage",
+      "description": "Triggers while the player has learned at least {param1} stages of Hemomancy.",
+      "param": { "label": "Stage", "min": 1, "max": 7, "default": 1 }
+    },
+    {
+      "id": "wassail",
+      "label": "Wassail",
+      "description": "Triggers while the player vampire has at least {param1} Wassail.",
+      "param": { "label": "Wassail", "min": 1, "max": 100, "default": 5 }
+    },
+    {
+      "id": "lord.perks",
+      "label": "Vampire Lord perks",
+      "description": "Triggers once the player has earned at least {param1} Vampire Lord perks.",
+      "param": { "label": "Perks", "min": 1, "max": 34, "default": 5 }
+    },
+    {
+      "id": "lord.levitating",
+      "label": "Levitating",
+      "description": "Triggers while the player is levitating in Vampire Lord form."
+    }
+  ],
+  "effects": [
+    {
+      "id": "thirst.feed",
+      "label": "Sate thirst",
+      "kind": "burst",
+      "description": "When shown, the player vampire's thirst is sated, as if they had just fed."
+    },
+    {
+      "id": "thirst.worsen",
+      "label": "Deepen thirst",
+      "kind": "burst",
+      "description": "When shown, the player vampire's thirst worsens by one stage."
+    },
+    {
+      "id": "age.grant",
+      "label": "Grant rank age",
+      "kind": "burst",
+      "description": "When shown, the player vampire gains {param1} hours toward their next rank.",
+      "param1": { "label": "Hours", "min": 1, "max": 120, "default": 24, "format": "{0} h" }
+    },
+    {
+      "id": "age.rate",
+      "label": "Quicken aging",
+      "description": "While shown, the player vampire gains rank age {param1}% faster.",
+      "param1": { "label": "Bonus", "min": 10, "max": 500, "step": 10, "default": 50, "format": "{0}%" }
+    },
+    {
+      "id": "ward.sun",
+      "label": "Sun ward",
+      "description": "While shown, the sun does not harm the player vampire."
+    },
+    {
+      "id": "ward.hate",
+      "label": "Masquerade ward",
+      "description": "While shown, being Blood Starved does not turn people hostile to the player."
+    },
+    {
+      "id": "ward.trespass",
+      "label": "Threshold ward",
+      "description": "While shown, the player vampire does not suffer the Trespassing Curse."
+    },
+    {
+      "id": "lord.bloodpoints",
+      "label": "Grant Vampire Lord blood",
+      "kind": "burst",
+      "description": "When shown, the player gains {param1} Vampire Lord blood points toward their next perk.",
+      "param1": { "label": "Points", "min": 1, "max": 20, "default": 1 }
+    }
+  ]
+}
