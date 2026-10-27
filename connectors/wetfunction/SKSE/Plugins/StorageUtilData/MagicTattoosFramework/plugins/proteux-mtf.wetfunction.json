@@ -1,0 +1,76 @@
+{
+  "schemaversion": 2,
+  "pluginid": "proteux-mtf.wetfunction",
+  "pluginlabel": "Wet Function Redux",
+  "conditions": [
+    {
+      "id": "wetness",
+      "label": "Wetness",
+      "description": "Triggers while the actor's wetness is at least {param1}% of the maximum.",
+      "param": { "label": "At least", "min": 0, "max": 100, "default": 50, "format": "{0}%" }
+    },
+    {
+      "id": "stage",
+      "label": "Wetness stage",
+      "description": "Triggers while the actor's skin is {param1} ({param2}).",
+      "param": {
+        "label": "Stage",
+        "default": "soaked",
+        "menu": [
+          { "id": "dry", "label": "Dry" },
+          { "id": "sweaty", "label": "Sweaty" },
+          { "id": "soaked", "label": "Soaked" }
+        ]
+      },
+      "param2": {
+        "label": "Match",
+        "default": "exact",
+        "menu": [
+          { "id": "exact", "label": "Exactly" },
+          { "id": "or_wetter", "label": "Or wetter" },
+          { "id": "or_drier", "label": "Or drier" }
+        ]
+      }
+    },
+    {
+      "id": "trend",
+      "label": "Wetness trend",
+      "description": "Triggers while the actor is {param1}.",
+      "param": {
+        "label": "Trend",
+        "default": "wetter",
+        "menu": [
+          { "id": "wetter", "label": "Getting wetter" },
+          { "id": "drying", "label": "Drying off" }
+        ]
+      }
+    },
+    {
+      "id": "active",
+      "label": "Wet Function running",
+      "description": "Triggers while Wet Function Redux's effect is running on the actor."
+    }
+  ],
+  "effects": [
+    {
+      "id": "wet.add",
+      "label": "Wet the skin",
+      "kind": "burst",
+      "description": "When shown, the actor's wetness rises by {param1}% of the maximum.",
+      "param1": { "label": "Amount", "min": 1, "max": 100, "default": 25, "format": "{0}%" }
+    },
+    {
+      "id": "wet.remove",
+      "label": "Dry the skin",
+      "kind": "burst",
+      "description": "When shown, the actor's wetness falls by {param1}% of the maximum.",
+      "param1": { "label": "Amount", "min": 1, "max": 100, "default": 100, "format": "{0}%" }
+    },
+    {
+      "id": "rate.global",
+      "label": "Wetness rate",
+      "description": "While shown on the player, everyone's skin gets wet and dries at {param1}% of the usual rate.",
+      "param1": { "label": "Rate", "min": 10, "max": 500, "step": 10, "default": 200, "format": "{0}%" }
+    }
+  ]
+}

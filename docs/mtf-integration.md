@@ -389,7 +389,7 @@ The API keeps its own list per actor (`StorageUtil` string list `mtf.api.applied
 3. Your plugin should appear on the Plugins page of MTF's menu, and its conditions and effects in the tier pickers. Magic Tattoos UI reads the same catalog folder, so it shows them too: on its Plugins tab, and in the Condition and Effects tabs of the tier editor, with your sliders, menus and descriptions.
 4. Put one of your conditions on a tier, apply the preset, and make the condition true. The tier should switch within about 2 s.
 5. Add your effects to that tier and watch them start and stop. Temporary `Debug.Trace("MTF.YourMod: onActivate " + eid)` lines help.
-6. For continuous effects, switch tiers back and forth, then run `cqf MTF_MainQuest DumpLifecycleAudit` in the console (the counters need Debug mode on in MTF's menu). Any non-zero entry in the log under `mtf.yourmod.<effectId>` means `onDeactivate` missed something. `cqf MTF_MainQuest ResetLifecycleAudit` starts the count over.
+6. For continuous effects, switch tiers back and forth, then check that whatever the effect changed is back to its starting value. MTF keeps lifecycle audit counters (with Debug mode on in its menu) and its docs say to dump them with `cqf MTF_MainQuest DumpLifecycleAudit`, but `cqf` is a Fallout 4 console command and Skyrim's console doesn't have it, so `DumpLifecycleAudit` needs to be called from a script.
 
 If it never registers:
 

@@ -91,15 +91,17 @@ mod.WriteToBinary(outputPath, new BinaryWriteParameters
 Console.WriteLine($"Wrote {outputPath}");
 
 // Start-game-enabled quests in a non-master plugin start from this file, including on an existing save.
+// Seq entries are file-relative FormIDs: the top byte is the plugin's own index, which is its master count.
 var seqDir = Path.Combine(outputDir, "Seq");
 Directory.CreateDirectory(seqDir);
 var seqPath = Path.Combine(seqDir, Path.GetFileNameWithoutExtension(outputPath) + ".seq");
+var seqFormId = ((uint)mod.ModHeader.MasterReferences.Count << 24) | quest.FormKey.ID;
 using (var seq = File.Create(seqPath))
 using (var writer = new BinaryWriter(seq))
 {
-    writer.Write(quest.FormKey.ID);
+    writer.Write(seqFormId);
 }
-Console.WriteLine($"Wrote {seqPath}");
+Console.WriteLine($"Wrote {seqPath} ({seqFormId:X8})");
 
 using var check = SkyrimMod.CreateFromBinaryOverlay(outputPath, SkyrimRelease.SkyrimSE);
 var savedQuest = check.Quests.Single();

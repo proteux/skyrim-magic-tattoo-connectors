@@ -5,6 +5,7 @@ Small patch mods that let [Magic Tattoos Framework](https://www.nexusmods.com/sk
 | Connector | Connects | Mod name | Plugin id |
 | --- | --- | --- | --- |
 | [sacrosanct](connectors/sacrosanct/README.md) | [Sacrosanct - Vampires of Skyrim](https://www.nexusmods.com/skyrimspecialedition/mods/3928) | MTF Plugin - Sacrosanct | `proteux-mtf.sacrosanct` |
+| [wetfunction](connectors/wetfunction/README.md) | [Wet Function Redux SE](https://www.nexusmods.com/skyrimspecialedition/mods/78804) | MTF Plugin - Wet Function Redux | `proteux-mtf.wetfunction` |
 
 See [docs/mtf-integration.md](docs/mtf-integration.md) for how MTF plugins work.
 

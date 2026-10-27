@@ -169,7 +169,10 @@ EOF
     echo "In Vortex, enable the mod '$MOD_NAME' (it appears on its own; press F5 in the Mods tab if not), deploy, then restart Skyrim."
     ;;
   live)
-    cp -rf "$MODROOT/." "$DATA/"
+    if ! cp -rf "$MODROOT/." "$DATA/"; then
+      echo "Couldn't copy everything into $DATA. Skyrim locks loaded plugins while it runs; quit the game and run this again." >&2
+      exit 1
+    fi
     echo "Copied $VERSION into $DATA"
     echo "Restart Skyrim."
     if [[ -d "$STAGING" ]]; then
