@@ -10,6 +10,9 @@
 # All three must be unique across connectors: each connector releases as its own mod.
 # Optional:
 #   AUTHOR, DESCRIPTION  written into the ESP header
+#   ALIAS_SCRIPTS        space-separated extra scripts attached to the player alias (for player events such
+#                        as OnPlayerLoadGame, which quest scripts never receive). Each name must start with
+#                        ${ESP_BASE}_ and have a matching Scripts/Source/<name>.psc.
 #
 # Environment overrides: SKYRIM_DIR, VORTEX_MODS, PAPYRUS_COMPILER.
 set -euo pipefail
@@ -17,6 +20,7 @@ set -euo pipefail
 : "${CONNECTOR_DIR:?}" "${ESP_BASE:?}" "${PLUGIN_ID:?}" "${MOD_NAME:?}"
 AUTHOR="${AUTHOR:-}"
 DESCRIPTION="${DESCRIPTION:-}"
+read -r -a ALIAS_LIST <<< "${ALIAS_SCRIPTS:-}"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET="${1:-live}"
@@ -33,6 +37,10 @@ remove_from() {
   local root="$1"
   rm -f "$root/$ESP_BASE.esp" "$root/Seq/$ESP_BASE.seq" "$root/Scripts/$ESP_BASE.pex" \
     "$root/Scripts/Source/$ESP_BASE.psc" "$root/$CATALOG_REL/$PLUGIN_ID.json"
+  local alias
+  for alias in "${ALIAS_LIST[@]}"; do
+    rm -f "$root/Scripts/$alias.pex" "$root/Scripts/Source/$alias.psc"
+  done
 }
 
 case "$TARGET" in
@@ -90,6 +98,16 @@ if ! grep -q "\"pluginid\": \"$PLUGIN_ID\"" "$CATALOG"; then
   echo "pluginid in $CATALOG is not \"$PLUGIN_ID\"" >&2
   exit 1
 fi
+for alias in "${ALIAS_LIST[@]}"; do
+  if [[ "$alias" != "${ESP_BASE}_"* ]]; then
+    echo "Alias script $alias must start with ${ESP_BASE}_ so it cannot collide with another mod's script" >&2
+    exit 1
+  fi
+  if [[ ! -f "$CONNECTOR_DIR/Scripts/Source/$alias.psc" ]]; then
+    echo "Alias script source not found: $CONNECTOR_DIR/Scripts/Source/$alias.psc" >&2
+    exit 1
+  fi
+done
 
 echo "=== validating catalog ==="
 python "$(cygpath -w "$MTF/tools/validate_catalogs.py")" "$(cygpath -w "$CONNECTOR_DIR/$CATALOG_REL")"
@@ -118,15 +136,21 @@ mkdir -p "$DIST/Scripts"
 (
   cd "$CONNECTOR_DIR/Scripts/Source"
   export MSYS_NO_PATHCONV=1
-  "$COMPILER" "$ESP_BASE.psc" -f="$FLAGS" -i="$IMPORTS" -o="$(cygpath -w "$DIST/Scripts")" -op
+  for script in "$ESP_BASE" "${ALIAS_LIST[@]}"; do
+    "$COMPILER" "$script.psc" -f="$FLAGS" -i="$IMPORTS" -o="$(cygpath -w "$DIST/Scripts")" -op
+  done
 )
-if [[ ! -f "$DIST/Scripts/$ESP_BASE.pex" ]]; then
-  echo "Compile produced no $ESP_BASE.pex" >&2
-  exit 1
-fi
+SHIPPED=("$ESP_BASE" "${ALIAS_LIST[@]}")
+for script in "${SHIPPED[@]}"; do
+  if [[ ! -f "$DIST/Scripts/$script.pex" ]]; then
+    echo "Compile produced no $script.pex" >&2
+    exit 1
+  fi
+done
 for pex in "$DIST/Scripts/"*.pex; do
-  if [[ "$(basename "$pex")" != "$ESP_BASE.pex" ]]; then
-    echo "Removing $(basename "$pex") from dist. Only $ESP_BASE.pex ships; MTF and stub scripts must not be overwritten."
+  name="$(basename "$pex" .pex)"
+  if [[ " ${SHIPPED[*]} " != *" $name "* ]]; then
+    echo "Removing $name.pex from dist. Only ${SHIPPED[*]} ship; MTF and stub scripts must not be overwritten."
     rm -f "$pex"
   fi
 done
@@ -136,7 +160,7 @@ echo "=== generating $ESP_BASE.esp ==="
   export MSYS_NO_PATHCONV=1
   dotnet run --project "$(cygpath -w "$REPO_ROOT/shared/tools/PluginGen/PluginGen.csproj")" -- \
     --out "$(cygpath -w "$DIST/$ESP_BASE.esp")" --script "$ESP_BASE" --name "$MOD_NAME" \
-    --author "$AUTHOR" --description "$DESCRIPTION"
+    --author "$AUTHOR" --description "$DESCRIPTION" --alias-scripts "$(IFS=,; echo "${ALIAS_LIST[*]}")"
 )
 
 # The mod exactly as it ships, laid out as it sits in Data. Staging, live, and the zip all use this folder.
@@ -144,8 +168,10 @@ MODROOT="$DIST/mod"
 mkdir -p "$MODROOT/Scripts/Source" "$MODROOT/Seq" "$MODROOT/$CATALOG_REL"
 cp -f "$DIST/$ESP_BASE.esp" "$MODROOT/"
 cp -f "$DIST/Seq/$ESP_BASE.seq" "$MODROOT/Seq/"
-cp -f "$DIST/Scripts/$ESP_BASE.pex" "$MODROOT/Scripts/"
-cp -f "$SCRIPT_SRC" "$MODROOT/Scripts/Source/"
+for script in "${SHIPPED[@]}"; do
+  cp -f "$DIST/Scripts/$script.pex" "$MODROOT/Scripts/"
+  cp -f "$CONNECTOR_DIR/Scripts/Source/$script.psc" "$MODROOT/Scripts/Source/"
+done
 cp -f "$CATALOG" "$MODROOT/$CATALOG_REL/"
 
 case "$TARGET" in

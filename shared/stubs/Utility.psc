@@ -3,4 +3,6 @@ Scriptname Utility Hidden
 
 float Function GetCurrentGameTime() native global
 
+float Function GetCurrentRealTime() native global
+
 int Function RandomInt(int aiMin = 0, int aiMax = 100) native global

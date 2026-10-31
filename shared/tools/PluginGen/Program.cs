@@ -1,10 +1,10 @@
 // Generates the ESP for an MTF plugin connector, matching MTF's own plugin ESPs
 // (vendor/magic-tattoos-framework/spriggit/MTF_Plugin_BFNG):
 // one Start Game Enabled quest carrying the plugin script, and a PluginKickAlias
-// forced to the player carrying MTF_PluginAliasKick.
+// forced to the player carrying MTF_PluginAliasKick, plus any --alias-scripts.
 //
 // Usage: PluginGen --out <path/To/MTF_Plugin_X.esp> --script <MTF_Plugin_X> --name <quest name>
-//                  [--author <text>] [--description <text>]
+//                  [--author <text>] [--description <text>] [--alias-scripts <name,name>]
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Binary.Parameters;
@@ -15,13 +15,16 @@ var options = ParseArgs(args);
 string Required(string key) =>
     options.TryGetValue(key, out var value) && value.Length > 0
         ? value
-        : throw new ArgumentException($"Missing --{key}. Usage: PluginGen --out <esp> --script <name> --name <quest name> [--author <text>] [--description <text>]");
+        : throw new ArgumentException($"Missing --{key}. Usage: PluginGen --out <esp> --script <name> --name <quest name> [--author <text>] [--description <text>] [--alias-scripts <name,name>]");
 
 var outputPath = Path.GetFullPath(Required("out"));
 var scriptName = Required("script");
 var questName = Required("name");
 options.TryGetValue("author", out var author);
 options.TryGetValue("description", out var description);
+var aliasScripts = options.TryGetValue("alias-scripts", out var aliasList)
+    ? aliasList.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    : [];
 
 var modKey = ModKey.FromFileName(Path.GetFileName(outputPath));
 var mod = new SkyrimMod(modKey, SkyrimRelease.SkyrimSE);
@@ -65,6 +68,14 @@ kickAlias.Scripts.Add(new ScriptEntry
     Name = "MTF_PluginAliasKick",
     Flags = ScriptEntry.Flag.Local,
 });
+foreach (var aliasScript in aliasScripts)
+{
+    kickAlias.Scripts.Add(new ScriptEntry
+    {
+        Name = aliasScript,
+        Flags = ScriptEntry.Flag.Local,
+    });
+}
 questAdapter.Aliases.Add(kickAlias);
 quest.VirtualMachineAdapter = questAdapter;
 mod.Quests.Add(quest);

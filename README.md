@@ -4,6 +4,8 @@ Small patch mods that let [Magic Tattoos Framework](https://www.nexusmods.com/sk
 
 | Connector | Connects | Mod name | Plugin id |
 | --- | --- | --- | --- |
+| [base](connectors/base/README.md) | Skyrim itself, beyond MTF's own Base plugin | MTF Plugin - Base Extended | `proteux-mtf.base` |
+| [racemenu](connectors/racemenu/README.md) | [RaceMenu](https://www.nexusmods.com/skyrimspecialedition/mods/19080) and BodySlide morphs | MTF Plugin - RaceMenu | `proteux-mtf.racemenu` |
 | [sacrosanct](connectors/sacrosanct/README.md) | [Sacrosanct - Vampires of Skyrim](https://www.nexusmods.com/skyrimspecialedition/mods/3928) | MTF Plugin - Sacrosanct | `proteux-mtf.sacrosanct` |
 | [wetfunction](connectors/wetfunction/README.md) | [Wet Function Redux SE](https://www.nexusmods.com/skyrimspecialedition/mods/78804) | MTF Plugin - Wet Function Redux | `proteux-mtf.wetfunction` |
 
@@ -13,7 +15,7 @@ See [docs/mtf-integration.md](docs/mtf-integration.md) for how MTF plugins work.
 
 - `connectors/<name>/` holds one connector: `VERSION`, `Makefile`, `build.sh`, its Papyrus source, compile stubs, and its MTF catalog under `SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/`. `build.sh` sets the mod name (`MOD_NAME`), plugin file (`ESP_BASE`), and MTF plugin id (`PLUGIN_ID`); the build refuses to run if another connector uses any of the same three. Connector folder names can't be `all`, `list`, `run`, or an action name, since the root Makefile reads them as goals.
 - `shared/build-common.sh` does the work for every connector: validate the catalog, compile, generate the ESP, assemble the mod in `dist/mod`, then copy it into Data, stage it for Vortex, or package it.
-- `shared/tools/PluginGen/` generates the ESL-flagged plugin ESP that MTF expects (one Start Game Enabled quest with the plugin script, and a `PluginKickAlias` on the player with `MTF_PluginAliasKick`).
+- `shared/tools/PluginGen/` generates the ESL-flagged plugin ESP that MTF expects (one Start Game Enabled quest with the plugin script, and a `PluginKickAlias` on the player with `MTF_PluginAliasKick`). A connector that needs player events, such as `OnPlayerLoadGame`, which quest scripts never receive, lists extra alias scripts in `ALIAS_SCRIPTS` in its `build.sh`. Each one is named `<ESP_BASE>_<Something>`, and the build compiles it, attaches it to the same alias, and ships it.
 - `shared/stubs/` holds compile-only stubs for scripts MTF imports that aren't installed. They are never shipped.
 - `vendor/magic-tattoos-framework/` is MTF's repository as a git submodule, pinned to the commit the docs were checked against. Builds compile against its `source/scripts` and run its catalog validator.
 

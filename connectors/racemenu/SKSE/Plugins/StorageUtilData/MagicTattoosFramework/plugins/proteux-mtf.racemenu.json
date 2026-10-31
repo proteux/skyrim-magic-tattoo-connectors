@@ -1,0 +1,28 @@
+{
+  "schemaversion": 2,
+  "pluginid": "proteux-mtf.racemenu",
+  "pluginlabel": "RaceMenu",
+  "conditions": [],
+  "effects": [
+    {
+      "id": "scale",
+      "label": "Actor scale",
+      "description": "While shown, the actor is {param1}% of their usual size.",
+      "param1": { "label": "Size", "min": 50, "max": 200, "step": 5, "default": 110, "format": "{0}%" }
+    },
+    {
+      "id": "shape",
+      "label": "Body shape",
+      "description": "While shown, the actor's body becomes {param1} at {param2}% strength. Needs a body built with morphs in BodySlide.",
+      "param1": {
+        "label": "Shape",
+        "default": "muscular",
+        "menu": [
+          { "id": "muscular", "label": "Muscular" },
+          { "id": "bust", "label": "Bigger bust" }
+        ]
+      },
+      "param2": { "label": "Strength", "min": 5, "max": 100, "step": 5, "default": 75, "format": "{0}%" }
+    }
+  ]
+}

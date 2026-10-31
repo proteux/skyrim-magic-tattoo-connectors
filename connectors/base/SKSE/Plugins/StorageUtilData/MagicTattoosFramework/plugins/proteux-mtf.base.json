@@ -1,0 +1,331 @@
+{
+  "schemaversion": 2,
+  "pluginid": "proteux-mtf.base",
+  "pluginlabel": "Base Extended",
+  "conditions": [
+    {
+      "id": "stat",
+      "label": "Statistic",
+      "description": "Triggers once the player's {param1} statistic reaches {param2}.",
+      "param": {
+        "label": "Statistic",
+        "default": "dragon_souls",
+        "menu": [
+          { "id": "locations_discovered", "label": "Locations discovered" },
+          { "id": "dungeons_cleared", "label": "Dungeons cleared" },
+          { "id": "days_passed", "label": "Days passed" },
+          { "id": "hours_slept", "label": "Hours slept" },
+          { "id": "hours_waiting", "label": "Hours waiting" },
+          { "id": "standing_stones", "label": "Standing stones found" },
+          { "id": "gold_found", "label": "Gold found" },
+          { "id": "most_gold", "label": "Most gold carried" },
+          { "id": "chests_looted", "label": "Chests looted" },
+          { "id": "horses_owned", "label": "Horses owned" },
+          { "id": "houses_owned", "label": "Houses owned" },
+          { "id": "stores_invested", "label": "Stores invested in" },
+          { "id": "skill_increases", "label": "Skill increases" },
+          { "id": "skill_books", "label": "Skill books read" },
+          { "id": "books_read", "label": "Books read" },
+          { "id": "food_eaten", "label": "Food eaten" },
+          { "id": "training_sessions", "label": "Training sessions" },
+          { "id": "barters", "label": "Barters" },
+          { "id": "persuasions", "label": "Persuasions" },
+          { "id": "bribes", "label": "Bribes" },
+          { "id": "intimidations", "label": "Intimidations" },
+          { "id": "diseases", "label": "Diseases contracted" },
+          { "id": "days_vampire", "label": "Days as a vampire" },
+          { "id": "days_werewolf", "label": "Days as a werewolf" },
+          { "id": "necks_bitten", "label": "Necks bitten" },
+          { "id": "vampirism_cures", "label": "Vampirism cures" },
+          { "id": "werewolf_transformations", "label": "Werewolf transformations" },
+          { "id": "mauls", "label": "Mauls" },
+          { "id": "quests", "label": "Quests completed" },
+          { "id": "misc_objectives", "label": "Misc objectives completed" },
+          { "id": "quests_main", "label": "Main quests completed" },
+          { "id": "quests_side", "label": "Side quests completed" },
+          { "id": "quests_companions", "label": "Companions quests completed" },
+          { "id": "quests_college", "label": "College of Winterhold quests completed" },
+          { "id": "quests_thieves", "label": "Thieves Guild quests completed" },
+          { "id": "quests_brotherhood", "label": "Dark Brotherhood quests completed" },
+          { "id": "quests_civil_war", "label": "Civil War quests completed" },
+          { "id": "quests_daedric", "label": "Daedric quests completed" },
+          { "id": "quests_dawnguard", "label": "Dawnguard quests completed" },
+          { "id": "quests_dragonborn", "label": "Dragonborn quests completed" },
+          { "id": "questlines", "label": "Questlines completed" },
+          { "id": "people_killed", "label": "People killed" },
+          { "id": "animals_killed", "label": "Animals killed" },
+          { "id": "creatures_killed", "label": "Creatures killed" },
+          { "id": "undead_killed", "label": "Undead killed" },
+          { "id": "daedra_killed", "label": "Daedra killed" },
+          { "id": "automatons_killed", "label": "Automatons killed" },
+          { "id": "bunnies", "label": "Bunnies slaughtered" },
+          { "id": "critical_strikes", "label": "Critical strikes" },
+          { "id": "sneak_attacks", "label": "Sneak attacks" },
+          { "id": "backstabs", "label": "Backstabs" },
+          { "id": "weapons_disarmed", "label": "Weapons disarmed" },
+          { "id": "brawls_won", "label": "Brawls won" },
+          { "id": "spells_learned", "label": "Spells learned" },
+          { "id": "dragon_souls", "label": "Dragon souls collected" },
+          { "id": "words_of_power", "label": "Words of power unlocked" },
+          { "id": "shouts_learned", "label": "Shouts learned" },
+          { "id": "shouts_mastered", "label": "Shouts mastered" },
+          { "id": "times_shouted", "label": "Times shouted" },
+          { "id": "soul_gems_used", "label": "Soul gems used" },
+          { "id": "souls_trapped", "label": "Souls trapped" },
+          { "id": "magic_items_made", "label": "Magic items made" },
+          { "id": "weapons_improved", "label": "Weapons improved" },
+          { "id": "weapons_made", "label": "Weapons made" },
+          { "id": "armor_improved", "label": "Armor improved" },
+          { "id": "armor_made", "label": "Armor made" },
+          { "id": "potions_mixed", "label": "Potions mixed" },
+          { "id": "potions_used", "label": "Potions used" },
+          { "id": "poisons_mixed", "label": "Poisons mixed" },
+          { "id": "poisons_used", "label": "Poisons used" },
+          { "id": "ingredients_harvested", "label": "Ingredients harvested" },
+          { "id": "ingredients_eaten", "label": "Ingredients eaten" },
+          { "id": "nirnroots_found", "label": "Nirnroots found" },
+          { "id": "wings_plucked", "label": "Wings plucked" },
+          { "id": "total_bounty", "label": "Total lifetime bounty" },
+          { "id": "largest_bounty", "label": "Largest bounty" },
+          { "id": "locks_picked", "label": "Locks picked" },
+          { "id": "pockets_picked", "label": "Pockets picked" },
+          { "id": "items_pickpocketed", "label": "Items pickpocketed" },
+          { "id": "times_jailed", "label": "Times jailed" },
+          { "id": "days_jailed", "label": "Days jailed" },
+          { "id": "fines_paid", "label": "Fines paid" },
+          { "id": "jail_escapes", "label": "Jail escapes" },
+          { "id": "items_stolen", "label": "Items stolen" },
+          { "id": "assaults", "label": "Assaults" },
+          { "id": "murders", "label": "Murders" },
+          { "id": "horses_stolen", "label": "Horses stolen" },
+          { "id": "trespasses", "label": "Trespasses" }
+        ]
+      },
+      "param2": { "label": "At least", "min": 1, "max": 10000, "default": 10 }
+    },
+    {
+      "id": "moon.phase",
+      "label": "Moon phase",
+      "description": "Triggers while the moons are {param1}.",
+      "param": {
+        "label": "Phase",
+        "default": "full",
+        "menu": [
+          { "id": "full", "label": "Full" },
+          { "id": "waning_gibbous", "label": "Waning gibbous" },
+          { "id": "waning_half", "label": "Waning half" },
+          { "id": "waning_crescent", "label": "Waning crescent" },
+          { "id": "new", "label": "New" },
+          { "id": "waxing_crescent", "label": "Waxing crescent" },
+          { "id": "waxing_half", "label": "Waxing half" },
+          { "id": "waxing_gibbous", "label": "Waxing gibbous" },
+          { "id": "waxing", "label": "Any waxing phase" },
+          { "id": "waning", "label": "Any waning phase" }
+        ]
+      }
+    },
+    {
+      "id": "darkness",
+      "label": "In darkness",
+      "description": "Triggers while the light on the actor is below {param1} (the sneak eye dims around 40).",
+      "param": { "label": "Light below", "min": 0, "max": 200, "step": 5, "default": 40 }
+    },
+    {
+      "id": "season",
+      "label": "Season",
+      "description": "Triggers during {param1}.",
+      "param": {
+        "label": "Season",
+        "default": "winter",
+        "menu": [
+          { "id": "winter", "label": "Winter (Evening Star to Sun's Dawn)" },
+          { "id": "spring", "label": "Spring (First Seed to Second Seed)" },
+          { "id": "summer", "label": "Summer (Midyear to Last Seed)" },
+          { "id": "autumn", "label": "Autumn (Hearthfire to Frostfall)" }
+        ]
+      }
+    },
+    {
+      "id": "holiday",
+      "label": "Holiday",
+      "description": "Triggers on {param1}.",
+      "param": {
+        "label": "Holiday",
+        "default": "any",
+        "menu": [
+          { "id": "any", "label": "Any holiday" },
+          { "id": "new_life", "label": "New Life Festival (Morning Star 1)" },
+          { "id": "meridia", "label": "Meridia's Summoning Day (Morning Star 13)" },
+          { "id": "south_winds_prayer", "label": "South Wind's Prayer (Morning Star 15)" },
+          { "id": "hearts_day", "label": "Heart's Day (Sun's Dawn 16)" },
+          { "id": "hermaeus_mora", "label": "Hermaeus Mora's Summoning Day (First Seed 5)" },
+          { "id": "first_planting", "label": "First Planting (First Seed 7)" },
+          { "id": "peryite", "label": "Peryite's Summoning Day (Rain's Hand 9)" },
+          { "id": "jesters_festival", "label": "Jester's Day (Rain's Hand 28)" },
+          { "id": "second_planting", "label": "Second Planting (Second Seed 7)" },
+          { "id": "hircine", "label": "Hircine's Summoning Day (Midyear 5)" },
+          { "id": "mid_year", "label": "Mid Year Celebration (Midyear 16)" },
+          { "id": "merchants_festival", "label": "Merchants' Festival (Sun's Height 10)" },
+          { "id": "suns_rest", "label": "Sun's Rest (Sun's Height 20)" },
+          { "id": "harvests_end", "label": "Harvest's End (Last Seed 27)" },
+          { "id": "tales_and_tallows", "label": "Tales and Tallows (Hearthfire 3)" },
+          { "id": "malacath", "label": "Malacath's Summoning Day (Frostfall 8)" },
+          { "id": "witches_festival", "label": "Witches' Festival (Frostfall 13)" },
+          { "id": "emperors_day", "label": "Emperor's Day (Frostfall 30)" },
+          { "id": "warriors_festival", "label": "Warriors' Festival (Sun's Dusk 20)" },
+          { "id": "north_winds_prayer", "label": "North Wind's Prayer (Evening Star 15)" },
+          { "id": "saturalia", "label": "Saturalia (Evening Star 25)" },
+          { "id": "old_life", "label": "Old Life Festival (Evening Star 31)" }
+        ]
+      }
+    },
+    {
+      "id": "bounty",
+      "label": "Bounty in this hold",
+      "description": "Triggers while the player has a bounty of at least {param1} gold in the hold they are in.",
+      "param": { "label": "At least", "min": 1, "max": 5000, "default": 40, "format": "{0} gold" }
+    },
+    {
+      "id": "wanted",
+      "label": "Wanted anywhere",
+      "description": "Triggers while the player has a bounty of at least {param1} gold in any hold, Solstheim included.",
+      "param": { "label": "At least", "min": 1, "max": 5000, "default": 1, "format": "{0} gold" }
+    },
+    {
+      "id": "hidden",
+      "label": "Hidden",
+      "description": "Triggers while the actor is sneaking and nobody nearby has detected them. The player's followers do not count."
+    },
+    {
+      "id": "sitting",
+      "label": "Sitting",
+      "description": "Triggers while the actor is sitting in a chair, bench, or other furniture."
+    },
+    {
+      "id": "sleeping",
+      "label": "Sleeping",
+      "description": "Triggers while the actor is asleep."
+    },
+    {
+      "id": "crafting",
+      "label": "At a crafting station",
+      "description": "Triggers while the actor is using {param1}.",
+      "param": {
+        "label": "Station",
+        "default": "any",
+        "menu": [
+          { "id": "any", "label": "Any crafting station" },
+          { "id": "forge", "label": "A forge" },
+          { "id": "workbench", "label": "A workbench" },
+          { "id": "grindstone", "label": "A grindstone" },
+          { "id": "smelter", "label": "A smelter" },
+          { "id": "tanning_rack", "label": "A tanning rack" },
+          { "id": "cooking", "label": "A cooking pot or spit" },
+          { "id": "alchemy", "label": "An alchemy lab" },
+          { "id": "enchanting", "label": "An arcane enchanter" }
+        ]
+      }
+    },
+    {
+      "id": "diseased",
+      "label": "Diseased",
+      "description": "Triggers while the actor has any disease."
+    },
+    {
+      "id": "kill.recent",
+      "label": "Just made a kill",
+      "description": "Triggers for {param1} seconds after the player kills anyone or anything.",
+      "param": { "label": "Seconds", "min": 1, "max": 120, "default": 10, "format": "{0} s" }
+    },
+    {
+      "id": "levelup.recent",
+      "label": "Just leveled up",
+      "description": "Triggers for {param1} seconds after the actor gains a level.",
+      "param": { "label": "Seconds", "min": 1, "max": 600, "default": 30, "format": "{0} s" }
+    }
+  ],
+  "effects": [
+    {
+      "id": "vision.night",
+      "label": "Night vision",
+      "description": "While shown on the player, they see in the dark as with Night Eye."
+    },
+    {
+      "id": "shout.recovery",
+      "label": "Shout recovery",
+      "description": "While shown, the actor's shout cooldowns last {param1}% as long as usual.",
+      "param1": { "label": "Cooldown", "min": 10, "max": 300, "step": 10, "default": 50, "format": "{0}%" }
+    },
+    {
+      "id": "disease.cure",
+      "label": "Cure disease",
+      "kind": "burst",
+      "description": "When shown, every disease the actor has is cured."
+    },
+    {
+      "id": "rested",
+      "label": "Rested bonus",
+      "description": "While shown, the actor keeps {param1}. A bonus they already had when the tattoo appeared stays when it goes.",
+      "param1": {
+        "label": "Bonus",
+        "default": "well_rested",
+        "menu": [
+          { "id": "rested", "label": "Rested" },
+          { "id": "well_rested", "label": "Well Rested" },
+          { "id": "lovers_comfort", "label": "Lover's Comfort" }
+        ]
+      }
+    },
+    {
+      "id": "mood",
+      "label": "Facial mood",
+      "description": "While shown, the actor's face holds a {param1} expression at {param2}% strength.",
+      "param1": {
+        "label": "Mood",
+        "default": "happy",
+        "menu": [
+          { "id": "neutral", "label": "Neutral" },
+          { "id": "angry", "label": "Angry" },
+          { "id": "fearful", "label": "Fearful" },
+          { "id": "happy", "label": "Happy" },
+          { "id": "sad", "label": "Sad" },
+          { "id": "surprised", "label": "Surprised" },
+          { "id": "puzzled", "label": "Puzzled" },
+          { "id": "disgusted", "label": "Disgusted" }
+        ]
+      },
+      "param2": { "label": "Strength", "min": 0, "max": 100, "step": 5, "default": 75, "format": "{0}%" }
+    },
+    {
+      "id": "calm",
+      "label": "Calm enemies",
+      "kind": "burst",
+      "description": "When shown, everyone within {param1} metres who is hostile to or fighting the actor stops fighting. Enemies that are always hostile may attack again.",
+      "param1": { "label": "Radius", "min": 5, "max": 100, "step": 5, "default": 20, "format": "{0} m" }
+    },
+    {
+      "id": "fall.nodamage",
+      "label": "No fall damage",
+      "description": "While shown on the player, falling does them no harm."
+    },
+    {
+      "id": "weather",
+      "label": "Change the weather",
+      "kind": "burst",
+      "description": "When shown on the player, the weather turns {param1}. It changes again on its own later.",
+      "param1": {
+        "label": "Weather",
+        "default": "clear",
+        "menu": [
+          { "id": "clear", "label": "Clear" },
+          { "id": "cloudy", "label": "Cloudy" },
+          { "id": "fog", "label": "Foggy" },
+          { "id": "rain", "label": "Rainy" },
+          { "id": "storm", "label": "Thunderstorm" },
+          { "id": "snow", "label": "Snowy" },
+          { "id": "blizzard", "label": "Blizzard" }
+        ]
+      }
+    }
+  ]
+}
