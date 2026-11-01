@@ -6,7 +6,7 @@ Tattoos that change the body wearing them.
 
 This patch connects [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF) to [RaceMenu](https://www.nexusmods.com/skyrimspecialedition/mods/19080). A tattoo tier can make the actor bigger or smaller, or reshape their body with BodySlide sliders while it shows, for example a muscular build on a warrior's mark.
 
-It adds a **RaceMenu** plugin to MTF's menu and to Magic Tattoos UI. RaceMenu itself is not changed.
+It adds a **RaceMenu** plugin to MTF's menu and to [Magic Tattoos UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803). RaceMenu itself is not changed.
 
 ## Requirements
 
@@ -14,6 +14,7 @@ It adds a **RaceMenu** plugin to MTF's menu and to Magic Tattoos UI. RaceMenu it
 - [RaceMenu](https://www.nexusmods.com/skyrimspecialedition/mods/19080)
 - [PapyrusUtil SE](https://www.nexusmods.com/skyrimspecialedition/mods/13048)
 - For Body shape: a body with BodySlide morphs, such as [CBBE 3BA](https://www.nexusmods.com/skyrimspecialedition/mods/30174), built in BodySlide with **Build Morphs** checked. Outfits need morphs built too, or the body grows through them.
+- Optional: [Magic Tattoos Framework - SKSE UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803), an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these effects far easier.
 
 ## Installation
 
@@ -95,3 +96,7 @@ All changes go through RaceMenu's `NiOverride` script under the key `proteux-mtf
 - expired6978, for RaceMenu
 - Ousnius and Caliente, for BodySlide and CBBE 3BA
 - levchimik, for Magic Tattoos Framework
+
+## License
+
+Copyright (C) 2026 Jack Whitehouse (proteux). Released under the [GNU General Public License v3.0 or later](../../LICENSE), with ABSOLUTELY NO WARRANTY. The download includes the license text and a notice in `SKSE/Plugins/MTF_Plugin_RaceMenu`, and the Papyrus source in `Scripts/Source`.

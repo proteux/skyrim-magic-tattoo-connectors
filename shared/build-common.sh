@@ -30,6 +30,8 @@ STAGING="${VORTEX_MODS:-/c/Users/white/AppData/Roaming/Vortex/skyrimse/mods}/$MO
 DIST="$CONNECTOR_DIR/dist"
 MTF="$REPO_ROOT/vendor/magic-tattoos-framework"
 CATALOG_REL="SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins"
+LICENSE_REL="SKSE/Plugins/$ESP_BASE"
+REPO_URL="https://github.com/proteux/skyrim-magic-tattoo-connectors"
 CATALOG="$CONNECTOR_DIR/$CATALOG_REL/$PLUGIN_ID.json"
 SCRIPT_SRC="$CONNECTOR_DIR/Scripts/Source/$ESP_BASE.psc"
 PLUGINS_TXT="${PLUGINS_TXT:-$(cygpath -u "${LOCALAPPDATA:-C:\\Users\\white\\AppData\\Local}")/Skyrim Special Edition/plugins.txt}"
@@ -58,6 +60,7 @@ remove_from() {
   local root="$1"
   rm -f "$root/$ESP_BASE.esp" "$root/Seq/$ESP_BASE.seq" "$root/Scripts/$ESP_BASE.pex" \
     "$root/Scripts/Source/$ESP_BASE.psc" "$root/$CATALOG_REL/$PLUGIN_ID.json"
+  rm -rf "${root:?}/$LICENSE_REL"
   local alias
   for alias in "${ALIAS_LIST[@]}"; do
     rm -f "$root/Scripts/$alias.pex" "$root/Scripts/Source/$alias.psc"
@@ -198,6 +201,23 @@ for script in "${SHIPPED[@]}"; do
   cp -f "$CONNECTOR_DIR/Scripts/Source/$script.psc" "$MODROOT/Scripts/Source/"
 done
 cp -f "$CATALOG" "$MODROOT/$CATALOG_REL/"
+# GPL-3.0 needs the license text and the source location to travel with the binaries.
+mkdir -p "$MODROOT/$LICENSE_REL"
+cp -f "$REPO_ROOT/LICENSE" "$MODROOT/$LICENSE_REL/LICENSE.txt"
+cat > "$MODROOT/$LICENSE_REL/README.txt" << EOF
+$MOD_NAME $VERSION
+An add-on for Magic Tattoos Framework.
+
+Copyright (C) 2026 Jack Whitehouse (proteux)
+
+This program is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version. It comes with ABSOLUTELY NO WARRANTY; see
+LICENSE.txt in this folder for the full terms.
+
+The Papyrus source ships in Scripts/Source. The full source, including the build that produces
+$ESP_BASE.esp, is at $REPO_URL
+EOF
 
 case "$TARGET" in
   staging)

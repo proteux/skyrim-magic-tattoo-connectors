@@ -1,3 +1,4 @@
+; Copyright (C) 2026 Jack Whitehouse (proteux). Licensed under the GNU General Public License v3.0 or later; see LICENSE.
 Scriptname MTF_Plugin_RaceMenu extends MTF_Plugin
 {Magic Tattoos Framework effects backed by RaceMenu: actor scale and BodySlide body shapes.
  Soft dependency: RaceMenu's skee plugin is checked at runtime, and the plugin stays unregistered without it.

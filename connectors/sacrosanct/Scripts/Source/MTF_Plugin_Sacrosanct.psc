@@ -1,3 +1,4 @@
+; Copyright (C) 2026 Jack Whitehouse (proteux). Licensed under the GNU General Public License v3.0 or later; see LICENSE.
 Scriptname MTF_Plugin_Sacrosanct extends MTF_Plugin
 {Magic Tattoos Framework conditions and effects backed by Sacrosanct - Vampires of Skyrim.
  Soft dependency: Sacrosanct is looked up at runtime, and the plugin stays unregistered without it.

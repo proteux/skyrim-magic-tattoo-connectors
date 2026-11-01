@@ -1,3 +1,4 @@
+; Copyright (C) 2026 Jack Whitehouse (proteux). Licensed under the GNU General Public License v3.0 or later; see LICENSE.
 Scriptname MTF_Plugin_BaseExtended extends MTF_Plugin
 {Magic Tattoos Framework conditions and effects for the base game, beyond what MTF's own Base plugin covers.
  No soft dependency: everything here is Skyrim, its DLC, and SKSE.

@@ -4,7 +4,7 @@
 
 This patch adds base game conditions and effects to [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF), on top of the ones in MTF's own Base plugin. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, or for a few seconds after a kill. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, or change the weather.
 
-It adds a [b]Base Extended[/b] plugin to MTF's menu and to Magic Tattoos UI. It doesn't edit any game records.
+It adds a [b]Base Extended[/b] plugin to MTF's menu and to [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos UI[/url]. It doesn't edit any game records.
 
 [size=5][b]Requirements[/b][/size]
 
@@ -12,6 +12,7 @@ It adds a [b]Base Extended[/b] plugin to MTF's menu and to Magic Tattoos UI. It 
 [*][url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] 0.7.0 or later, and its requirements
 [*][url=https://skse.silverlock.org/]SKSE[/url] and [url=https://www.nexusmods.com/skyrimspecialedition/mods/13048]PapyrusUtil SE[/url]
 [*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url] for Hidden, Diseased, Cure disease, and Calm enemies. Without it, those four do nothing.
+[*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos Framework - SKSE UI[/url], an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these conditions and effects far easier.
 [/list]
 
 Dawnguard and Dragonborn come with Skyrim Special Edition. The connector uses a few of their forms: the Aetherium Forge, the Staff Enchanter, Solstheim's bounty, and the Black Book perk behind No fall damage.
@@ -89,6 +90,8 @@ The Papyrus log ([font=Courier New]Documents/My Games/Skyrim Special Edition/Log
 [*]powerofthree, for Papyrus Extender
 [/list]
 
-[size=5][b]Source[/b][/size]
+[size=5][b]License and source code[/b][/size]
 
-The source, build instructions, and the other MTF connectors are on [url=https://github.com/proteux/skyrim-magic-tattoo-connectors]GitHub[/url].
+Copyright (C) 2026 Jack Whitehouse (proteux). MTF Plugin - Base Extended is released under the [url=https://www.gnu.org/licenses/gpl-3.0.html]GNU General Public License v3.0[/url] or later. It comes with ABSOLUTELY NO WARRANTY. You may modify and redistribute it under the terms of that license.
+
+The full source code, with the build and the other MTF connectors, is on GitHub: [url=https://github.com/proteux/skyrim-magic-tattoo-connectors]github.com/proteux/skyrim-magic-tattoo-connectors[/url]. The download includes the Papyrus source in [font=Courier New]Data/Scripts/Source[/font], and the license text and this notice in [font=Courier New]Data/SKSE/Plugins/MTF_Plugin_BaseExtended[/font].

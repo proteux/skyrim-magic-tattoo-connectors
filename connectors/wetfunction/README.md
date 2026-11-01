@@ -6,13 +6,14 @@ Let your magic tattoos glisten.
 
 This patch connects [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF) to [Wet Function Redux SE](https://www.nexusmods.com/skyrimspecialedition/mods/78804). A tattoo tier can show only when the skin is soaked, once a sweat has built up, or while someone is drying off after a swim. A tier can also wet or dry the skin when it appears, or make everyone sweat and dry faster while it shows.
 
-It adds a **Wet Function Redux** plugin to MTF's menu and to Magic Tattoos UI. Wet Function Redux itself is not changed.
+It adds a **Wet Function Redux** plugin to MTF's menu and to [Magic Tattoos UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803). Wet Function Redux itself is not changed.
 
 ## Requirements
 
 - [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) 0.7.0 or later, and its requirements
 - [Wet Function Redux SE](https://www.nexusmods.com/skyrimspecialedition/mods/78804). Built against 1.0 (script version 39). Works with the [OSweat](https://www.nexusmods.com/skyrimspecialedition/mods/108511) patch too.
 - [PapyrusUtil SE](https://www.nexusmods.com/skyrimspecialedition/mods/13048)
+- Optional: [Magic Tattoos Framework - SKSE UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803), an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these conditions and effects far easier.
 
 ## Installation
 
@@ -64,3 +65,7 @@ Wet Function Redux forms used: its MCM quest `WetFunctionMCM` (`WetFunction.esp`
 - Proteux, author
 - The Wet Function Redux authors, and the OSweat author
 - levchimik, for Magic Tattoos Framework
+
+## License
+
+Copyright (C) 2026 Jack Whitehouse (proteux). Released under the [GNU General Public License v3.0 or later](../../LICENSE), with ABSOLUTELY NO WARRANTY. The download includes the license text and a notice in `SKSE/Plugins/MTF_Plugin_WetFunction`, and the Papyrus source in `Scripts/Source`.

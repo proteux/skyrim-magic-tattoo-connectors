@@ -55,4 +55,14 @@ Each connector is its own Nexus page. To release one:
 5. On Nexus, upload `dist/<plugin>-<version>.zip` as a Main file, paste `nexus/summary.txt` into the summary (350 characters at most) and `nexus/description.bbcode` into the Description tab, add the changelog lines, and link the requirements. Archive the previous file when updating.
 6. Tag the commit `<connector>-v<version>`, for example `sacrosanct-v0.1.0`, and push the tag.
 
-`nexus/description.bbcode` is the Nexus page, written by hand in Nexus BBCode. It follows the README, but Nexus has no tables, so table rows are list items, and links to repository files are full GitHub URLs. "Building from source" is left out in favour of a link to this repository.
+`nexus/description.bbcode` is the Nexus page, written by hand in Nexus BBCode. It follows the README, but Nexus has no tables, so table rows are list items, and links to repository files are full GitHub URLs. "Building from source" is left out in favour of a link to this repository, and the page ends with the license and source notice.
+
+The Nexus permissions can't be stricter than the GPL, so set every one of them to allowed: upload, modification, conversion, and asset use (each with credit, which the GPL's notice requirement already asks for), including in mods that are sold or earn donation points. Leave "Other user's assets" off, since nothing from other authors ships. Put this in the author notes:
+
+```
+Licensed under the GNU General Public License v3.0 or later. Where these settings and the license differ, the license applies. Full source: https://github.com/proteux/skyrim-magic-tattoo-connectors
+```
+
+## License
+
+Copyright (C) 2026 Jack Whitehouse (proteux). Everything in this repository outside `vendor/` is released under the GNU General Public License v3.0 or later; see [LICENSE](LICENSE). Magic Tattoos Framework, which the connectors extend, is GPL-3.0-or-later too, and Mutagen, which `PluginGen` uses, is GPL-3.0. Each release zip carries the license text and a notice with the source location in `SKSE/Plugins/<plugin>/`.

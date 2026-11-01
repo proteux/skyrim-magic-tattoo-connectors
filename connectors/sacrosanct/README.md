@@ -6,7 +6,7 @@ Let your magic tattoos feel the thirst.
 
 This patch connects [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF) to [Sacrosanct - Vampires of Skyrim](https://www.nexusmods.com/skyrimspecialedition/mods/3928). A tattoo tier can show only when you are Blood Starved, when you have just fed, once you reach a vampire rank, or while you soar as a Vampire Lord. A tier can also do vampiric things while it shows: sate your thirst, ward you from the sun, or speed your path to the next rank.
 
-It adds a **Sacrosanct** plugin to MTF's menu and to Magic Tattoos UI. Sacrosanct itself is not changed.
+It adds a **Sacrosanct** plugin to MTF's menu and to [Magic Tattoos UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803). Sacrosanct itself is not changed.
 
 ## Requirements
 
@@ -14,6 +14,7 @@ It adds a **Sacrosanct** plugin to MTF's menu and to Magic Tattoos UI. Sacrosanc
 - [Sacrosanct - Vampires of Skyrim](https://www.nexusmods.com/skyrimspecialedition/mods/3928). Built against 5.17.0.
 - [PapyrusUtil SE](https://www.nexusmods.com/skyrimspecialedition/mods/13048)
 - Dawnguard
+- Optional: [Magic Tattoos Framework - SKSE UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803), an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these conditions and effects far easier.
 
 ## Installation
 
@@ -74,3 +75,7 @@ Sacrosanct FormIDs used (all in `Sacrosanct - Vampires of Skyrim.esp`): rank age
 - Proteux, author
 - Enai Siaion, for Sacrosanct
 - levchimik, for Magic Tattoos Framework
+
+## License
+
+Copyright (C) 2026 Jack Whitehouse (proteux). Released under the [GNU General Public License v3.0 or later](../../LICENSE), with ABSOLUTELY NO WARRANTY. The download includes the license text and a notice in `SKSE/Plugins/MTF_Plugin_Sacrosanct`, and the Papyrus source in `Scripts/Source`.

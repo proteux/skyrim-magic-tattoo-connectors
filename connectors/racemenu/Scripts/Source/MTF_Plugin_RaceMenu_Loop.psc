@@ -1,3 +1,4 @@
+; Copyright (C) 2026 Jack Whitehouse (proteux). Licensed under the GNU General Public License v3.0 or later; see LICENSE.
 Scriptname MTF_Plugin_RaceMenu_Loop extends ReferenceAlias
 {On the player alias of MTF_Plugin_RaceMenu's quest: the step timer for transitions, and the load hook.
  The quest's own OnUpdate belongs to MTF_Plugin's registration, and quest scripts never receive OnPlayerLoadGame.}
