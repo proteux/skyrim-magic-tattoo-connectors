@@ -17,9 +17,12 @@ int Function AdjustIntValue(Form ObjKey, string KeyName, int amount) global nati
 
 int Function FormListCount(Form ObjKey, string KeyName) global native
 Form Function FormListGet(Form ObjKey, string KeyName, int index) global native
+int function FormListAdd(Form ObjKey, string KeyName, Form value, bool allowDuplicate = true) global native
+bool function FormListRemoveAt(Form ObjKey, string KeyName, int index) global native
 
 int function StringListAdd(Form ObjKey, string KeyName, string value, bool allowDuplicate = true) global native
 string function StringListGet(Form ObjKey, string KeyName, int index) global native
 int function StringListRemove(Form ObjKey, string KeyName, string value, bool allInstances = false) global native
 int function StringListCount(Form ObjKey, string KeyName) global native
+int function StringListClear(Form ObjKey, string KeyName) global native
 int function StringListFind(Form ObjKey, string KeyName, string value) global native

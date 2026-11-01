@@ -9,5 +9,6 @@ PLUGIN_ID="proteux-mtf.racemenu"
 MOD_NAME="MTF Plugin - RaceMenu"
 AUTHOR="Proteux"
 DESCRIPTION="Magic Tattoos Framework effects backed by RaceMenu: actor scale and BodySlide body shapes."
+ALIAS_SCRIPTS="MTF_Plugin_RaceMenu_Loop"
 
 source "$CONNECTOR_DIR/../../shared/build-common.sh" "$@"

@@ -12,6 +12,17 @@ Put Actor scale at 150% on a tier and make it show. The actor should be clearly 
 - Change RaceMenu's height slider while the tier shows. Both apply together.
 - Save and reload while the tier shows. The size stays.
 
+## Transitions
+
+Set Transition to 10 seconds on a Bigger bust tier at 100%. When the tier starts, the bust should grow smoothly over about 10 seconds, slow at the start and end, and the log line appears when it's done. Stop the tier and it shrinks back the same way. Then:
+
+- Stop the tier halfway through growing. It should turn around from where it is, not jump.
+- Set Transition to 0. The change is instant, as before.
+- Save mid-transition and reload. The body should land on the final shape within a moment of loading.
+- Do the same with Actor scale.
+
+If nothing ever moves gradually but instant changes work, check the log for errors from `MTF_Plugin_RaceMenu_Loop`.
+
 ## Body shape
 
 Use a female actor with a CBBE 3BA body built with morphs. Every change logs `[MTF_Plugin_RaceMenu] body morphs on <name>: <slider>=<value> ...` (or `none` when cleared) in the Papyrus log, so check there first if nothing seems to happen. No line means the effect never ran; a line with no visible change means the body has no morphs.

@@ -9,6 +9,8 @@ Function UpdateNodeTransform(ObjectReference akRef, bool firstPerson, bool isFem
 
 Function SetBodyMorph(ObjectReference ref, string morphName, string keyName, float value) native global
 
+float Function GetBodyMorph(ObjectReference ref, string morphName, string keyName) native global
+
 Function ClearBodyMorph(ObjectReference ref, string morphName, string keyName) native global
 
 Function UpdateModelWeight(ObjectReference ref) native global

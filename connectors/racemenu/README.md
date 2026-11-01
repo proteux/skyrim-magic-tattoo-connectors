@@ -26,6 +26,8 @@ Install with your mod manager and enable `MTF_Plugin_RaceMenu.esp`. It is ESL-fl
 | Actor scale | while shown | the actor is 50 to 200% of their usual size |
 | Body shape | while shown | the body takes one of 14 shapes at 5 to 100% strength |
 
+Both effects have a **Transition** setting, 0 to 30 seconds (5 by default). The body eases from its current shape to the new one over that time instead of changing at once, starting and stopping gently, and eases back the same way when the tier stops. 0 changes it instantly. A change that arrives mid-transition carries on from wherever the body is. Loading a save finishes any transition that was under way.
+
 **Actor scale** scales RaceMenu's root `NPC` node, so it multiplies with RaceMenu's own height slider. Several tiers multiply together.
 
 **Body shape** moves CBBE 3BA BodySlide sliders through RaceMenu's body morphs. It adds to the body's own preset, including one from OBody, rather than replacing it, so the same strength changes any body by the same amount. At 100% strength, each shape adds this much to its sliders; lower strengths scale them down:
@@ -67,7 +69,7 @@ Take off any tattoo whose tiers use these effects, so the body goes back to norm
 
 The Papyrus log (`Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.0.log`) should show `[MTF_Main] Registered 'proteux-mtf.racemenu'` a few seconds after loading a save. If it doesn't, check that RaceMenu and MTF are enabled and that `MTF_Plugin_RaceMenu.esp` loads after `MagicTattoosFramework.esp`.
 
-Each Body shape change logs a line such as `[MTF_Plugin_RaceMenu] body morphs on Lydia: Breasts=1.000000`, so you can tell whether the effect ran. If the line appears but the body doesn't change, the body has no morphs. Rebuild it in BodySlide with **Build Morphs** checked; a `femalebody.tri` file should appear next to `femalebody_0.nif` and `femalebody_1.nif`.
+Each Body shape change logs a line such as `[MTF_Plugin_RaceMenu] body morphs on Lydia: Breasts=1.000000` once it finishes (after the transition), so you can tell whether the effect ran. If the line appears but the body doesn't change, the body has no morphs. Rebuild it in BodySlide with **Build Morphs** checked; a `femalebody.tri` file should appear next to `femalebody_0.nif` and `femalebody_1.nif`.
 
 [TESTING.md](TESTING.md) walks through checking each effect in game.
 
@@ -75,7 +77,7 @@ Each Body shape change logs a line such as `[MTF_Plugin_RaceMenu] body morphs on
 
 Run `make racemenu` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live racemenu` removes those files. `make package racemenu` writes the release zip with the same files, and `make staging racemenu` builds it as its own Vortex mod, **MTF Plugin - RaceMenu**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_RaceMenu.psc`.
 
-All changes go through RaceMenu's `NiOverride` script under the key `proteux-mtf.racemenu`: `AddNodeTransformScale` for scale, and `SetBodyMorph` with `UpdateModelWeight` for shapes. A new shape needs an id in the catalog menu, a branch in `_shapeIndex`, its slider weights in `_shapeWeight`, and any slider it uses that isn't already in `_sliderNames` added there (a slider missing from that list is never set). Slider names come from the CBBE 3BA reference slider set, `CalienteTools/BodySlide/RefTemplates/CBBE 3BA/CBBE 3BA Reference.osp`.
+All changes go through RaceMenu's `NiOverride` script under the key `proteux-mtf.racemenu`: `AddNodeTransformScale` for scale, and `SetBodyMorph` with `UpdateModelWeight` for shapes. Transitions step four times a second from a second script, `MTF_Plugin_RaceMenu_Loop`, on the player alias (`ALIAS_SCRIPTS` in `build.sh`), which only runs while some actor is changing. Each step of a shape rebuilds the body mesh once per changing actor. A new shape needs an id in the catalog menu, a branch in `_shapeIndex`, its slider weights in `_shapeWeight`, and any slider it uses that isn't already in `_sliderNames` added there (a slider missing from that list is never set). Slider names come from the CBBE 3BA reference slider set, `CalienteTools/BodySlide/RefTemplates/CBBE 3BA/CBBE 3BA Reference.osp`.
 
 ## Credits
 
