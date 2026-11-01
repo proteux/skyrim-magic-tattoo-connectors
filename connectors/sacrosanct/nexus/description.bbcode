@@ -1,0 +1,76 @@
+[size=4][i]Let your magic tattoos feel the thirst.[/i][/size]
+
+[size=5][b]Description[/b][/size]
+
+This patch connects [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF) to [url=https://www.nexusmods.com/skyrimspecialedition/mods/3928]Sacrosanct - Vampires of Skyrim[/url]. A tattoo tier can show only when you are Blood Starved, when you have just fed, once you reach a vampire rank, or while you soar as a Vampire Lord. A tier can also do vampiric things while it shows: sate your thirst, ward you from the sun, or speed your path to the next rank.
+
+It adds a [b]Sacrosanct[/b] plugin to MTF's menu and to Magic Tattoos UI. Sacrosanct itself is not changed.
+
+[size=5][b]Requirements[/b][/size]
+
+[list]
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] 0.7.0 or later, and its requirements
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/3928]Sacrosanct - Vampires of Skyrim[/url]. Built against 5.17.0.
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/13048]PapyrusUtil SE[/url]
+[*]Dawnguard
+[/list]
+
+[size=5][b]Installation[/b][/size]
+
+Install with your mod manager and enable [font=Courier New]MTF_Plugin_Sacrosanct.esp[/font]. It is ESL-flagged and only lists [font=Courier New]Skyrim.esm[/font] and [font=Courier New]MagicTattoosFramework.esp[/font] as masters, so it can go anywhere after MTF. Sacrosanct is found at runtime; if it isn't loaded, the plugin stays unregistered and does nothing.
+
+[size=5][b]Conditions[/b][/size]
+
+[list]
+[*][b]Is a vampire[/b]: the actor is a vampire. Works on NPCs too.
+[*][b]Vampire Lord form[/b]: the actor is a Vampire Lord. Works on NPCs too.
+[*][b]Thirst stage[/b]: your thirst is Sated, Thirsty, Parched, or Blood Starved, matched exactly, "or thirstier", or "or better fed"
+[*][b]Fed recently[/b]: you fed within the last 1 to 72 hours
+[*][b]Vampire rank[/b]: your rank is at least Fledgeling, Blooded, Mistwalker, Nightstalker, Nightlord, or Nightmaster
+[*][b]Rank progress[/b]: you are at least 0 to 100% of the way to your next rank
+[*][b]Hemomancy stage[/b]: you have learned at least 1 to 7 Hemomancy stages
+[*][b]Wassail[/b]: you have at least 1 to 100 Wassail
+[*][b]Vampire Lord perks[/b]: you have earned at least 1 to 34 Vampire Lord perks
+[*][b]Levitating[/b]: you are levitating in Vampire Lord form
+[/list]
+
+Apart from the first two, conditions describe the player vampire and are false for other actors and for a player who isn't a vampire.
+
+[size=5][b]Effects[/b][/size]
+
+Effects work on the player while they are a vampire, and do nothing on NPCs.
+
+[list]
+[*][b]Sate thirst[/b] ([i]once[/i]): sets your thirst to Sated, as feeding does
+[*][b]Deepen thirst[/b] ([i]once[/i]): worsens your thirst by one stage
+[*][b]Grant rank age[/b] ([i]once[/i]): adds 1 to 120 hours toward your next rank (scaled by Sacrosanct's Age Speed setting)
+[*][b]Quicken aging[/b] ([i]while shown[/i]): you gain rank age 10 to 500% faster
+[*][b]Sun ward[/b] ([i]while shown[/i]): the sun doesn't harm you
+[*][b]Masquerade ward[/b] ([i]while shown[/i]): being Blood Starved doesn't turn people hostile, and any current hostility from it ends
+[*][b]Threshold ward[/b] ([i]while shown[/i]): no Trespassing Curse
+[*][b]Grant Vampire Lord blood[/b] ([i]once[/i]): adds 1 to 20 Vampire Lord blood points, earning perks the same way feeding does
+[/list]
+
+The three wards switch on the matching option in Sacrosanct's MCM while the tier shows, and put your own setting back when the last tier using that ward stops showing. Avoid changing those three options in the MCM while a ward tier is showing.
+
+[size=5][b]Uninstalling[/b][/size]
+
+Take off any tattoo whose tiers use the wards or Quicken aging, so their changes are undone, then save, quit, and disable the plugin.
+
+[size=5][b]Troubleshooting[/b][/size]
+
+The Papyrus log ([font=Courier New]Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.0.log[/font]) should show [font=Courier New][MTF_Main] Registered 'proteux-mtf.sacrosanct'[/font] a few seconds after loading a save. If it doesn't, check that Sacrosanct and MTF are enabled and that [font=Courier New]MTF_Plugin_Sacrosanct.esp[/font] loads after [font=Courier New]MagicTattoosFramework.esp[/font].
+
+[url=https://github.com/proteux/skyrim-magic-tattoo-connectors/blob/main/connectors/sacrosanct/TESTING.md]TESTING.md[/url] lists console commands that put you into each thirst stage, rank, and Vampire Lord state, and check what each effect changes.
+
+[size=5][b]Credits[/b][/size]
+
+[list]
+[*]Proteux, author
+[*]Enai Siaion, for Sacrosanct
+[*]levchimik, for Magic Tattoos Framework
+[/list]
+
+[size=5][b]Source[/b][/size]
+
+The source, build instructions, and the other MTF connectors are on [url=https://github.com/proteux/skyrim-magic-tattoo-connectors]GitHub[/url].

@@ -1,0 +1,94 @@
+[size=4][i]More of Skyrim for your magic tattoos.[/i][/size]
+
+[size=5][b]Description[/b][/size]
+
+This patch adds base game conditions and effects to [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF), on top of the ones in MTF's own Base plugin. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, or for a few seconds after a kill. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, or change the weather.
+
+It adds a [b]Base Extended[/b] plugin to MTF's menu and to Magic Tattoos UI. It doesn't edit any game records.
+
+[size=5][b]Requirements[/b][/size]
+
+[list]
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] 0.7.0 or later, and its requirements
+[*][url=https://skse.silverlock.org/]SKSE[/url] and [url=https://www.nexusmods.com/skyrimspecialedition/mods/13048]PapyrusUtil SE[/url]
+[*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url] for Hidden, Diseased, Cure disease, and Calm enemies. Without it, those four do nothing.
+[/list]
+
+Dawnguard and Dragonborn come with Skyrim Special Edition. The connector uses a few of their forms: the Aetherium Forge, the Staff Enchanter, Solstheim's bounty, and the Black Book perk behind No fall damage.
+
+[size=5][b]Installation[/b][/size]
+
+Install with your mod manager and enable [font=Courier New]MTF_Plugin_BaseExtended.esp[/font]. It is ESL-flagged and only lists [font=Courier New]Skyrim.esm[/font] and [font=Courier New]MagicTattoosFramework.esp[/font] as masters, so it can go anywhere after MTF.
+
+[size=5][b]Conditions[/b][/size]
+
+Conditions marked "player" are always false on an NPC, because the game keeps that information for the player only.
+
+[list]
+[*][b]Statistic[/b]: (player) a General Stats value has reached 1 to 10,000. There are 88 to pick from, such as locks picked, items stolen, days as a vampire, and dragon souls collected
+[*][b]Moon phase[/b]: the moons are in one of the eight phases, or in any waxing or any waning phase
+[*][b]In darkness[/b]: the light on the actor is below a level, 40 by default
+[*][b]Season[/b]: it is winter, spring, summer, or autumn
+[*][b]Holiday[/b]: it is one of the 22 holidays on the in-game calendar, or any of them
+[*][b]Bounty in this hold[/b]: (player) the player has at least this much bounty in the hold they are in
+[*][b]Wanted anywhere[/b]: (player) the player has at least this much bounty in any hold, Solstheim included
+[*][b]Hidden[/b]: the actor is sneaking and no one nearby has detected them. The player's followers don't count
+[*][b]Sitting[/b]: the actor sits in furniture
+[*][b]Sleeping[/b]: the actor is asleep
+[*][b]At a crafting station[/b]: the actor is using a forge, workbench, grindstone, smelter, tanning rack, cooking pot, alchemy lab, enchanter, or any of them
+[*][b]Diseased[/b]: the actor has any disease, Sanguinare Vampiris included
+[*][b]Just made a kill[/b]: (player) for 1 to 120 seconds after the player kills a person, animal, creature, undead, daedra, or automaton
+[*][b]Just leveled up[/b]: for 1 to 600 seconds after the actor gains a level
+[/list]
+
+The General Stats page has no "dragons killed", so use Dragon souls collected for that. The moon phase follows the moons drawn in the sky: a 24-day cycle with three days per phase, starting full. Seasons go by month: Evening Star to Sun's Dawn is winter, First Seed to Second Seed is spring, Midyear to Last Seed is summer, and Hearthfire to Frostfall is autumn.
+
+Bounty in this hold uses the hold of the actor's current location. Unnamed wilderness has no location, so between named places the condition is false even though guards there would arrest you. Just made a kill and Just leveled up learn the current count the first time MTF checks them after a load, so a kill made before that doesn't count.
+
+[size=5][b]Effects[/b][/size]
+
+[list]
+[*][b]Night vision[/b] ([i]while shown[/i]): (player) the Night Eye vision
+[*][b]Shout recovery[/b] ([i]while shown[/i]): shout cooldowns last 10 to 300% as long as usual
+[*][b]Cure disease[/b] ([i]once[/i]): cures every disease the actor has
+[*][b]Rested bonus[/b] ([i]while shown[/i]): keeps Rested, Well Rested, or Lover's Comfort on the actor
+[*][b]Facial mood[/b] ([i]while shown[/i]): holds a neutral, angry, fearful, happy, sad, surprised, puzzled, or disgusted expression at 0 to 100% strength
+[*][b]Calm enemies[/b] ([i]once[/i]): everyone within 5 to 100 metres who is hostile to the actor, or fighting them, stops fighting
+[*][b]No fall damage[/b] ([i]while shown[/i]): (player) falling does no harm
+[*][b]Change the weather[/b] ([i]once[/i]): (player) the weather turns clear, cloudy, foggy, rainy, stormy, snowy, or to a blizzard
+[/list]
+
+How the effects behave:
+
+[list]
+[*][b]Night vision.[/b] Casting Night Eye while the tattoo shows and then letting it run out also ends the tattoo's vision until the next load. Toggling the tier back on restores it.
+[*][b]Shout recovery.[/b] Several tiers add up, and the multiplier never goes below 5%.
+[*][b]Cure disease.[/b] Like a Cure Disease potion, it also cures Sanguinare Vampiris before it turns into vampirism.
+[*][b]Rested bonus.[/b] The bonus is put back every few seconds if sleeping replaces it or it expires. A bonus the actor already had when the tier appeared stays when the tier goes.
+[*][b]Facial mood.[/b] The most recently shown mood wins, and it is put back after dialogue or combat changes the face.
+[*][b]Calm enemies.[/b] Bandits, draugr, and other enemies that are always hostile may attack again.
+[*][b]No fall damage.[/b] This uses the perk from the Black Book "The Hidden Twilight". If the player has already earned that perk, it stays when the tier goes.
+[*][b]Change the weather.[/b] The new weather lasts until the climate changes it again on its own.
+[/list]
+
+[size=5][b]Uninstalling[/b][/size]
+
+Take off any tattoo whose tiers use Shout recovery, Rested bonus, Facial mood, Night vision, or No fall damage, so their changes are undone. Then save, quit, and disable the plugin.
+
+[size=5][b]Troubleshooting[/b][/size]
+
+The Papyrus log ([font=Courier New]Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.0.log[/font]) should show [font=Courier New][MTF_Main] Registered 'proteux-mtf.base'[/font] a few seconds after loading a save. If it doesn't, check that [font=Courier New]MTF_Plugin_BaseExtended.esp[/font] is enabled and loads after [font=Courier New]MagicTattoosFramework.esp[/font]. Errors mentioning [font=Courier New]PO3_SKSEFunctions[/font] mean Papyrus Extender is missing.
+
+[url=https://github.com/proteux/skyrim-magic-tattoo-connectors/blob/main/connectors/base/TESTING.md]TESTING.md[/url] walks through checking each condition and effect in game.
+
+[size=5][b]Credits[/b][/size]
+
+[list]
+[*]Proteux, author
+[*]levchimik, for Magic Tattoos Framework
+[*]powerofthree, for Papyrus Extender
+[/list]
+
+[size=5][b]Source[/b][/size]
+
+The source, build instructions, and the other MTF connectors are on [url=https://github.com/proteux/skyrim-magic-tattoo-connectors]GitHub[/url].

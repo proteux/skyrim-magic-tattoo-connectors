@@ -1,0 +1,100 @@
+[size=4][i]Tattoos that change the body wearing them.[/i][/size]
+
+[size=5][b]Description[/b][/size]
+
+This patch connects [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF) to [url=https://www.nexusmods.com/skyrimspecialedition/mods/19080]RaceMenu[/url]. A tattoo tier can make the actor bigger or smaller, or reshape their body with BodySlide sliders while it shows, for example a muscular build on a warrior's mark.
+
+It adds a [b]RaceMenu[/b] plugin to MTF's menu and to Magic Tattoos UI. RaceMenu itself is not changed.
+
+[size=5][b]Requirements[/b][/size]
+
+[list]
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] 0.7.0 or later, and its requirements
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/19080]RaceMenu[/url]
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/13048]PapyrusUtil SE[/url]
+[*]For Body shape: a body with BodySlide morphs, such as [url=https://www.nexusmods.com/skyrimspecialedition/mods/30174]CBBE 3BA[/url], built in BodySlide with [b]Build Morphs[/b] checked. Outfits need morphs built too, or the body grows through them.
+[/list]
+
+[size=5][b]Installation[/b][/size]
+
+Install with your mod manager and enable [font=Courier New]MTF_Plugin_RaceMenu.esp[/font]. It is ESL-flagged and only lists [font=Courier New]Skyrim.esm[/font] and [font=Courier New]MagicTattoosFramework.esp[/font] as masters, so it can go anywhere after MTF. RaceMenu is found at runtime; if it isn't loaded, the plugin stays unregistered and does nothing.
+
+[size=5][b]Effects[/b][/size]
+
+[list]
+[*][b]Actor scale[/b] ([i]while shown[/i]): the actor is 50 to 200% of their usual size
+[*][b]Body shape[/b] ([i]while shown[/i]): the body takes one of 20 shapes at 5 to 100% strength
+[/list]
+
+Both effects have a [b]Transition[/b] setting, 0 to 30 seconds (5 by default). The body eases from its current shape to the new one over that time instead of changing at once, starting and stopping gently, and eases back the same way when the tier stops. 0 changes it instantly. A change that arrives mid-transition carries on from wherever the body is. Loading a save finishes any transition that was under way.
+
+[b]Actor scale[/b] scales RaceMenu's root [font=Courier New]NPC[/font] node, so it multiplies with RaceMenu's own height slider. Several tiers multiply together.
+
+[b]Body shape[/b] moves CBBE 3BA BodySlide sliders through RaceMenu's body morphs. It adds to the body's own preset, including one from OBody, rather than replacing it, so the same strength changes any body by the same amount. At 100% strength, each shape adds this much to its sliders; lower strengths scale them down:
+
+[list]
+[*][b]Muscular[/b]: [font=Courier New]MuscleAbs[/font], [font=Courier New]MuscleArms[/font], [font=Courier New]MuscleBack_v2[/font], [font=Courier New]MuscleButt[/font], [font=Courier New]MuscleLegs[/font], [font=Courier New]MusclePecs[/font] +100; [font=Courier New]MuscleMoreAbs_v2[/font], [font=Courier New]MuscleMoreArms_v2[/font], [font=Courier New]MuscleMoreLegs_v2[/font] +50
+[*][b]Bigger bust[/b]: [font=Courier New]Breasts[/font] +100
+[*][b]Smaller bust[/b]: [font=Courier New]BreastsSmall[/font] +100
+[*][b]Perkier bust[/b]: [font=Courier New]BreastPerkiness[/font] +100, [font=Courier New]PushUp[/font] +50
+[*][b]Saggier bust[/b]: [font=Courier New]BreastGravity2[/font] +100
+[*][b]Perkier nipples[/b]: [font=Courier New]NipplePerkiness[/font] +100, [font=Courier New]NippleLength[/font] +50
+[*][b]Bigger butt[/b]: [font=Courier New]Butt[/font] +100, [font=Courier New]BigButt[/font] +50
+[*][b]Smaller butt[/b]: [font=Courier New]ButtSmall[/font] +100
+[*][b]Rounder butt[/b]: [font=Courier New]RoundAss[/font] +100, [font=Courier New]AppleCheeks[/font] +50
+[*][b]Wider hips[/b]: [font=Courier New]Hips[/font] +100, [font=Courier New]HipUpperWidth[/font] +50
+[*][b]Thicker thighs[/b]: [font=Courier New]Thighs[/font] +100, [font=Courier New]ThighFBThicc_v2[/font] and [font=Courier New]ThighOutsideThicc_v2[/font] +50
+[*][b]Slender[/b]: [font=Courier New]SlimThighs[/font] +100, [font=Courier New]LegsThin[/font] and [font=Courier New]ButtNarrow_v2[/font] +50
+[*][b]Chubby[/b]: [font=Courier New]ChubbyArms[/font], [font=Courier New]ChubbyButt[/font], [font=Courier New]ChubbyLegs[/font], [font=Courier New]ChubbyWaist[/font] +100; [font=Courier New]BigBelly[/font] +50
+[*][b]Pregnant[/b]: [font=Courier New]PregnancyBelly[/font] +100
+[*][b]Older[/b]: [font=Courier New]BreastGravity2[/font], [font=Courier New]ButtSaggy_v2[/font] +100; [font=Courier New]ButtUnderFold[/font] +50
+[*][b]Younger[/b]: [font=Courier New]BreastPerkiness[/font] +100, [font=Courier New]NipplePerkiness[/font] +50
+[*][b]Longer schlong[/b]: [font=Courier New]Length[/font], [font=Courier New]SOS - SchlongLength[/font] +100
+[*][b]Thicker schlong[/b]: [font=Courier New]Thickness[/font], [font=Courier New]SOS - SchlongGirth[/font] +100
+[*][b]Larger glans[/b]: [font=Courier New]Head[/font], [font=Courier New]SOS - GlansSize[/font] +100
+[*][b]Larger balls[/b]: [font=Courier New]SOS - BallsSize[/font] +100 (futanari addon only)
+[/list]
+
+Older and Younger only change the body. RaceMenu can't reshape a face from a script, so for an aged face, pair Older with an MTF face tattoo carrying a wrinkle texture.
+
+Shrinking uses 3BA's own shrink sliders ([font=Courier New]BreastsSmall[/font], [font=Courier New]ButtSmall[/font], [font=Courier New]SlimThighs[/font]) rather than taking away from the size sliders, which would push past the flat shape on a small preset.
+
+Several Body shape tiers combine: different shapes stack, so Muscular and Pregnant together give both. Two tiers that move the same slider don't add up; that slider takes the strongest value either asks for. Opposites such as Bigger and Smaller bust move different sliders, so they partly cancel.
+
+Bodies without these sliders don't change. That includes the vanilla male body and BHUNP, which uses different slider names.
+
+The schlong, glans and balls shapes move the genital meshes from [url=https://www.nexusmods.com/skyrimspecialedition/mods/104215]TNG[/url], which RaceMenu morphs alongside the body. Each mesh only responds to its own slider names:
+
+[list]
+[*]TNG's male meshes (the [font=Courier New][TNG][/font] slider sets) use [font=Courier New]Length[/font], [font=Courier New]Thickness[/font] and [font=Courier New]Head[/font]. They have no balls slider.
+[*]The ERF Futanari addon uses the old SOS names, such as [font=Courier New]SOS - SchlongLength[/font].
+[/list]
+
+Either kind needs to be built in BodySlide with [b]Build Morphs[/b] checked. You'll see [font=Courier New].tri[/font] files next to the meshes, for example [font=Courier New]actors/character/character assets/TNG/m_genitals.tri[/font].
+
+Both effects work on the player and NPCs. RaceMenu saves them with the game, so they stay after a load until the tier stops.
+
+[size=5][b]Uninstalling[/b][/size]
+
+Take off any tattoo whose tiers use these effects, so the body goes back to normal. Then save, quit, and disable the plugin.
+
+[size=5][b]Troubleshooting[/b][/size]
+
+The Papyrus log ([font=Courier New]Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.0.log[/font]) should show [font=Courier New][MTF_Main] Registered 'proteux-mtf.racemenu'[/font] a few seconds after loading a save. If it doesn't, check that RaceMenu and MTF are enabled and that [font=Courier New]MTF_Plugin_RaceMenu.esp[/font] loads after [font=Courier New]MagicTattoosFramework.esp[/font].
+
+Each Body shape change logs a line such as [font=Courier New][MTF_Plugin_RaceMenu] body morphs on Lydia: Breasts=1.000000[/font] once it finishes (after the transition), so you can tell whether the effect ran. If the line appears but the body doesn't change, the body has no morphs. Rebuild it in BodySlide with [b]Build Morphs[/b] checked; a [font=Courier New]femalebody.tri[/font] file should appear next to [font=Courier New]femalebody_0.nif[/font] and [font=Courier New]femalebody_1.nif[/font].
+
+[url=https://github.com/proteux/skyrim-magic-tattoo-connectors/blob/main/connectors/racemenu/TESTING.md]TESTING.md[/url] walks through checking each effect in game.
+
+[size=5][b]Credits[/b][/size]
+
+[list]
+[*]Proteux, author
+[*]expired6978, for RaceMenu
+[*]Ousnius and Caliente, for BodySlide and CBBE 3BA
+[*]levchimik, for Magic Tattoos Framework
+[/list]
+
+[size=5][b]Source[/b][/size]
+
+The source, build instructions, and the other MTF connectors are on [url=https://github.com/proteux/skyrim-magic-tattoo-connectors]GitHub[/url].

@@ -107,6 +107,10 @@ if ! grep -q "MOD_VERSION = \"$VERSION\"" "$SCRIPT_SRC"; then
   echo "MOD_VERSION in $SCRIPT_SRC does not match VERSION ($VERSION)" >&2
   exit 1
 fi
+if [[ "$TARGET" == package ]] && ! grep -qxF "## $VERSION" "$CONNECTOR_DIR/CHANGELOG.md" 2> /dev/null; then
+  echo "$CONNECTOR_DIR/CHANGELOG.md has no '## $VERSION' section. Add the release notes before packaging." >&2
+  exit 1
+fi
 if ! grep -q "return \"$PLUGIN_ID\"" "$SCRIPT_SRC"; then
   echo "GetPluginId() in $SCRIPT_SRC does not return \"$PLUGIN_ID\"" >&2
   exit 1

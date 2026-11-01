@@ -65,7 +65,7 @@ The Papyrus log (`Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.
 
 ## Building from source
 
-Run `make sacrosanct` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live sacrosanct` removes those files. `make package sacrosanct` writes the release zip with the same files, and `make staging sacrosanct` builds it as its own Vortex mod, **MTF Plugin - Sacrosanct**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_Sacrosanct.psc`.
+Run `make sacrosanct` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live sacrosanct` removes those files. `make package sacrosanct` writes the release zip with the same files (it needs a `CHANGELOG.md` entry for the version; the Nexus page is `nexus/description.bbcode`), and `make staging sacrosanct` builds it as its own Vortex mod, **MTF Plugin - Sacrosanct**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_Sacrosanct.psc`.
 
 Sacrosanct FormIDs used (all in `Sacrosanct - Vampires of Skyrim.esp`): rank age `0x133B5E`, age speed `0x133B64`, rank threshold `0x133B65` and increment `0x133B66`, rank quest `0x133B4D`, hemomancy stage `0x059BA1`, Wassail `0x136314`, sun damage `0x10994B`, hate `0x1071A8`, and trespassing `0x133B72` toggles. Thirst and feeding go through vanilla `PlayerVampireQuest` (`Skyrim.esm` `0x0EAFD5`), and Vampire Lord state through `DLC1PlayerVampireQuest` (`Dawnguard.esm` `0x0071D0`).
 

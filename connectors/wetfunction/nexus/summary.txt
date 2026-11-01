@@ -1,0 +1,1 @@
+Let your magic tattoos glisten. This patch connects Magic Tattoos Framework (MTF) to Wet Function Redux SE.

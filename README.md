@@ -13,7 +13,7 @@ See [docs/mtf-integration.md](docs/mtf-integration.md) for how MTF plugins work.
 
 ## Layout
 
-- `connectors/<name>/` holds one connector: `VERSION`, `Makefile`, `build.sh`, its Papyrus source, compile stubs, and its MTF catalog under `SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/`. `build.sh` sets the mod name (`MOD_NAME`), plugin file (`ESP_BASE`), and MTF plugin id (`PLUGIN_ID`); the build refuses to run if another connector uses any of the same three. Connector folder names can't be `all`, `list`, `run`, or an action name, since the root Makefile reads them as goals.
+- `connectors/<name>/` holds one connector: `VERSION`, `CHANGELOG.md`, `Makefile`, `build.sh`, its Nexus page in `nexus/`, its Papyrus source, compile stubs, and its MTF catalog under `SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/`. `build.sh` sets the mod name (`MOD_NAME`), plugin file (`ESP_BASE`), and MTF plugin id (`PLUGIN_ID`); the build refuses to run if another connector uses any of the same three. Connector folder names can't be `all`, `list`, `run`, or an action name, since the root Makefile reads them as goals.
 - `shared/build-common.sh` does the work for every connector: validate the catalog, compile, generate the ESP, assemble the mod in `dist/mod`, then copy it into Data, stage it for Vortex, or package it.
 - `shared/tools/PluginGen/` generates the ESL-flagged plugin ESP that MTF expects (one Start Game Enabled quest with the plugin script, and a `PluginKickAlias` on the player with `MTF_PluginAliasKick`). A connector that needs player events, such as `OnPlayerLoadGame`, which quest scripts never receive, lists extra alias scripts in `ALIAS_SCRIPTS` in its `build.sh`. Each one is named `<ESP_BASE>_<Something>`, and the build compiles it, attaches it to the same alias, and ships it.
 - `shared/stubs/` holds compile-only stubs for scripts MTF imports that aren't installed. They are never shipped.
@@ -43,3 +43,16 @@ The default build copies into `<SKYRIM_DIR>/Data`, so a rebuild only needs a Sky
 Requirements: Git Bash, the Papyrus Compiler (the build uses the one Nemesis installs under `Data/Nemesis_Engine/Papyrus Compiler`), `TESV_Papyrus_Flags.flg` in `Data/Source/Scripts` or `Data/Scripts/Source`, the .NET SDK, and Python 3. Scripts compile against the stubs in `shared/stubs` and each connector's `Scripts/CompileStubs`, plus MTF's sources from the submodule, so the game's script sources don't need to be installed. When a connector calls a game, SKSE, or PapyrusUtil function that no stub declares yet, add it to `shared/stubs` with the signature copied from the real source.
 
 The default paths point to the author's machine. Set `SKYRIM_DIR` (the game folder), `VORTEX_MODS` (Vortex's `skyrimse/mods` folder), or `PAPYRUS_COMPILER` to override them.
+
+## Releasing on Nexus Mods
+
+Each connector is its own Nexus page. To release one:
+
+1. Bump `VERSION` and `MOD_VERSION` in the plugin script together, and add a `## <version>` section with `- ` entries to the connector's `CHANGELOG.md`. `make package` refuses to run without one.
+2. If the README changed, make the same change in the connector's `nexus/description.bbcode`.
+3. Run the checks in the connector's `TESTING.md` against a build made with `make live <connector>`.
+4. Run `make package <connector>`.
+5. On Nexus, upload `dist/<plugin>-<version>.zip` as a Main file, paste `nexus/summary.txt` into the summary (350 characters at most) and `nexus/description.bbcode` into the Description tab, add the changelog lines, and link the requirements. Archive the previous file when updating.
+6. Tag the commit `<connector>-v<version>`, for example `sacrosanct-v0.1.0`, and push the tag.
+
+`nexus/description.bbcode` is the Nexus page, written by hand in Nexus BBCode. It follows the README, but Nexus has no tables, so table rows are list items, and links to repository files are full GitHub URLs. "Building from source" is left out in favour of a link to this repository.

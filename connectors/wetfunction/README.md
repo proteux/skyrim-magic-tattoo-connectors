@@ -55,7 +55,7 @@ The Papyrus log (`Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.
 
 ## Building from source
 
-Run `make wetfunction` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live wetfunction` removes those files. `make package wetfunction` writes the release zip with the same files, and `make staging wetfunction` builds it as its own Vortex mod, **MTF Plugin - Wet Function Redux**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_WetFunction.psc`.
+Run `make wetfunction` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live wetfunction` removes those files. `make package wetfunction` writes the release zip with the same files (it needs a `CHANGELOG.md` entry for the version; the Nexus page is `nexus/description.bbcode`), and `make staging wetfunction` builds it as its own Vortex mod, **MTF Plugin - Wet Function Redux**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_WetFunction.psc`.
 
 Wet Function Redux forms used: its MCM quest `WetFunctionMCM` (`WetFunction.esp` `0x800`), whose StorageUtil floats hold the settings (`wetnessStart`, `wetnessSoaked`, `wetnessCap`, `multGlobal`). Per-actor state comes from the StorageUtil floats `WetFunction_Actor_wetness`, `WetFunction_Actor_wetnessRate`, and `WetFunction_Actor_specular` on each actor.
 

@@ -80,7 +80,7 @@ The Papyrus log (`Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.
 
 ## Building from source
 
-Run `make base` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live base` removes those files. `make package base` writes the release zip with the same files, and `make staging base` builds it as its own Vortex mod, **MTF Plugin - Base Extended**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_BaseExtended.psc`.
+Run `make base` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live base` removes those files. `make package base` writes the release zip with the same files (it needs a `CHANGELOG.md` entry for the version; the Nexus page is `nexus/description.bbcode`), and `make staging base` builds it as its own Vortex mod, **MTF Plugin - Base Extended**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_BaseExtended.psc`.
 
 The script isn't called `MTF_Plugin_Base`, because MTF ships a script by that name. A second script, `MTF_Plugin_BaseExtended_Load`, sits on the player alias (`ALIAS_SCRIPTS` in `build.sh`) and restores the night vision and the facial mood after a load. The game doesn't save either one, and MTF doesn't replay effects.
 

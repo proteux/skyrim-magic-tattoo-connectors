@@ -1,0 +1,66 @@
+[size=4][i]Let your magic tattoos glisten.[/i][/size]
+
+[size=5][b]Description[/b][/size]
+
+This patch connects [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF) to [url=https://www.nexusmods.com/skyrimspecialedition/mods/78804]Wet Function Redux SE[/url]. A tattoo tier can show only when the skin is soaked, once a sweat has built up, or while someone is drying off after a swim. A tier can also wet or dry the skin when it appears, or make everyone sweat and dry faster while it shows.
+
+It adds a [b]Wet Function Redux[/b] plugin to MTF's menu and to Magic Tattoos UI. Wet Function Redux itself is not changed.
+
+[size=5][b]Requirements[/b][/size]
+
+[list]
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] 0.7.0 or later, and its requirements
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/78804]Wet Function Redux SE[/url]. Built against 1.0 (script version 39). Works with the [url=https://www.nexusmods.com/skyrimspecialedition/mods/108511]OSweat[/url] patch too.
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/13048]PapyrusUtil SE[/url]
+[/list]
+
+[size=5][b]Installation[/b][/size]
+
+Install with your mod manager and enable [font=Courier New]MTF_Plugin_WetFunction.esp[/font]. It is ESL-flagged and only lists [font=Courier New]Skyrim.esm[/font] and [font=Courier New]MagicTattoosFramework.esp[/font] as masters, so it can go anywhere after MTF. Wet Function Redux is found at runtime; if it isn't loaded, the plugin stays unregistered and does nothing.
+
+[size=5][b]Conditions[/b][/size]
+
+Conditions work on any actor Wet Function Redux tracks, the player or NPCs. An actor it has never run on has no wetness, so every condition is false for them.
+
+[list]
+[*][b]Wetness[/b]: wetness is at least 0 to 100% of Wet Function's maximum ("cap" in its MCM)
+[*][b]Wetness stage[/b]: the skin is Dry, Sweaty, or Soaked, matched exactly, "or wetter", or "or drier"
+[*][b]Wetness trend[/b]: the actor is getting wetter, or drying off
+[*][b]Wet Function running[/b]: Wet Function's effect is running on the actor
+[/list]
+
+The stages use Wet Function's own "start" and "soaked" points. Wet Function holds its sweaty look a little longer while drying, so the visuals can lag slightly behind the stage condition. The trend is only known while Wet Function's effect runs on the actor.
+
+[size=5][b]Effects[/b][/size]
+
+[list]
+[*][b]Wet the skin[/b] ([i]once[/i]): raises wetness by 1 to 100% of the maximum
+[*][b]Dry the skin[/b] ([i]once[/i]): lowers wetness by 1 to 100% of the maximum
+[*][b]Wetness rate[/b] ([i]while shown[/i]): Wet Function's global rate runs at 10 to 500%, for getting wet and drying alike
+[/list]
+
+Wetting and drying work on the player and NPCs, but only on actors Wet Function tracks. A forced wetness (the Force slider in Wet Function's MCM) overrides them, as it overrides Wet Function's own sources.
+
+Wetness rate changes Wet Function's "Global rate multiplier", which applies to everyone, so it only does something on a player tier. Several tiers with it multiply together, and each puts its share back when it stops. Avoid moving the Global rate multiplier slider while such a tier is showing.
+
+[size=5][b]Uninstalling[/b][/size]
+
+Take off any tattoo whose tiers use Wetness rate, so the multiplier is put back, then save, quit, and disable the plugin.
+
+[size=5][b]Troubleshooting[/b][/size]
+
+The Papyrus log ([font=Courier New]Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.0.log[/font]) should show [font=Courier New][MTF_Main] Registered 'proteux-mtf.wetfunction'[/font] a few seconds after loading a save. If it doesn't, check that Wet Function Redux and MTF are enabled and that [font=Courier New]MTF_Plugin_WetFunction.esp[/font] loads after [font=Courier New]MagicTattoosFramework.esp[/font].
+
+[url=https://github.com/proteux/skyrim-magic-tattoo-connectors/blob/main/connectors/wetfunction/TESTING.md]TESTING.md[/url] walks through checking each condition and effect in game.
+
+[size=5][b]Credits[/b][/size]
+
+[list]
+[*]Proteux, author
+[*]The Wet Function Redux authors, and the OSweat author
+[*]levchimik, for Magic Tattoos Framework
+[/list]
+
+[size=5][b]Source[/b][/size]
+
+The source, build instructions, and the other MTF connectors are on [url=https://github.com/proteux/skyrim-magic-tattoo-connectors]GitHub[/url].
