@@ -121,7 +121,7 @@ Function _applyShapes(Actor target)
     string listKey = KEY_PREFIX + "shape.instances"
     int n = StorageUtil.StringListCount(target, listKey)
     string[] sliders = _sliderNames()
-    float[] values = new float[10]
+    float[] values = Utility.CreateFloatArray(sliders.Length)
     int i = 0
     while i < n
         int packed = StorageUtil.GetIntValue(target, StorageUtil.StringListGet(target, listKey, i))
@@ -129,7 +129,7 @@ Function _applyShapes(Actor target)
         float strength = (packed % 1000) as float / 100.0
         int s = 0
         while s < sliders.Length
-            float value = _shapeWeight(shape, s) * strength
+            float value = _shapeWeight(shape, sliders[s]) * strength
             if value > values[s]
                 values[s] = value
             endif
@@ -155,9 +155,9 @@ Function _applyShapes(Actor target)
     Debug.Trace("[MTF_Plugin_RaceMenu] body morphs on " + target.GetName() + ":" + applied)
 EndFunction
 
-; Every slider any shape uses. The values array in _applyShapes has the same length.
+; Every CBBE 3BA slider any shape in _shapeWeight uses. A slider missing here is never set.
 string[] Function _sliderNames() global
-    string[] names = new string[10]
+    string[] names = new string[36]
     names[0] = "MuscleAbs"
     names[1] = "MuscleArms"
     names[2] = "MuscleBack_v2"
@@ -168,29 +168,159 @@ string[] Function _sliderNames() global
     names[7] = "MuscleMoreArms_v2"
     names[8] = "MuscleMoreLegs_v2"
     names[9] = "Breasts"
+    names[10] = "BreastsSmall"
+    names[11] = "BreastPerkiness"
+    names[12] = "PushUp"
+    names[13] = "BreastGravity2"
+    names[14] = "Butt"
+    names[15] = "BigButt"
+    names[16] = "ButtSmall"
+    names[17] = "RoundAss"
+    names[18] = "AppleCheeks"
+    names[19] = "Hips"
+    names[20] = "HipUpperWidth"
+    names[21] = "Thighs"
+    names[22] = "ThighFBThicc_v2"
+    names[23] = "ThighOutsideThicc_v2"
+    names[24] = "SlimThighs"
+    names[25] = "LegsThin"
+    names[26] = "ButtNarrow_v2"
+    names[27] = "ChubbyArms"
+    names[28] = "ChubbyButt"
+    names[29] = "ChubbyLegs"
+    names[30] = "ChubbyWaist"
+    names[31] = "BigBelly"
+    names[32] = "PregnancyBelly"
+    names[33] = "NipplePerkiness"
+    names[34] = "ButtSaggy_v2"
+    names[35] = "ButtUnderFold"
     return names
 EndFunction
 
+; Indexes match _shapeWeight.
 int Function _shapeIndex(string shapeId) global
     if shapeId == "muscular"
         return 0
     elseif shapeId == "bust"
         return 1
+    elseif shapeId == "bust_small"
+        return 2
+    elseif shapeId == "bust_perky"
+        return 3
+    elseif shapeId == "bust_saggy"
+        return 4
+    elseif shapeId == "butt_big"
+        return 5
+    elseif shapeId == "butt_small"
+        return 6
+    elseif shapeId == "butt_round"
+        return 7
+    elseif shapeId == "hips_wide"
+        return 8
+    elseif shapeId == "thighs_thick"
+        return 9
+    elseif shapeId == "slender"
+        return 10
+    elseif shapeId == "chubby"
+        return 11
+    elseif shapeId == "pregnant"
+        return 12
+    elseif shapeId == "nipples_perky"
+        return 13
+    elseif shapeId == "older"
+        return 14
+    elseif shapeId == "younger"
+        return 15
     endif
     return -1
 EndFunction
 
-; How far a shape at full strength moves each slider in _sliderNames.
-float Function _shapeWeight(int shape, int slider) global
-    if shape == 0
-        if slider <= 5
+; How far a shape at full strength moves a slider: 1.0 is 100 in BodySlide. Papyrus string
+; comparison ignores case.
+float Function _shapeWeight(int shape, string slider) global
+    if shape == 0 ; muscular
+        if slider == "MuscleAbs" || slider == "MuscleArms" || slider == "MuscleBack_v2" || slider == "MuscleButt" || slider == "MuscleLegs" || slider == "MusclePecs"
             return 1.0
-        elseif slider <= 8
+        elseif slider == "MuscleMoreAbs_v2" || slider == "MuscleMoreArms_v2" || slider == "MuscleMoreLegs_v2"
             return 0.5
         endif
-    elseif shape == 1
-        if slider == 9
+    elseif shape == 1 ; bust
+        if slider == "Breasts"
             return 1.0
+        endif
+    elseif shape == 2 ; bust_small
+        if slider == "BreastsSmall"
+            return 1.0
+        endif
+    elseif shape == 3 ; bust_perky
+        if slider == "BreastPerkiness"
+            return 1.0
+        elseif slider == "PushUp"
+            return 0.5
+        endif
+    elseif shape == 4 ; bust_saggy
+        if slider == "BreastGravity2"
+            return 1.0
+        endif
+    elseif shape == 5 ; butt_big
+        if slider == "Butt"
+            return 1.0
+        elseif slider == "BigButt"
+            return 0.5
+        endif
+    elseif shape == 6 ; butt_small
+        if slider == "ButtSmall"
+            return 1.0
+        endif
+    elseif shape == 7 ; butt_round
+        if slider == "RoundAss"
+            return 1.0
+        elseif slider == "AppleCheeks"
+            return 0.5
+        endif
+    elseif shape == 8 ; hips_wide
+        if slider == "Hips"
+            return 1.0
+        elseif slider == "HipUpperWidth"
+            return 0.5
+        endif
+    elseif shape == 9 ; thighs_thick
+        if slider == "Thighs"
+            return 1.0
+        elseif slider == "ThighFBThicc_v2" || slider == "ThighOutsideThicc_v2"
+            return 0.5
+        endif
+    elseif shape == 10 ; slender
+        if slider == "SlimThighs"
+            return 1.0
+        elseif slider == "LegsThin" || slider == "ButtNarrow_v2"
+            return 0.5
+        endif
+    elseif shape == 11 ; chubby
+        if slider == "ChubbyArms" || slider == "ChubbyButt" || slider == "ChubbyLegs" || slider == "ChubbyWaist"
+            return 1.0
+        elseif slider == "BigBelly"
+            return 0.5
+        endif
+    elseif shape == 12 ; pregnant
+        if slider == "PregnancyBelly"
+            return 1.0
+        endif
+    elseif shape == 13 ; nipples_perky
+        if slider == "NipplePerkiness"
+            return 1.0
+        endif
+    elseif shape == 14 ; older
+        if slider == "BreastGravity2" || slider == "ButtSaggy_v2"
+            return 1.0
+        elseif slider == "ButtUnderFold"
+            return 0.5
+        endif
+    elseif shape == 15 ; younger
+        if slider == "BreastPerkiness"
+            return 1.0
+        elseif slider == "NipplePerkiness"
+            return 0.5
         endif
     endif
     return 0.0

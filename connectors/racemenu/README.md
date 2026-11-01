@@ -24,11 +24,36 @@ Install with your mod manager and enable `MTF_Plugin_RaceMenu.esp`. It is ESL-fl
 | Effect | Kind | Does |
 | --- | --- | --- |
 | Actor scale | while shown | the actor is 50 to 200% of their usual size |
-| Body shape | while shown | the body takes a shape at 5 to 100% strength: Muscular or Bigger bust |
+| Body shape | while shown | the body takes one of 14 shapes at 5 to 100% strength |
 
 **Actor scale** scales RaceMenu's root `NPC` node, so it multiplies with RaceMenu's own height slider. Several tiers multiply together.
 
-**Body shape** moves BodySlide sliders through RaceMenu's body morphs. It adds to the body's own preset, including one from OBody, rather than replacing it. Muscular at 100% sets the CBBE 3BA sliders `MuscleAbs`, `MuscleArms`, `MuscleBack_v2`, `MuscleButt`, `MuscleLegs`, and `MusclePecs` to 100, and `MuscleMoreAbs_v2`, `MuscleMoreArms_v2`, and `MuscleMoreLegs_v2` to 50. Bigger bust at 100% adds 100 to the single slider `Breasts`. Lower strengths scale all of them down. Several tiers don't add up: each slider takes the strongest value any of them asks for.
+**Body shape** moves CBBE 3BA BodySlide sliders through RaceMenu's body morphs. It adds to the body's own preset, including one from OBody, rather than replacing it, so the same strength changes any body by the same amount. At 100% strength, each shape adds this much to its sliders; lower strengths scale them down:
+
+| Shape | Sliders at 100% strength |
+| --- | --- |
+| Muscular | `MuscleAbs`, `MuscleArms`, `MuscleBack_v2`, `MuscleButt`, `MuscleLegs`, `MusclePecs` +100; `MuscleMoreAbs_v2`, `MuscleMoreArms_v2`, `MuscleMoreLegs_v2` +50 |
+| Bigger bust | `Breasts` +100 |
+| Smaller bust | `BreastsSmall` +100 |
+| Perkier bust | `BreastPerkiness` +100, `PushUp` +50 |
+| Saggier bust | `BreastGravity2` +100 |
+| Perkier nipples | `NipplePerkiness` +100 |
+| Bigger butt | `Butt` +100, `BigButt` +50 |
+| Smaller butt | `ButtSmall` +100 |
+| Rounder butt | `RoundAss` +100, `AppleCheeks` +50 |
+| Wider hips | `Hips` +100, `HipUpperWidth` +50 |
+| Thicker thighs | `Thighs` +100, `ThighFBThicc_v2` and `ThighOutsideThicc_v2` +50 |
+| Slender | `SlimThighs` +100, `LegsThin` and `ButtNarrow_v2` +50 |
+| Chubby | `ChubbyArms`, `ChubbyButt`, `ChubbyLegs`, `ChubbyWaist` +100; `BigBelly` +50 |
+| Pregnant | `PregnancyBelly` +100 |
+| Older | `BreastGravity2`, `ButtSaggy_v2` +100; `ButtUnderFold` +50 |
+| Younger | `BreastPerkiness` +100, `NipplePerkiness` +50 |
+
+Older and Younger only change the body. RaceMenu can't reshape a face from a script, so for an aged face, pair Older with an MTF face tattoo carrying a wrinkle texture.
+
+Shrinking uses 3BA's own shrink sliders (`BreastsSmall`, `ButtSmall`, `SlimThighs`) rather than taking away from the size sliders, which would push past the flat shape on a small preset.
+
+Several Body shape tiers combine: different shapes stack, so Muscular and Pregnant together give both. Two tiers that move the same slider don't add up; that slider takes the strongest value either asks for. Opposites such as Bigger and Smaller bust move different sliders, so they partly cancel.
 
 Bodies without these sliders don't change. That includes the vanilla male body and BHUNP, which uses different slider names.
 
@@ -50,7 +75,7 @@ Each Body shape change logs a line such as `[MTF_Plugin_RaceMenu] body morphs on
 
 Run `make racemenu` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live racemenu` removes those files. `make package racemenu` writes the release zip with the same files, and `make staging racemenu` builds it as its own Vortex mod, **MTF Plugin - RaceMenu**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_RaceMenu.psc`.
 
-All changes go through RaceMenu's `NiOverride` script under the key `proteux-mtf.racemenu`: `AddNodeTransformScale` for scale, and `SetBodyMorph` with `UpdateModelWeight` for shapes. A new shape needs an id in the catalog menu, a branch in `_shapeIndex`, any new slider names in `_sliderNames` (the `values` array in `_applyShapes` has the same length), and its weights in `_shapeWeight`.
+All changes go through RaceMenu's `NiOverride` script under the key `proteux-mtf.racemenu`: `AddNodeTransformScale` for scale, and `SetBodyMorph` with `UpdateModelWeight` for shapes. A new shape needs an id in the catalog menu, a branch in `_shapeIndex`, its slider weights in `_shapeWeight`, and any slider it uses that isn't already in `_sliderNames` added there (a slider missing from that list is never set). Slider names come from the CBBE 3BA reference slider set, `CalienteTools/BodySlide/RefTemplates/CBBE 3BA/CBBE 3BA Reference.osp`.
 
 ## Credits
 

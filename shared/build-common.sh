@@ -14,7 +14,7 @@
 #                        as OnPlayerLoadGame, which quest scripts never receive). Each name must start with
 #                        ${ESP_BASE}_ and have a matching Scripts/Source/<name>.psc.
 #
-# Environment overrides: SKYRIM_DIR, VORTEX_MODS, PAPYRUS_COMPILER.
+# Environment overrides: SKYRIM_DIR, VORTEX_MODS, PAPYRUS_COMPILER, PLUGINS_TXT.
 set -euo pipefail
 
 : "${CONNECTOR_DIR:?}" "${ESP_BASE:?}" "${PLUGIN_ID:?}" "${MOD_NAME:?}"
@@ -32,6 +32,27 @@ MTF="$REPO_ROOT/vendor/magic-tattoos-framework"
 CATALOG_REL="SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins"
 CATALOG="$CONNECTOR_DIR/$CATALOG_REL/$PLUGIN_ID.json"
 SCRIPT_SRC="$CONNECTOR_DIR/Scripts/Source/$ESP_BASE.psc"
+PLUGINS_TXT="${PLUGINS_TXT:-$(cygpath -u "${LOCALAPPDATA:-C:\\Users\\white\\AppData\\Local}")/Skyrim Special Edition/plugins.txt}"
+
+# The game's active load order: "*Name.esp" is enabled, a bare "Name.esp" is listed but off.
+warn_if_not_enabled() {
+  local esp="$ESP_BASE.esp"
+  if [[ ! -f "$PLUGINS_TXT" ]]; then
+    echo "Warning: couldn't find $PLUGINS_TXT to check whether $esp is enabled. Set PLUGINS_TXT to its path." >&2
+    return
+  fi
+  local lines
+  lines="$(tr -d '\r' < "$PLUGINS_TXT")"
+  if grep -qixF "*$esp" <<< "$lines"; then
+    echo "$esp is enabled in the load order."
+  elif grep -qixF "$esp" <<< "$lines"; then
+    echo "Warning: $esp is in the load order but NOT enabled, so its script will never run (MTF still lists the catalog)." >&2
+    echo "         Enable it in your mod manager's Plugins tab, then check again: $PLUGINS_TXT" >&2
+  else
+    echo "Warning: $esp is not in the load order yet, so its script will never run (MTF still lists the catalog)." >&2
+    echo "         Enable it in your mod manager's Plugins tab (Vortex may need F5 to see it), then check again: $PLUGINS_TXT" >&2
+  fi
+}
 
 remove_from() {
   local root="$1"
@@ -193,10 +214,12 @@ EOF
     sed -i "s/^version=.*/version=$VERSION/" "$STAGING/meta.ini"
     echo "Staged $VERSION at $STAGING"
     echo "In Vortex, enable the mod '$MOD_NAME' (it appears on its own; press F5 in the Mods tab if not), deploy, then restart Skyrim."
+    warn_if_not_enabled
     ;;
   live)
     if ! cp -rf "$MODROOT/." "$DATA/"; then
       echo "Couldn't copy everything into $DATA. Skyrim locks loaded plugins while it runs; quit the game and run this again." >&2
+      warn_if_not_enabled
       exit 1
     fi
     echo "Copied $VERSION into $DATA"
@@ -204,6 +227,7 @@ EOF
     if [[ -d "$STAGING" ]]; then
       echo "Warning: a Vortex mod for this connector is staged at $STAGING. Disable it, or run uninstall-staging, so a deploy does not replace these files." >&2
     fi
+    warn_if_not_enabled
     ;;
   package)
     ZIP="$DIST/$ESP_BASE-$VERSION.zip"

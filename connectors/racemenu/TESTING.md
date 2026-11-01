@@ -16,13 +16,15 @@ Put Actor scale at 150% on a tier and make it show. The actor should be clearly 
 
 Use a female actor with a CBBE 3BA body built with morphs. Every change logs `[MTF_Plugin_RaceMenu] body morphs on <name>: <slider>=<value> ...` (or `none` when cleared) in the Papyrus log, so check there first if nothing seems to happen. No line means the effect never ran; a line with no visible change means the body has no morphs.
 
-Start with **Bigger bust** at 100%, which moves the single `Breasts` slider by 100 and is easy to see. Stop the tier and the bust goes back to its preset size. Then try Muscular:
+Start with **Bigger bust** at 100%, which moves the single `Breasts` slider by 100 and is easy to see. Stop the tier and the bust goes back to its preset size. **Smaller bust** at 100% should shrink it the same way, through `BreastsSmall`. With both on two tiers at once, they offset each other. Then try Muscular:
 
 1. Put Body shape, Muscular, at 100% on a tier and make it show. Arms, abs, back, legs, and pecs should firm up within a second or two.
 2. Lower the strength to 25% on a second tier, then stop the first. The body should ease down to the lighter build rather than snap back to normal.
 3. Stop the last tier. The body goes back to its preset.
 4. With an OBody preset assigned, the muscles add to the preset. Also reassign the preset in OBody's menu while the tier shows and note whether the muscles survive; if OBody clears them, they come back the next time the tier starts.
 5. Save and reload while the tier shows. The shape stays.
+
+Then go through the rest of the menu at 100%, one tier at a time, and check that each changes the part it names. The README lists the sliders each shape moves, and the log line shows them as they're set. Pregnant and Chubby are the most visible; Perkier and Saggier bust are subtler, so compare against the same pose. If a shape looks wrong for your body, note its log line: the weights are a first guess and easy to adjust.
 
 On a male actor or a BHUNP body, nothing should change, and the Papyrus log should stay free of errors.
 

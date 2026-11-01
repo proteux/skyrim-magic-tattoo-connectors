@@ -19,7 +19,21 @@
         "default": "muscular",
         "menu": [
           { "id": "muscular", "label": "Muscular" },
-          { "id": "bust", "label": "Bigger bust" }
+          { "id": "bust", "label": "Bigger bust" },
+          { "id": "bust_small", "label": "Smaller bust" },
+          { "id": "bust_perky", "label": "Perkier bust" },
+          { "id": "bust_saggy", "label": "Saggier bust" },
+          { "id": "nipples_perky", "label": "Perkier nipples" },
+          { "id": "butt_big", "label": "Bigger butt" },
+          { "id": "butt_small", "label": "Smaller butt" },
+          { "id": "butt_round", "label": "Rounder butt" },
+          { "id": "hips_wide", "label": "Wider hips" },
+          { "id": "thighs_thick", "label": "Thicker thighs" },
+          { "id": "slender", "label": "Slender" },
+          { "id": "chubby", "label": "Chubby" },
+          { "id": "pregnant", "label": "Pregnant" },
+          { "id": "older", "label": "Older" },
+          { "id": "younger", "label": "Younger" }
         ]
       },
       "param2": { "label": "Strength", "min": 5, "max": 100, "step": 5, "default": 75, "format": "{0}%" }
