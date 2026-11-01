@@ -50,10 +50,10 @@ Both effects have a **Transition** setting, 0 to 30 seconds (5 by default). The 
 | Pregnant | `PregnancyBelly` +100 |
 | Older | `BreastGravity2`, `ButtSaggy_v2` +100; `ButtUnderFold` +50 |
 | Younger | `BreastPerkiness` +100, `NipplePerkiness` +50 |
-| Longer schlong (futanari) | `SOS - SchlongLength` +100 |
-| Thicker schlong (futanari) | `SOS - SchlongGirth` +100 |
-| Larger glans (futanari) | `SOS - GlansSize` +100 |
-| Larger balls (futanari) | `SOS - BallsSize` +100 |
+| Longer schlong | `Length`, `SOS - SchlongLength` +100 |
+| Thicker schlong | `Thickness`, `SOS - SchlongGirth` +100 |
+| Larger glans | `Head`, `SOS - GlansSize` +100 |
+| Larger balls | `SOS - BallsSize` +100 (futanari addon only) |
 
 Older and Younger only change the body. RaceMenu can't reshape a face from a script, so for an aged face, pair Older with an MTF face tattoo carrying a wrinkle texture.
 
@@ -63,7 +63,11 @@ Several Body shape tiers combine: different shapes stack, so Muscular and Pregna
 
 Bodies without these sliders don't change. That includes the vanilla male body and BHUNP, which uses different slider names.
 
-The futanari shapes move the morphs on [TNG](https://www.nexusmods.com/skyrimspecialedition/mods/104215)'s ERF Futanari addon, which RaceMenu applies alongside the body. They only work on actors TNG has given that addon, built in BodySlide with **Build Morphs** checked (a `futanari_schlong_cbbe.tri` appears in `meshes/ERF_Futanari`). TNG's other addons use their own meshes and may have no morphs.
+The schlong, glans and balls shapes move the genital meshes from [TNG](https://www.nexusmods.com/skyrimspecialedition/mods/104215), which RaceMenu morphs alongside the body. Each mesh only responds to its own slider names:
+- TNG's male meshes (the `[TNG]` slider sets) use `Length`, `Thickness` and `Head`. They have no balls slider.
+- The ERF Futanari addon uses the old SOS names, such as `SOS - SchlongLength`.
+
+Either kind needs to be built in BodySlide with **Build Morphs** checked. You'll see `.tri` files next to the meshes, for example `actors/character/character assets/TNG/m_genitals.tri`.
 
 Both effects work on the player and NPCs. RaceMenu saves them with the game, so they stay after a load until the tier stops.
 
