@@ -358,7 +358,7 @@ EndFunction
 
 ; Every CBBE 3BA slider any shape in _shapeWeight uses. A slider missing here is never set.
 string[] Function _sliderNames() global
-    string[] names = new string[36]
+    string[] names = new string[41]
     names[0] = "MuscleAbs"
     names[1] = "MuscleArms"
     names[2] = "MuscleBack_v2"
@@ -395,6 +395,12 @@ string[] Function _sliderNames() global
     names[33] = "NipplePerkiness"
     names[34] = "ButtSaggy_v2"
     names[35] = "ButtUnderFold"
+    ; TNG ERF Futanari addon (the old SOS slider names)
+    names[36] = "SOS - SchlongLength"
+    names[37] = "SOS - SchlongGirth"
+    names[38] = "SOS - GlansSize"
+    names[39] = "SOS - BallsSize"
+    names[40] = "NippleLength"
     return names
 EndFunction
 
@@ -432,6 +438,14 @@ int Function _shapeIndex(string shapeId) global
         return 14
     elseif shapeId == "younger"
         return 15
+    elseif shapeId == "futa_length"
+        return 16
+    elseif shapeId == "futa_girth"
+        return 17
+    elseif shapeId == "futa_glans"
+        return 18
+    elseif shapeId == "futa_balls"
+        return 19
     endif
     return -1
 EndFunction
@@ -510,6 +524,8 @@ float Function _shapeWeight(int shape, string slider) global
     elseif shape == 13 ; nipples_perky
         if slider == "NipplePerkiness"
             return 1.0
+        elseif slider == "NippleLength"
+            return 0.5
         endif
     elseif shape == 14 ; older
         if slider == "BreastGravity2" || slider == "ButtSaggy_v2"
@@ -522,6 +538,22 @@ float Function _shapeWeight(int shape, string slider) global
             return 1.0
         elseif slider == "NipplePerkiness"
             return 0.5
+        endif
+    elseif shape == 16 ; futa_length
+        if slider == "SOS - SchlongLength"
+            return 1.0
+        endif
+    elseif shape == 17 ; futa_girth
+        if slider == "SOS - SchlongGirth"
+            return 1.0
+        endif
+    elseif shape == 18 ; futa_glans
+        if slider == "SOS - GlansSize"
+            return 1.0
+        endif
+    elseif shape == 19 ; futa_balls
+        if slider == "SOS - BallsSize"
+            return 1.0
         endif
     endif
     return 0.0

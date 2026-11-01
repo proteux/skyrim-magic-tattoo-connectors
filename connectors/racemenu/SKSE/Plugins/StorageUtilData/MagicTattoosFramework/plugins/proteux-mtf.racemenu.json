@@ -34,7 +34,11 @@
           { "id": "chubby", "label": "Chubby" },
           { "id": "pregnant", "label": "Pregnant" },
           { "id": "older", "label": "Older" },
-          { "id": "younger", "label": "Younger" }
+          { "id": "younger", "label": "Younger" },
+          { "id": "futa_length", "label": "Longer schlong (futanari)" },
+          { "id": "futa_girth", "label": "Thicker schlong (futanari)" },
+          { "id": "futa_glans", "label": "Larger glans (futanari)" },
+          { "id": "futa_balls", "label": "Larger balls (futanari)" }
         ]
       },
       "param2": { "label": "Strength", "min": 5, "max": 100, "step": 5, "default": 75, "format": "{0}%" },

@@ -24,7 +24,7 @@ Install with your mod manager and enable `MTF_Plugin_RaceMenu.esp`. It is ESL-fl
 | Effect | Kind | Does |
 | --- | --- | --- |
 | Actor scale | while shown | the actor is 50 to 200% of their usual size |
-| Body shape | while shown | the body takes one of 14 shapes at 5 to 100% strength |
+| Body shape | while shown | the body takes one of 20 shapes at 5 to 100% strength |
 
 Both effects have a **Transition** setting, 0 to 30 seconds (5 by default). The body eases from its current shape to the new one over that time instead of changing at once, starting and stopping gently, and eases back the same way when the tier stops. 0 changes it instantly. A change that arrives mid-transition carries on from wherever the body is. Loading a save finishes any transition that was under way.
 
@@ -39,7 +39,7 @@ Both effects have a **Transition** setting, 0 to 30 seconds (5 by default). The 
 | Smaller bust | `BreastsSmall` +100 |
 | Perkier bust | `BreastPerkiness` +100, `PushUp` +50 |
 | Saggier bust | `BreastGravity2` +100 |
-| Perkier nipples | `NipplePerkiness` +100 |
+| Perkier nipples | `NipplePerkiness` +100, `NippleLength` +50 |
 | Bigger butt | `Butt` +100, `BigButt` +50 |
 | Smaller butt | `ButtSmall` +100 |
 | Rounder butt | `RoundAss` +100, `AppleCheeks` +50 |
@@ -50,6 +50,10 @@ Both effects have a **Transition** setting, 0 to 30 seconds (5 by default). The 
 | Pregnant | `PregnancyBelly` +100 |
 | Older | `BreastGravity2`, `ButtSaggy_v2` +100; `ButtUnderFold` +50 |
 | Younger | `BreastPerkiness` +100, `NipplePerkiness` +50 |
+| Longer schlong (futanari) | `SOS - SchlongLength` +100 |
+| Thicker schlong (futanari) | `SOS - SchlongGirth` +100 |
+| Larger glans (futanari) | `SOS - GlansSize` +100 |
+| Larger balls (futanari) | `SOS - BallsSize` +100 |
 
 Older and Younger only change the body. RaceMenu can't reshape a face from a script, so for an aged face, pair Older with an MTF face tattoo carrying a wrinkle texture.
 
@@ -58,6 +62,8 @@ Shrinking uses 3BA's own shrink sliders (`BreastsSmall`, `ButtSmall`, `SlimThigh
 Several Body shape tiers combine: different shapes stack, so Muscular and Pregnant together give both. Two tiers that move the same slider don't add up; that slider takes the strongest value either asks for. Opposites such as Bigger and Smaller bust move different sliders, so they partly cancel.
 
 Bodies without these sliders don't change. That includes the vanilla male body and BHUNP, which uses different slider names.
+
+The futanari shapes move the morphs on [TNG](https://www.nexusmods.com/skyrimspecialedition/mods/104215)'s ERF Futanari addon, which RaceMenu applies alongside the body. They only work on actors TNG has given that addon, built in BodySlide with **Build Morphs** checked (a `futanari_schlong_cbbe.tri` appears in `meshes/ERF_Futanari`). TNG's other addons use their own meshes and may have no morphs.
 
 Both effects work on the player and NPCs. RaceMenu saves them with the game, so they stay after a load until the tier stops.
 
