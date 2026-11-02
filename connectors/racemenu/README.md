@@ -75,9 +75,21 @@ Either kind needs to be built in BodySlide with **Build Morphs** checked. You'll
 
 Both effects work on the player and NPCs. RaceMenu saves them with the game, so they stay after a load until the tier stops.
 
+## Resetting
+
+If a body or size change ever stays after its tattoo is gone, you can undo everything the plugin has changed. Open the console and enter:
+
+```
+setpqv MTF_Plugin_RaceMenu ResetOnLoad 1
+```
+
+Then save and load that save. Every actor the plugin has changed goes back to their own shape and size, and the Papyrus log shows `[MTF_Plugin_RaceMenu] reset N actor(s)`. The setting turns itself off again, so later loads don't reset. Skyrim's console can't run a script directly, which is why it waits for a load.
+
+The reset only touches this plugin's own changes. RaceMenu sliders, OBody presets and other mods' morphs stay as they were. A tier that is still showing comes back the next time it starts.
+
 ## Uninstalling
 
-Take off any tattoo whose tiers use these effects, so the body goes back to normal. Then save, quit, and disable the plugin.
+Take off any tattoo whose tiers use these effects, so the body goes back to normal, or use the reset above. Then save, quit, and disable the plugin.
 
 ## Troubleshooting
 

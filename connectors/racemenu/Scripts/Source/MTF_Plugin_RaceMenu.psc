@@ -15,10 +15,14 @@ string Property MOD_VERSION = "0.1.0" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.racemenu." AutoReadOnly Hidden
 string Property NI_KEY = "proteux-mtf.racemenu" AutoReadOnly Hidden
 string Property RAMP_LIST = "proteux-mtf.racemenu.moving" AutoReadOnly Hidden
+string Property ACTOR_LIST = "proteux-mtf.racemenu.actors" AutoReadOnly Hidden
 float Property STEP_SECONDS = 0.25 AutoReadOnly Hidden
 int Property MAX_TRANSITION = 30 AutoReadOnly Hidden
 
 Actor Property PlayerRef Auto Hidden
+; Set to 1 from the console (setpqv MTF_Plugin_RaceMenu ResetOnLoad 1); the next save load undoes every
+; change this plugin made and sets it back to 0. Skyrim's console can't call a script function directly.
+int Property ResetOnLoad = 0 Auto Hidden
 
 string Function GetPluginId()
     return "proteux-mtf.racemenu"
@@ -43,6 +47,11 @@ EndFunction
 ; Real time restarts on load, which would stall or jump a transition saved mid-way, so they all finish
 ; on the next step instead.
 Function _onGameLoaded()
+    if ResetOnLoad != 0
+        ResetOnLoad = 0
+        _resetAll()
+        return
+    endif
     int i = StorageUtil.FormListCount(self, RAMP_LIST)
     if i <= 0
         return
@@ -73,6 +82,7 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         StorageUtil.SetFloatValue(target, instKey, param as float / 100.0)
         StorageUtil.SetFloatValue(target, instKey + ".fade", fade)
         StorageUtil.StringListAdd(target, KEY_PREFIX + "scale.instances", instKey, false)
+        StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
         _startScale(target, fade)
     elseif eid == "shape"
         int shape = _shapeIndex(_paramNStrEx(slot, effectIdx, useScratch, presetName, 1))
@@ -83,6 +93,7 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         StorageUtil.SetIntValue(target, instKey, shape * 1000 + _clampInt(param2, 0, 100))
         StorageUtil.SetFloatValue(target, instKey + ".fade", fade)
         StorageUtil.StringListAdd(target, KEY_PREFIX + "shape.instances", instKey, false)
+        StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
         _startShapes(target, fade)
     endif
 EndFunction
@@ -110,6 +121,53 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
         StorageUtil.StringListRemove(target, KEY_PREFIX + "shape.instances", instKey, true)
         _startShapes(target, fade)
     endif
+EndFunction
+
+; ── Reset ───────────────────────────────────────────────────────────────────
+
+; Undoes every change on every actor this plugin has touched, and forgets the tiers it applied. MTF still
+; counts those tiers as showing, so their onDeactivate finds nothing to undo, and they apply again the next
+; time they start. The player is always included, in case they were touched before the actor list existed.
+Function _resetAll()
+    StorageUtil.FormListAdd(self, ACTOR_LIST, PlayerRef, false)
+    int i = StorageUtil.FormListCount(self, ACTOR_LIST)
+    int count = 0
+    while i > 0
+        i -= 1
+        Actor target = StorageUtil.FormListGet(self, ACTOR_LIST, i) as Actor
+        if target != None
+            _resetActor(target)
+            count += 1
+        endif
+    endwhile
+    StorageUtil.FormListClear(self, ACTOR_LIST)
+    StorageUtil.FormListClear(self, RAMP_LIST)
+    Debug.Trace("[MTF_Plugin_RaceMenu] reset " + count + " actor(s)")
+EndFunction
+
+Function _resetActor(Actor target)
+    _clearShapeRamp(target)
+    _endRamp(target, "scale")
+    StorageUtil.UnsetFloatValue(target, KEY_PREFIX + "scale.from")
+    StorageUtil.UnsetFloatValue(target, KEY_PREFIX + "scale.to")
+    _forgetInstances(target, "shape")
+    _forgetInstances(target, "scale")
+    NiOverride.ClearBodyMorphKeys(target, NI_KEY)
+    NiOverride.UpdateModelWeight(target)
+    _setScale(target, 1.0)
+EndFunction
+
+Function _forgetInstances(Actor target, string kind)
+    string listKey = KEY_PREFIX + kind + ".instances"
+    int i = StorageUtil.StringListCount(target, listKey)
+    while i > 0
+        i -= 1
+        string instKey = StorageUtil.StringListGet(target, listKey, i)
+        StorageUtil.UnsetIntValue(target, instKey)
+        StorageUtil.UnsetFloatValue(target, instKey)
+        StorageUtil.UnsetFloatValue(target, instKey + ".fade")
+    endwhile
+    StorageUtil.StringListClear(target, listKey)
 EndFunction
 
 ; ── Transitions ─────────────────────────────────────────────────────────────

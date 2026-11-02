@@ -13,4 +13,6 @@ float Function GetBodyMorph(ObjectReference ref, string morphName, string keyNam
 
 Function ClearBodyMorph(ObjectReference ref, string morphName, string keyName) native global
 
+Function ClearBodyMorphKeys(ObjectReference ref, string keyName) native global
+
 Function UpdateModelWeight(ObjectReference ref) native global

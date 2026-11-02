@@ -39,6 +39,13 @@ Then go through the rest of the menu at 100%, one tier at a time, and check that
 
 On a male actor or a BHUNP body, nothing should change, and the Papyrus log should stay free of errors.
 
+## Reset
+
+1. Show a Bigger bust tier and an Actor scale tier at 150% on the player, and a Body shape tier on an NPC.
+2. Enter `setpqv MTF_Plugin_RaceMenu ResetOnLoad 1`, save, and load that save. Both actors go back to their own shape and size, and the log shows `[MTF_Plugin_RaceMenu] reset 2 actor(s)`.
+3. `sqv MTF_Plugin_RaceMenu` shows `::ResetOnLoad_var = 0`. Load again: nothing resets.
+4. Stop the tiers and start them again. The changes come back, and stopping them clears them as usual.
+
 ## Registration
 
 The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.racemenu'` and `[MTF_Plugin_RaceMenu] 0.1.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
