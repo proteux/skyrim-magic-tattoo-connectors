@@ -24,7 +24,7 @@ Install with your mod manager and enable [font=Courier New]MTF_Plugin_RaceMenu.e
 
 [list]
 [*][b]Actor scale[/b] ([i]while shown[/i]): the actor is 50 to 200% of their usual size
-[*][b]Body shape[/b] ([i]while shown[/i]): the body takes one of 20 shapes at 5 to 100% strength
+[*][b]Body shape[/b] ([i]while shown[/i]): the body takes one of 23 shapes at 5 to 100% strength
 [/list]
 
 Both effects have a [b]Transition[/b] setting, 0 to 30 seconds (5 by default). The body eases from its current shape to the new one over that time instead of changing at once, starting and stopping gently, and eases back the same way when the tier stops. 0 changes it instantly. A change that arrives mid-transition carries on from wherever the body is. Loading a save finishes any transition that was under way.
@@ -44,7 +44,9 @@ Both effects have a [b]Transition[/b] setting, 0 to 30 seconds (5 by default). T
 [*][b]Smaller butt[/b]: [font=Courier New]ButtSmall[/font] +100
 [*][b]Rounder butt[/b]: [font=Courier New]RoundAss[/font] +100, [font=Courier New]AppleCheeks[/font] +50
 [*][b]Wider hips[/b]: [font=Courier New]Hips[/font] +100, [font=Courier New]HipUpperWidth[/font] +50
+[*][b]Narrower hips[/b]: [font=Courier New]HipNarrow_v2[/font] +100
 [*][b]Thicker thighs[/b]: [font=Courier New]Thighs[/font] +100, [font=Courier New]ThighFBThicc_v2[/font] and [font=Courier New]ThighOutsideThicc_v2[/font] +50
+[*][b]Thinner thighs[/b]: [font=Courier New]SlimThighs[/font] +100, [font=Courier New]LegsThin[/font] +50
 [*][b]Slender[/b]: [font=Courier New]SlimThighs[/font] +100, [font=Courier New]LegsThin[/font] and [font=Courier New]ButtNarrow_v2[/font] +50
 [*][b]Chubby[/b]: [font=Courier New]ChubbyArms[/font], [font=Courier New]ChubbyButt[/font], [font=Courier New]ChubbyLegs[/font], [font=Courier New]ChubbyWaist[/font] +100; [font=Courier New]BigBelly[/font] +50
 [*][b]Pregnant[/b]: [font=Courier New]PregnancyBelly[/font] +100
@@ -54,11 +56,12 @@ Both effects have a [b]Transition[/b] setting, 0 to 30 seconds (5 by default). T
 [*][b]Thicker schlong[/b]: [font=Courier New]Thickness[/font], [font=Courier New]SOS - SchlongGirth[/font] +100
 [*][b]Larger glans[/b]: [font=Courier New]Head[/font], [font=Courier New]SOS - GlansSize[/font] +100
 [*][b]Larger balls[/b]: [font=Courier New]SOS - BallsSize[/font] +100 (futanari addon only)
+[*][b]Smaller balls[/b]: [font=Courier New]SOS - BallsSmall[/font] +100 (futanari addon only)
 [/list]
 
 Older and Younger only change the body. RaceMenu can't reshape a face from a script, so for an aged face, pair Older with an MTF face tattoo carrying a wrinkle texture.
 
-Shrinking uses 3BA's own shrink sliders ([font=Courier New]BreastsSmall[/font], [font=Courier New]ButtSmall[/font], [font=Courier New]SlimThighs[/font]) rather than taking away from the size sliders, which would push past the flat shape on a small preset.
+Shrinking uses the bodies' own shrink sliders ([font=Courier New]BreastsSmall[/font], [font=Courier New]ButtSmall[/font], [font=Courier New]HipNarrow_v2[/font], [font=Courier New]SlimThighs[/font], [font=Courier New]SOS - BallsSmall[/font]) rather than taking away from the size sliders, which would push past the flat shape on a small preset. TNG and the futanari addon have no shrink sliders for length, girth or the glans, so those shapes only grow.
 
 Several Body shape tiers combine: different shapes stack, so Muscular and Pregnant together give both. Two tiers that move the same slider don't add up; that slider takes the strongest value either asks for. Opposites such as Bigger and Smaller bust move different sliders, so they partly cancel.
 

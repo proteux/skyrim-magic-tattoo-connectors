@@ -359,7 +359,7 @@ EndFunction
 
 ; Every CBBE 3BA slider any shape in _shapeWeight uses. A slider missing here is never set.
 string[] Function _sliderNames() global
-    string[] names = new string[44]
+    string[] names = new string[46]
     names[0] = "MuscleAbs"
     names[1] = "MuscleArms"
     names[2] = "MuscleBack_v2"
@@ -397,15 +397,17 @@ string[] Function _sliderNames() global
     names[34] = "ButtSaggy_v2"
     names[35] = "ButtUnderFold"
     names[36] = "NippleLength"
+    names[37] = "HipNarrow_v2"
     ; TNG male genitals
-    names[37] = "Length"
-    names[38] = "Thickness"
-    names[39] = "Head"
+    names[38] = "Length"
+    names[39] = "Thickness"
+    names[40] = "Head"
     ; TNG ERF Futanari addon (the old SOS slider names)
-    names[40] = "SOS - SchlongLength"
-    names[41] = "SOS - SchlongGirth"
-    names[42] = "SOS - GlansSize"
-    names[43] = "SOS - BallsSize"
+    names[41] = "SOS - SchlongLength"
+    names[42] = "SOS - SchlongGirth"
+    names[43] = "SOS - GlansSize"
+    names[44] = "SOS - BallsSize"
+    names[45] = "SOS - BallsSmall"
     return names
 EndFunction
 
@@ -451,6 +453,12 @@ int Function _shapeIndex(string shapeId) global
         return 18
     elseif shapeId == "balls_big"
         return 19
+    elseif shapeId == "hips_narrow"
+        return 20
+    elseif shapeId == "thighs_thin"
+        return 21
+    elseif shapeId == "balls_small"
+        return 22
     endif
     return -1
 EndFunction
@@ -558,6 +566,20 @@ float Function _shapeWeight(int shape, string slider) global
         endif
     elseif shape == 19 ; balls_big
         if slider == "SOS - BallsSize"
+            return 1.0
+        endif
+    elseif shape == 20 ; hips_narrow
+        if slider == "HipNarrow_v2"
+            return 1.0
+        endif
+    elseif shape == 21 ; thighs_thin
+        if slider == "SlimThighs"
+            return 1.0
+        elseif slider == "LegsThin"
+            return 0.5
+        endif
+    elseif shape == 22 ; balls_small
+        if slider == "SOS - BallsSmall"
             return 1.0
         endif
     endif

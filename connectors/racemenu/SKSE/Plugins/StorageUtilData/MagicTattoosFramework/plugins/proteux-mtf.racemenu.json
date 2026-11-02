@@ -29,7 +29,9 @@
           { "id": "butt_small", "label": "Smaller butt" },
           { "id": "butt_round", "label": "Rounder butt" },
           { "id": "hips_wide", "label": "Wider hips" },
+          { "id": "hips_narrow", "label": "Narrower hips" },
           { "id": "thighs_thick", "label": "Thicker thighs" },
+          { "id": "thighs_thin", "label": "Thinner thighs" },
           { "id": "slender", "label": "Slender" },
           { "id": "chubby", "label": "Chubby" },
           { "id": "pregnant", "label": "Pregnant" },
@@ -38,7 +40,8 @@
           { "id": "schlong_long", "label": "Longer schlong" },
           { "id": "schlong_thick", "label": "Thicker schlong" },
           { "id": "glans_big", "label": "Larger glans" },
-          { "id": "balls_big", "label": "Larger balls" }
+          { "id": "balls_big", "label": "Larger balls" },
+          { "id": "balls_small", "label": "Smaller balls" }
         ]
       },
       "param2": { "label": "Strength", "min": 5, "max": 100, "step": 5, "default": 75, "format": "{0}%" },
