@@ -55,6 +55,7 @@ That's Rockjoint. **Diseased** should show. A tier with **Cure disease** removes
 ## Just made a kill and Just leveled up
 
 - **Just made a kill:** kill a chicken or a wolf. A 10-second tier shows right away and stops 10 real seconds later.
+- **Several kills:** set At least to 3 and Seconds to 30. Kill two chickens: nothing shows. Kill a third within 30 seconds of the first and the tier shows, then stops 30 seconds after the first of those three kills, unless more kills keep three inside the last 30 seconds.
 - **Just leveled up:** `player.advlevel` raises the level. On an NPC, `advlevel` on a selected NPC works too. The first check after a load only learns the current level and never fires.
 
 ## Effects
@@ -68,6 +69,7 @@ Put the effect on a tier, make the tier show, then check:
 - **Calm enemies:** hit a guard to start a fight, then show the tier. Nearby fighters stop. Bandits may attack again.
 - **No fall damage:** jump off a cliff that would normally kill you. `player.hasperk xx01e801` (Dragonborn's load order index in place of `xx`) reads 1 while the tier shows.
 - **Change the weather:** the sky changes to the chosen weather over a few seconds outdoors. It does nothing on an NPC tier.
+- **Grant experience:** the bar under the level on the Skills menu grows by the chosen share each time the tier appears. `player.advlevel` empties the bar first so it's easy to read. At 100% the bar fills, and the level-up shows on the Skills menu. It does nothing on an NPC tier.
 
 ## Registration
 

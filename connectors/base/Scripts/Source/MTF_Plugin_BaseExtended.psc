@@ -15,6 +15,9 @@ string Property KEY_PREFIX = "proteux-mtf.base." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
 int Property DISEASE_SPELL_TYPE = 1 AutoReadOnly Hidden
+; The largest Seconds and At least the Just made a kill catalog entry allows.
+float Property KILL_WINDOW_MAX = 120.0 AutoReadOnly Hidden
+int Property KILL_LOG_MAX = 20 AutoReadOnly Hidden
 
 Actor Property PlayerRef Auto Hidden
 string Property ResolvedVersion Auto Hidden
@@ -105,6 +108,8 @@ Function _onGameLoaded()
         NightEyeFX.ApplyCrossFade(1.0)
     endif
     _applyMood(PlayerRef, false)
+    StorageUtil.UnsetFloatValue(PlayerRef, KEY_PREFIX + "kills.base")
+    StorageUtil.FloatListClear(PlayerRef, KEY_PREFIX + "kills.times")
 EndFunction
 
 ; ── Conditions ──────────────────────────────────────────────────────────────
@@ -148,7 +153,14 @@ bool Function checkCondition(Actor target, int param, string cid)
     elseif cid == "diseased"
         return _countDiseases(target, false) > 0
     elseif cid == "kill.recent"
-        return target == PlayerRef && _transientIncrease(target, "kills", _killCount(), param as float)
+        if target != PlayerRef
+            return false
+        endif
+        int wanted = _host().GetEvalParam2()
+        if wanted < 1
+            wanted = 1
+        endif
+        return _recentKills(param as float) >= wanted
     elseif cid == "levelup.recent"
         return _transientIncrease(target, "level", target.GetLevel() as float, param as float)
     endif
@@ -387,6 +399,48 @@ float Function _killCount()
     return kills as float
 EndFunction
 
+; The player's kills in the last windowSec real seconds. A poll that sees the kill count rise logs one
+; time per new kill. The log is shared by every tier, so it only drops times older than the longest
+; window. The first poll after a load only sets the baseline, and a time ahead of now is left over from
+; an earlier session (real time restarts on load), so the log starts over.
+int Function _recentKills(float windowSec)
+    if windowSec <= 0.0
+        windowSec = 10.0
+    endif
+    string baseKey = KEY_PREFIX + "kills.base"
+    string logKey = KEY_PREFIX + "kills.times"
+    float now = Utility.GetCurrentRealTime()
+    float current = _killCount()
+    float prev = StorageUtil.GetFloatValue(PlayerRef, baseKey, -1.0)
+    StorageUtil.SetFloatValue(PlayerRef, baseKey, current)
+    int n = StorageUtil.FloatListCount(PlayerRef, logKey)
+    if n > 0 && StorageUtil.FloatListGet(PlayerRef, logKey, n - 1) > now + 1.0
+        StorageUtil.FloatListClear(PlayerRef, logKey)
+    endif
+    if prev >= 0.0 && current > prev
+        int added = (current - prev) as int
+        if added > KILL_LOG_MAX
+            added = KILL_LOG_MAX
+        endif
+        while added > 0
+            StorageUtil.FloatListAdd(PlayerRef, logKey, now)
+            added -= 1
+        endwhile
+    endif
+    n = StorageUtil.FloatListCount(PlayerRef, logKey)
+    while n > KILL_LOG_MAX || (n > 0 && StorageUtil.FloatListGet(PlayerRef, logKey, 0) < now - KILL_WINDOW_MAX)
+        StorageUtil.FloatListRemoveAt(PlayerRef, logKey, 0)
+        n -= 1
+    endwhile
+    int count = 0
+    int i = n - 1
+    while i >= 0 && StorageUtil.FloatListGet(PlayerRef, logKey, i) >= now - windowSec
+        count += 1
+        i -= 1
+    endwhile
+    return count
+EndFunction
+
 ; Same contract as MTF_Plugin_Base._checkTransientIncrease: the first poll only sets a baseline, a rise
 ; opens a window of sustainSec real seconds, and a window further out than one full length is left over
 ; from an earlier session (real time restarts on load), so it re-baselines instead of firing.
@@ -614,6 +668,11 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
             if sky != None
                 sky.SetActive(false, true)
             endif
+        endif
+    elseif eid == "xp.grant"
+        if target == PlayerRef && param > 0
+            float needed = Game.GetExperienceForLevel(PlayerRef.GetLevel())
+            Game.SetPlayerExperience(Game.GetPlayerExperience() + needed * param as float / 100.0)
         endif
     elseif eid == "vision.night"
         if target != PlayerRef || NightEyeFX == None || !_claim(target, instKey, 0)

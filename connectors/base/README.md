@@ -4,7 +4,7 @@ More of Skyrim for your magic tattoos.
 
 ## Description
 
-This patch adds base game conditions and effects to [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF), on top of the ones in MTF's own Base plugin. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, or for a few seconds after a kill. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, or change the weather.
+This patch adds base game conditions and effects to [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF), on top of the ones in MTF's own Base plugin. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, or for a few seconds after a kill. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, or grant experience.
 
 It adds a **Base Extended** plugin to MTF's menu and to [Magic Tattoos UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803). It doesn't edit any game records.
 
@@ -39,7 +39,7 @@ Conditions marked "player" are always false on an NPC, because the game keeps th
 | Sleeping | the actor is asleep |
 | At a crafting station | the actor is using a forge, workbench, grindstone, smelter, tanning rack, cooking pot, alchemy lab, enchanter, or any of them |
 | Diseased | the actor has any disease, Sanguinare Vampiris included |
-| Just made a kill | (player) for 1 to 120 seconds after the player kills a person, animal, creature, undead, daedra, or automaton |
+| Just made a kill | (player) the player has killed at least 1 to 20 people, animals, creatures, undead, daedra, or automatons in the last 1 to 120 seconds |
 | Just leveled up | for 1 to 600 seconds after the actor gains a level |
 
 The General Stats page has no "dragons killed", so use Dragon souls collected for that. The moon phase follows the moons drawn in the sky: a 24-day cycle with three days per phase, starting full. Seasons go by month: Evening Star to Sun's Dawn is winter, First Seed to Second Seed is spring, Midyear to Last Seed is summer, and Hearthfire to Frostfall is autumn.
@@ -58,6 +58,7 @@ Bounty in this hold uses the hold of the actor's current location. Unnamed wilde
 | Calm enemies | once | everyone within 5 to 100 metres who is hostile to the actor, or fighting them, stops fighting |
 | No fall damage | while shown | (player) falling does no harm |
 | Change the weather | once | (player) the weather turns clear, cloudy, foggy, rainy, stormy, snowy, or to a blizzard |
+| Grant experience | once | (player) gains 1 to 100% of the experience their current level needs |
 
 How the effects behave:
 
@@ -69,6 +70,7 @@ How the effects behave:
 - **Calm enemies.** Bandits, draugr, and other enemies that are always hostile may attack again.
 - **No fall damage.** This uses the perk from the Black Book "The Hidden Twilight". If the player has already earned that perk, it stays when the tier goes.
 - **Change the weather.** The new weather lasts until the climate changes it again on its own.
+- **Grant experience.** The amount is a share of the current level, so 10% is always a tenth of a level, at level 5 or level 50. It goes to the character level, not to any skill, and is granted each time the tier appears.
 
 ## Uninstalling
 

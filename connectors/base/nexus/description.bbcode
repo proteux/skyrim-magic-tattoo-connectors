@@ -2,7 +2,7 @@
 
 [size=5][b]Description[/b][/size]
 
-This patch adds base game conditions and effects to [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF), on top of the ones in MTF's own Base plugin. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, or for a few seconds after a kill. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, or change the weather.
+This patch adds base game conditions and effects to [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF), on top of the ones in MTF's own Base plugin. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, or for a few seconds after a kill. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, or grant experience.
 
 It adds a [b]Base Extended[/b] plugin to MTF's menu and to [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos UI[/url]. It doesn't edit any game records.
 
@@ -38,7 +38,7 @@ Conditions marked "player" are always false on an NPC, because the game keeps th
 [*][b]Sleeping[/b]: the actor is asleep
 [*][b]At a crafting station[/b]: the actor is using a forge, workbench, grindstone, smelter, tanning rack, cooking pot, alchemy lab, enchanter, or any of them
 [*][b]Diseased[/b]: the actor has any disease, Sanguinare Vampiris included
-[*][b]Just made a kill[/b]: (player) for 1 to 120 seconds after the player kills a person, animal, creature, undead, daedra, or automaton
+[*][b]Just made a kill[/b]: (player) the player has killed at least 1 to 20 people, animals, creatures, undead, daedra, or automatons in the last 1 to 120 seconds
 [*][b]Just leveled up[/b]: for 1 to 600 seconds after the actor gains a level
 [/list]
 
@@ -57,6 +57,7 @@ Bounty in this hold uses the hold of the actor's current location. Unnamed wilde
 [*][b]Calm enemies[/b] ([i]once[/i]): everyone within 5 to 100 metres who is hostile to the actor, or fighting them, stops fighting
 [*][b]No fall damage[/b] ([i]while shown[/i]): (player) falling does no harm
 [*][b]Change the weather[/b] ([i]once[/i]): (player) the weather turns clear, cloudy, foggy, rainy, stormy, snowy, or to a blizzard
+[*][b]Grant experience[/b] ([i]once[/i]): (player) gains 1 to 100% of the experience their current level needs
 [/list]
 
 How the effects behave:
@@ -70,6 +71,7 @@ How the effects behave:
 [*][b]Calm enemies.[/b] Bandits, draugr, and other enemies that are always hostile may attack again.
 [*][b]No fall damage.[/b] This uses the perk from the Black Book "The Hidden Twilight". If the player has already earned that perk, it stays when the tier goes.
 [*][b]Change the weather.[/b] The new weather lasts until the climate changes it again on its own.
+[*][b]Grant experience.[/b] The amount is a share of the current level, so 10% is always a tenth of a level, at level 5 or level 50. It goes to the character level, not to any skill, and is granted each time the tier appears.
 [/list]
 
 [size=5][b]Uninstalling[/b][/size]

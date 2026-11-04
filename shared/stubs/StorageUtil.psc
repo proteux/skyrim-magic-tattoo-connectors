@@ -21,6 +21,12 @@ int function FormListAdd(Form ObjKey, string KeyName, Form value, bool allowDupl
 bool function FormListRemoveAt(Form ObjKey, string KeyName, int index) global native
 int function FormListClear(Form ObjKey, string KeyName) global native
 
+int function FloatListAdd(Form ObjKey, string KeyName, float value, bool allowDuplicate = true) global native
+float function FloatListGet(Form ObjKey, string KeyName, int index) global native
+bool function FloatListRemoveAt(Form ObjKey, string KeyName, int index) global native
+int function FloatListCount(Form ObjKey, string KeyName) global native
+int function FloatListClear(Form ObjKey, string KeyName) global native
+
 int function StringListAdd(Form ObjKey, string KeyName, string value, bool allowDuplicate = true) global native
 string function StringListGet(Form ObjKey, string KeyName, int index) global native
 int function StringListRemove(Form ObjKey, string KeyName, string value, bool allInstances = false) global native

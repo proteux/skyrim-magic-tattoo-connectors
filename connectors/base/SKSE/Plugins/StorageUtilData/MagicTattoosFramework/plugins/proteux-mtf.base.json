@@ -234,8 +234,9 @@
     {
       "id": "kill.recent",
       "label": "Just made a kill",
-      "description": "Triggers for {param1} seconds after the player kills anyone or anything.",
-      "param": { "label": "Seconds", "min": 1, "max": 120, "default": 10, "format": "{0} s" }
+      "description": "Triggers while the player has killed at least {param2} of anyone or anything in the last {param1} seconds.",
+      "param": { "label": "Seconds", "min": 1, "max": 120, "default": 10, "format": "{0} s" },
+      "param2": { "label": "At least", "min": 1, "max": 20, "default": 1, "format": "{0} kills" }
     },
     {
       "id": "levelup.recent",
@@ -326,6 +327,13 @@
           { "id": "blizzard", "label": "Blizzard" }
         ]
       }
+    },
+    {
+      "id": "xp.grant",
+      "label": "Grant experience",
+      "kind": "burst",
+      "description": "When shown on the player, they gain {param1}% of the experience their current level needs.",
+      "param1": { "label": "Experience", "min": 1, "max": 100, "default": 10, "format": "{0}%" }
     }
   ]
 }
