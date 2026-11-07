@@ -41,8 +41,8 @@ Conditions marked "player" are always false on an NPC, because the game keeps th
 | Diseased | the actor has any disease, Sanguinare Vampiris included |
 | Just made a kill | (player) the player has killed at least 1 to 20 people, animals, creatures, undead, daedra, or automatons in the last 1 to 120 seconds |
 | Just leveled up | for 1 to 600 seconds after the actor gains a level |
-| Spell in hand | the actor has a named spell equipped in either hand, drawn or not |
-| Just cast a spell | for 1 to 120 seconds after the actor casts a named spell |
+| Spell in hand | the actor has a spell equipped in either hand, drawn or not, whose name is or contains one of a list |
+| Just cast a spell | for 1 to 120 seconds after the actor casts a spell whose name is or contains one of a list |
 | Spell school in hand | the actor has an Alteration, Conjuration, Destruction, Illusion, or Restoration spell equipped in either hand, or a spell of any of them |
 | Just cast from a spell school | for 1 to 120 seconds after the actor casts a spell of that spell school, or of any spell school |
 
@@ -50,7 +50,7 @@ The General Stats page has no "dragons killed", so use Dragon souls collected fo
 
 Bounty in this hold uses the hold of the actor's current location. Unnamed wilderness has no location, so between named places the condition is false even though guards there would arrest you. Just made a kill and Just leveled up learn the current count the first time MTF checks them after a load, so a kill made before that doesn't count.
 
-Spell in hand and Just cast a spell take spell names as they appear in game, in any case, with commas between several: `Flames, Frostbite, Sparks` matches any of the three. A game in another language, or a mod that renames a spell, needs the name it shows. Pair Spell in hand with MTF's Weapon Drawn condition to need the hands raised. For the player, Just cast a spell counts every spell the game casts, powers included, but not scrolls or staffs. For an NPC it counts spells cast from either hand, starting from the first time MTF checks the condition on them, so a cast before that doesn't count.
+Spell in hand and Just cast a spell take spell names as they appear in game, in any case, with commas between several: `Flames, Frostbite, Sparks` matches any of the three. Match picks whether the name must be the whole spell name (is) or only part of it (contains): with contains, `fire` matches Fireball, Firebolt, and Fire Rune, and also any spell from another mod with "fire" anywhere in its name. A game in another language, or a mod that renames a spell, needs the name it shows. Pair Spell in hand with MTF's Weapon Drawn condition to need the hands raised. For the player, Just cast a spell counts every spell the game casts, powers included, but not scrolls or staffs. For an NPC it counts spells cast from either hand, starting from the first time MTF checks the condition on them, so a cast before that doesn't count.
 
 Spell school in hand and Just cast from a spell school go by the spell's costliest effect, the same spell school the game gives the skill experience to, and work with spells from other mods without any setup. Powers have no spell school, so only Just cast a spell can match them, by name and on the player. The two cast conditions watch NPCs the same way.
 

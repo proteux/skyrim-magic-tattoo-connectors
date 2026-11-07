@@ -181,19 +181,21 @@ bool Function checkCondition(Actor target, int param, string cid)
         return _transientIncrease(target, "level", target.GetLevel() as float, param as float)
     elseif cid == "spell.equipped"
         string[] wanted = StringUtil.Split(_host().GetEvalParamStr(), ",")
-        return _inHands(target, wanted, "")
+        bool contains = _host().GetEvalParam2Str() == "contains"
+        return _inHands(target, wanted, contains, "")
     elseif cid == "spell.school.equipped"
         ; Unassigned rather than a None literal, which fails to cast to string[] at runtime.
         string[] noNames
-        return _inHands(target, noNames, _host().GetEvalParamStr())
+        return _inHands(target, noNames, false, _host().GetEvalParamStr())
     elseif cid == "spell.cast.recent"
-        ; Both read before _watchCasts, whose calls wait a frame while another evaluation can reset them.
+        ; All read before _watchCasts, whose calls wait a frame while another evaluation can reset them.
         string[] wanted = StringUtil.Split(_host().GetEvalParamStr(), ",")
-        float windowSec = _host().GetEvalParam2() as float
+        bool contains = _host().GetEvalParam2Str() == "contains"
+        float windowSec = _host().GetEvalParam3() as float
         if target != PlayerRef
             _watchCasts(target)
         endif
-        return _castWithin(target, wanted, "", windowSec)
+        return _castWithin(target, wanted, contains, "", windowSec)
     elseif cid == "spell.school.cast.recent"
         string school = _host().GetEvalParamStr()
         float windowSec = _host().GetEvalParam2() as float
@@ -201,7 +203,7 @@ bool Function checkCondition(Actor target, int param, string cid)
             _watchCasts(target)
         endif
         string[] noNames
-        return _castWithin(target, noNames, school, windowSec)
+        return _castWithin(target, noNames, false, school, windowSec)
     endif
     return false
 EndFunction
@@ -254,7 +256,7 @@ Function _logCast(Actor caster, Spell cast)
     _pruneCasts(caster, now)
 EndFunction
 
-bool Function _castWithin(Actor caster, string[] names, string school, float windowSec)
+bool Function _castWithin(Actor caster, string[] names, bool contains, string school, float windowSec)
     if windowSec <= 0.0
         windowSec = 10.0
     endif
@@ -264,7 +266,7 @@ bool Function _castWithin(Actor caster, string[] names, string school, float win
     string timesKey = KEY_PREFIX + "cast.times"
     int i = StorageUtil.FloatListCount(caster, timesKey) - 1
     while i >= 0 && StorageUtil.FloatListGet(caster, timesKey, i) >= now - windowSec
-        if _spellMatches(StorageUtil.FormListGet(caster, spellsKey, i) as Spell, names, school)
+        if _spellMatches(StorageUtil.FormListGet(caster, spellsKey, i) as Spell, names, contains, school)
             return true
         endif
         i -= 1
@@ -294,16 +296,16 @@ Function _clearCasts(Actor caster)
     StorageUtil.FloatListClear(caster, KEY_PREFIX + "cast.times")
 EndFunction
 
-bool Function _inHands(Actor target, string[] names, string school) global
-    return _spellMatches(target.GetEquippedSpell(0), names, school) || _spellMatches(target.GetEquippedSpell(1), names, school)
+bool Function _inHands(Actor target, string[] names, bool contains, string school) global
+    return _spellMatches(target.GetEquippedSpell(0), names, contains, school) || _spellMatches(target.GetEquippedSpell(1), names, contains, school)
 EndFunction
 
 ; By school when one is given, otherwise by name. "any" is any spell with a school, so not a power.
-bool Function _spellMatches(Spell candidate, string[] names, string school) global
+bool Function _spellMatches(Spell candidate, string[] names, bool contains, string school) global
     if candidate == None
         return false
     elseif school == ""
-        return _nameIn(candidate.GetName(), names)
+        return _nameIn(candidate.GetName(), names, contains)
     endif
     string actual = _schoolOf(candidate)
     return actual != "" && (school == "any" || school == actual)
@@ -324,14 +326,21 @@ string Function _schoolOf(Spell candidate) global
 EndFunction
 
 ; Papyrus compares strings without case, so "flames" matches Flames.
-bool Function _nameIn(string spellName, string[] wanted) global
+bool Function _nameIn(string spellName, string[] wanted, bool contains) global
     if spellName == "" || !wanted
         return false
     endif
     int i = 0
     while i < wanted.Length
-        if _trim(wanted[i]) == spellName
-            return true
+        string want = _trim(wanted[i])
+        if want != ""
+            if contains
+                if StringUtil.Find(spellName, want) >= 0
+                    return true
+                endif
+            elseif want == spellName
+                return true
+            endif
         endif
         i += 1
     endwhile

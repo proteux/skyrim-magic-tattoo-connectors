@@ -247,15 +247,31 @@
     {
       "id": "spell.equipped",
       "label": "Spell in hand",
-      "description": "Triggers while the actor has {param1} equipped in either hand.",
-      "param": { "label": "Spell names, comma-separated", "text": true, "default": "Flames" }
+      "description": "Triggers while the actor has a spell in either hand whose name {param2} {param1}.",
+      "param": { "label": "Spell names, comma-separated", "text": true, "default": "Flames" },
+      "param2": {
+        "label": "Match",
+        "default": "exact",
+        "menu": [
+          { "id": "exact", "label": "is" },
+          { "id": "contains", "label": "contains" }
+        ]
+      }
     },
     {
       "id": "spell.cast.recent",
       "label": "Just cast a spell",
-      "description": "Triggers for {param2} seconds after the actor casts {param1}.",
+      "description": "Triggers for {param3} seconds after the actor casts a spell whose name {param2} {param1}.",
       "param": { "label": "Spell names, comma-separated", "text": true, "default": "Flames" },
-      "param2": { "label": "Seconds", "min": 1, "max": 120, "default": 10, "format": "{0} s" }
+      "param2": {
+        "label": "Match",
+        "default": "exact",
+        "menu": [
+          { "id": "exact", "label": "is" },
+          { "id": "contains", "label": "contains" }
+        ]
+      },
+      "param3": { "label": "Seconds", "min": 1, "max": 120, "default": 10, "format": "{0} s" }
     },
     {
       "id": "spell.school.equipped",

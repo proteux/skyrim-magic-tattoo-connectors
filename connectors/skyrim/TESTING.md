@@ -62,7 +62,7 @@ That's Rockjoint. **Diseased** should show. A tier with **Cure disease** removes
 
 Set the spell names to `Flames, Healing`. `player.addspell 00012fcd` adds Flames and `player.addspell 00012fcc` adds Healing if the character lacks them.
 
-- **Spell in hand:** equip Flames in either hand and the tier shows, with the hands lowered too. Swap both hands to Sparks or a weapon and it stops. Typing `flames` in lower case still matches.
+- **Spell in hand:** equip Flames in either hand and the tier shows, with the hands lowered too. Swap both hands to Sparks or a weapon and it stops. Typing `flames` in lower case still matches. With Match on is, `Flame` doesn't match; switch it to contains and it does, and `FLAME` should too.
 - **Just cast a spell (player):** with Seconds at 10, cast Flames once; the tier shows and stops 10 real seconds after the last cast. Hold Flames for a while to see whether a long cast keeps it lit. Casting Sparks does nothing. A Flames scroll doesn't count. Try a power (Highborn, Battle Cry) with its name in the list: it counts.
 - **Just cast a spell (follower):** give a follower Flames in one hand and Healing in the other (`addspell` on the selected follower, then let them equip it, or use an outfit mod). Put the preset on the follower and start a fight. The tier shows once they cast either. With only `Healing` in the list, a Flames cast should not show it, which checks that the hand read matches the hand cast. Save and reload during the tier: it stops, and comes back on the follower's next cast.
 

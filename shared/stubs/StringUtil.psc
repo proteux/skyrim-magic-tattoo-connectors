@@ -3,6 +3,8 @@ Scriptname StringUtil Hidden
 
 int Function GetLength(string s) global native
 
+int Function Find(string s, string toFind, int startIndex = 0) global native
+
 string Function GetNthChar(string s, int index) global native
 
 string Function Substring(string s, int startIndex, int len = 0) global native
