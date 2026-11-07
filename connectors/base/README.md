@@ -4,7 +4,7 @@ More of Skyrim for your magic tattoos.
 
 ## Description
 
-This patch adds base game conditions and effects to [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF), on top of the ones in MTF's own Base plugin. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, or for a few seconds after a kill. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, or grant experience.
+This patch adds base game conditions and effects to [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF), on top of the ones in MTF's own Base plugin. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, with Flames in hand, or for a few seconds after a kill or a cast of Fireball. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, or grant experience.
 
 It adds a **Base Extended** plugin to MTF's menu and to [Magic Tattoos UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803). It doesn't edit any game records.
 
@@ -41,10 +41,18 @@ Conditions marked "player" are always false on an NPC, because the game keeps th
 | Diseased | the actor has any disease, Sanguinare Vampiris included |
 | Just made a kill | (player) the player has killed at least 1 to 20 people, animals, creatures, undead, daedra, or automatons in the last 1 to 120 seconds |
 | Just leveled up | for 1 to 600 seconds after the actor gains a level |
+| Spell in hand | the actor has a named spell equipped in either hand, drawn or not |
+| Just cast a spell | for 1 to 120 seconds after the actor casts a named spell |
+| School in hand | the actor has an Alteration, Conjuration, Destruction, Illusion, or Restoration spell equipped in either hand, or a spell of any of them |
+| Just cast from a school | for 1 to 120 seconds after the actor casts a spell of that school, or of any school |
 
 The General Stats page has no "dragons killed", so use Dragon souls collected for that. The moon phase follows the moons drawn in the sky: a 24-day cycle with three days per phase, starting full. Seasons go by month: Evening Star to Sun's Dawn is winter, First Seed to Second Seed is spring, Midyear to Last Seed is summer, and Hearthfire to Frostfall is autumn.
 
 Bounty in this hold uses the hold of the actor's current location. Unnamed wilderness has no location, so between named places the condition is false even though guards there would arrest you. Just made a kill and Just leveled up learn the current count the first time MTF checks them after a load, so a kill made before that doesn't count.
+
+Spell in hand and Just cast a spell take spell names as they appear in game, in any case, with commas between several: `Flames, Frostbite, Sparks` matches any of the three. A game in another language, or a mod that renames a spell, needs the name it shows. Pair Spell in hand with MTF's Weapon Drawn condition to need the hands raised. For the player, Just cast a spell counts every spell the game casts, powers included, but not scrolls or staffs. For an NPC it counts spells cast from either hand, starting from the first time MTF checks the condition on them, so a cast before that doesn't count.
+
+School in hand and Just cast from a school go by the spell's costliest effect, the same school the game gives the skill experience to, and work with spells from other mods without any setup. Powers have no school, so only Just cast a spell can match them, by name and on the player. The two cast conditions watch NPCs the same way.
 
 ## Effects
 
@@ -86,7 +94,7 @@ The Papyrus log (`Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.
 
 Run `make base` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live base` removes those files. `make package base` writes the release zip with the same files (it needs a `CHANGELOG.md` entry for the version; the Nexus page is `nexus/description.bbcode`), and `make staging base` builds it as its own Vortex mod, **MTF Plugin - Base Extended**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_BaseExtended.psc`.
 
-The script isn't called `MTF_Plugin_Base`, because MTF ships a script by that name. A second script, `MTF_Plugin_BaseExtended_Load`, sits on the player alias (`ALIAS_SCRIPTS` in `build.sh`) and restores the night vision and the facial mood after a load. The game doesn't save either one, and MTF doesn't replay effects.
+The script isn't called `MTF_Plugin_Base`, because MTF ships a script by that name. A second script, `MTF_Plugin_BaseExtended_Load`, sits on the player alias (`ALIAS_SCRIPTS` in `build.sh`) and restores the night vision and the facial mood after a load. The game doesn't save either one, and MTF doesn't replay effects. It also passes the player's casts to Just cast a spell and Just cast from a school. NPCs' casts come from their `BeginCastLeft` and `BeginCastRight` animation events, read with the spell equipped in that hand.
 
 Game forms used, all looked up at runtime:
 

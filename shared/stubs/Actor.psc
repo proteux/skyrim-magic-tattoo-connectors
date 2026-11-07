@@ -15,6 +15,8 @@ float Function GetActorValue(string asValueName) native
 
 Actor Function GetCombatTarget() native
 
+Spell Function GetEquippedSpell(int aiSource) native
+
 int Function GetLevel() native
 
 float Function GetLightLevel() native

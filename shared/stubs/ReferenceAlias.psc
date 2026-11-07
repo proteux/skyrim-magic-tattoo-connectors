@@ -3,3 +3,6 @@ Scriptname ReferenceAlias extends Alias Hidden
 
 Event OnPlayerLoadGame()
 EndEvent
+
+Event OnSpellCast(Form akSpell)
+EndEvent

@@ -58,6 +58,20 @@ That's Rockjoint. **Diseased** should show. A tier with **Cure disease** removes
 - **Several kills:** set At least to 3 and Seconds to 30. Kill two chickens: nothing shows. Kill a third within 30 seconds of the first and the tier shows, then stops 30 seconds after the first of those three kills, unless more kills keep three inside the last 30 seconds.
 - **Just leveled up:** `player.advlevel` raises the level. On an NPC, `advlevel` on a selected NPC works too. The first check after a load only learns the current level and never fires.
 
+## Spell in hand and Just cast a spell
+
+Set the spell names to `Flames, Healing`. `player.addspell 00012fcd` adds Flames and `player.addspell 00012fcc` adds Healing if the character lacks them.
+
+- **Spell in hand:** equip Flames in either hand and the tier shows, with the hands lowered too. Swap both hands to Sparks or a weapon and it stops. Typing `flames` in lower case still matches.
+- **Just cast a spell (player):** with Seconds at 10, cast Flames once; the tier shows and stops 10 real seconds after the last cast. Hold Flames for a while to see whether a long cast keeps it lit. Casting Sparks does nothing. A Flames scroll doesn't count. Try a power (Highborn, Battle Cry) with its name in the list: it counts.
+- **Just cast a spell (follower):** give a follower Flames in one hand and Healing in the other (`addspell` on the selected follower, then let them equip it, or use an outfit mod). Put the preset on the follower and start a fight. The tier shows once they cast either. With only `Healing` in the list, a Flames cast should not show it, which checks that the hand read matches the hand cast. Save and reload during the tier: it stops, and comes back on the follower's next cast.
+
+## School in hand and Just cast from a school
+
+- **School in hand:** with Destruction picked, equip Flames and the tier shows; swap to Healing and it stops, until Restoration is picked. "Any school" shows for either, but not with only a power or a weapon.
+- **Just cast from a school:** with Destruction and 10 seconds, cast Flames, Sparks, or Frostbite and the tier shows for 10 seconds; casting Healing does nothing. A spell from another mod counts under its own school. A power (Highborn) never counts, even with "Any school".
+- **On a follower:** the same steps as Just cast a spell, with Destruction picked. Casting Healing from the other hand should not show it.
+
 ## Effects
 
 Put the effect on a tier, make the tier show, then check:

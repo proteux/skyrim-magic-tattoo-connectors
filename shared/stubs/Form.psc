@@ -11,8 +11,15 @@ Function RegisterForSingleUpdate(float afInterval) native
 
 Function RegisterForModEvent(string eventName, string callbackName) native
 
+bool Function RegisterForAnimationEvent(ObjectReference akSender, string asEventName) native
+
+Function UnregisterForAnimationEvent(ObjectReference akSender, string asEventName) native
+
 Event OnInit()
 EndEvent
 
 Event OnUpdate()
+EndEvent
+
+Event OnAnimationEvent(ObjectReference akSource, string asEventName)
 EndEvent

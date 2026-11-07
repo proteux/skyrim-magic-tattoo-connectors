@@ -243,6 +243,54 @@
       "label": "Just leveled up",
       "description": "Triggers for {param1} seconds after the actor gains a level.",
       "param": { "label": "Seconds", "min": 1, "max": 600, "default": 30, "format": "{0} s" }
+    },
+    {
+      "id": "spell.equipped",
+      "label": "Spell in hand",
+      "description": "Triggers while the actor has {param1} equipped in either hand.",
+      "param": { "label": "Spell names, comma-separated", "text": true, "default": "Flames" }
+    },
+    {
+      "id": "spell.cast.recent",
+      "label": "Just cast a spell",
+      "description": "Triggers for {param2} seconds after the actor casts {param1}.",
+      "param": { "label": "Spell names, comma-separated", "text": true, "default": "Flames" },
+      "param2": { "label": "Seconds", "min": 1, "max": 120, "default": 10, "format": "{0} s" }
+    },
+    {
+      "id": "spell.school.equipped",
+      "label": "School in hand",
+      "description": "Triggers while the actor has a spell of {param1} equipped in either hand.",
+      "param": {
+        "label": "School",
+        "default": "any",
+        "menu": [
+          { "id": "any", "label": "Any school" },
+          { "id": "alteration", "label": "Alteration" },
+          { "id": "conjuration", "label": "Conjuration" },
+          { "id": "destruction", "label": "Destruction" },
+          { "id": "illusion", "label": "Illusion" },
+          { "id": "restoration", "label": "Restoration" }
+        ]
+      }
+    },
+    {
+      "id": "spell.school.cast.recent",
+      "label": "Just cast from a school",
+      "description": "Triggers for {param2} seconds after the actor casts a spell of {param1}.",
+      "param": {
+        "label": "School",
+        "default": "any",
+        "menu": [
+          { "id": "any", "label": "Any school" },
+          { "id": "alteration", "label": "Alteration" },
+          { "id": "conjuration", "label": "Conjuration" },
+          { "id": "destruction", "label": "Destruction" },
+          { "id": "illusion", "label": "Illusion" },
+          { "id": "restoration", "label": "Restoration" }
+        ]
+      },
+      "param2": { "label": "Seconds", "min": 1, "max": 120, "default": 10, "format": "{0} s" }
     }
   ],
   "effects": [

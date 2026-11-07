@@ -8,7 +8,7 @@ ESP_BASE="MTF_Plugin_BaseExtended"
 PLUGIN_ID="proteux-mtf.base"
 MOD_NAME="MTF Plugin - Base Extended"
 AUTHOR="Proteux"
-DESCRIPTION="More Magic Tattoos Framework conditions and effects for the base game: stats, moon and calendar, crime and stealth, what the actor is doing, plus night vision, shout recovery, rested bonuses, moods, calm, weather, and experience."
+DESCRIPTION="More Magic Tattoos Framework conditions and effects for the base game: stats, moon and calendar, crime and stealth, what the actor is doing, spells and schools in hand and just cast, plus night vision, shout recovery, rested bonuses, moods, calm, weather, and experience."
 ALIAS_SCRIPTS="MTF_Plugin_BaseExtended_Load"
 
 source "$CONNECTOR_DIR/../../shared/build-common.sh" "$@"
