@@ -1,4 +1,4 @@
-# Testing the Base Extended connector in game
+# Testing the Skyrim connector in game
 
 How to put the player or an NPC into each state the connector's conditions read, and how to check what its effects change. MTF re-evaluates tiers every couple of seconds, so a change shows up shortly after closing the console.
 
@@ -66,10 +66,10 @@ Set the spell names to `Flames, Healing`. `player.addspell 00012fcd` adds Flames
 - **Just cast a spell (player):** with Seconds at 10, cast Flames once; the tier shows and stops 10 real seconds after the last cast. Hold Flames for a while to see whether a long cast keeps it lit. Casting Sparks does nothing. A Flames scroll doesn't count. Try a power (Highborn, Battle Cry) with its name in the list: it counts.
 - **Just cast a spell (follower):** give a follower Flames in one hand and Healing in the other (`addspell` on the selected follower, then let them equip it, or use an outfit mod). Put the preset on the follower and start a fight. The tier shows once they cast either. With only `Healing` in the list, a Flames cast should not show it, which checks that the hand read matches the hand cast. Save and reload during the tier: it stops, and comes back on the follower's next cast.
 
-## School in hand and Just cast from a school
+## Spell school in hand and Just cast from a spell school
 
-- **School in hand:** with Destruction picked, equip Flames and the tier shows; swap to Healing and it stops, until Restoration is picked. "Any school" shows for either, but not with only a power or a weapon.
-- **Just cast from a school:** with Destruction and 10 seconds, cast Flames, Sparks, or Frostbite and the tier shows for 10 seconds; casting Healing does nothing. A spell from another mod counts under its own school. A power (Highborn) never counts, even with "Any school".
+- **Spell school in hand:** with Destruction picked, equip Flames and the tier shows; swap to Healing and it stops, until Restoration is picked. "Any spell school" shows for either, but not with only a power or a weapon.
+- **Just cast from a spell school:** with Destruction and 10 seconds, cast Flames, Sparks, or Frostbite and the tier shows for 10 seconds; casting Healing does nothing. A spell from another mod counts under its own spell school. A power (Highborn) never counts, even with "Any spell school".
 - **On a follower:** the same steps as Just cast a spell, with Destruction picked. Casting Healing from the other hand should not show it.
 
 ## Effects
@@ -87,10 +87,10 @@ Put the effect on a tier, make the tier show, then check:
 
 ## Registration
 
-The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.base'` and `[MTF_Plugin_BaseExtended] 0.1.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
+The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.1.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
 
 ```
-sqv MTF_Plugin_BaseExtended
+sqv MTF_Plugin_Skyrim
 ```
 
-It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.1.0`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_BaseExtended.esp` is enabled in the load order.
+It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.1.0`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.

@@ -1,7 +1,7 @@
 {
   "schemaversion": 2,
-  "pluginid": "proteux-mtf.base",
-  "pluginlabel": "Base Extended",
+  "pluginid": "proteux-mtf.skyrim",
+  "pluginlabel": "Skyrim",
   "conditions": [
     {
       "id": "stat",
@@ -259,13 +259,13 @@
     },
     {
       "id": "spell.school.equipped",
-      "label": "School in hand",
+      "label": "Spell school in hand",
       "description": "Triggers while the actor has a spell of {param1} equipped in either hand.",
       "param": {
-        "label": "School",
+        "label": "Spell school",
         "default": "any",
         "menu": [
-          { "id": "any", "label": "Any school" },
+          { "id": "any", "label": "Any spell school" },
           { "id": "alteration", "label": "Alteration" },
           { "id": "conjuration", "label": "Conjuration" },
           { "id": "destruction", "label": "Destruction" },
@@ -276,13 +276,13 @@
     },
     {
       "id": "spell.school.cast.recent",
-      "label": "Just cast from a school",
+      "label": "Just cast from a spell school",
       "description": "Triggers for {param2} seconds after the actor casts a spell of {param1}.",
       "param": {
-        "label": "School",
+        "label": "Spell school",
         "default": "any",
         "menu": [
-          { "id": "any", "label": "Any school" },
+          { "id": "any", "label": "Any spell school" },
           { "id": "alteration", "label": "Alteration" },
           { "id": "conjuration", "label": "Conjuration" },
           { "id": "destruction", "label": "Destruction" },

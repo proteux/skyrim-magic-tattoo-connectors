@@ -1,18 +1,18 @@
 ; Copyright (C) 2026 Jack Whitehouse (proteux). Licensed under the GNU General Public License v3.0 or later; see LICENSE.
-Scriptname MTF_Plugin_BaseExtended extends MTF_Plugin
-{Magic Tattoos Framework conditions and effects for the base game, beyond what MTF's own Base plugin covers.
+Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
+{Magic Tattoos Framework conditions and effects for the base game, beyond what MTF's built-in plugins cover.
  No soft dependency: everything here is Skyrim, its DLC, and SKSE.
- Catalog: SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/proteux-mtf.base.json
+ Catalog: SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/proteux-mtf.skyrim.json
 
  Optional: powerofthree's Papyrus Extender (hidden, diseased, disease.cure, calm).
  Without it those entries do nothing; everything else still works.
 
- MTF does not replay effects after a load, so MTF_Plugin_BaseExtended_Load, on the player alias,
+ MTF does not replay effects after a load, so MTF_Plugin_Skyrim_Load, on the player alias,
  calls _onGameLoaded to restore state the game does not save (the Night Eye image space, expressions).
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
 string Property MOD_VERSION = "0.1.0" AutoReadOnly Hidden
-string Property KEY_PREFIX = "proteux-mtf.base." AutoReadOnly Hidden
+string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
 int Property DISEASE_SPELL_TYPE = 1 AutoReadOnly Hidden
@@ -38,7 +38,7 @@ ImageSpaceModifier Property NightEyeFX Auto Hidden
 Perk Property NoFallDamagePerk Auto Hidden
 
 string Function GetPluginId()
-    return "proteux-mtf.base"
+    return "proteux-mtf.skyrim"
 EndFunction
 
 bool Function _resolveDeps()
@@ -104,7 +104,7 @@ Function _setCraft(int i, int keywordId, string file, int group)
 EndFunction
 
 Function _onRegistered()
-    Debug.Trace("[MTF_Plugin_BaseExtended] " + MOD_VERSION + " registered as " + GetPluginId())
+    Debug.Trace("[MTF_Plugin_Skyrim] " + MOD_VERSION + " registered as " + GetPluginId())
 EndFunction
 
 Function _onGameLoaded()
@@ -183,7 +183,9 @@ bool Function checkCondition(Actor target, int param, string cid)
         string[] wanted = StringUtil.Split(_host().GetEvalParamStr(), ",")
         return _inHands(target, wanted, "")
     elseif cid == "spell.school.equipped"
-        return _inHands(target, None, _host().GetEvalParamStr())
+        ; Unassigned rather than a None literal, which fails to cast to string[] at runtime.
+        string[] noNames
+        return _inHands(target, noNames, _host().GetEvalParamStr())
     elseif cid == "spell.cast.recent"
         ; Both read before _watchCasts, whose calls wait a frame while another evaluation can reset them.
         string[] wanted = StringUtil.Split(_host().GetEvalParamStr(), ",")
@@ -198,7 +200,8 @@ bool Function checkCondition(Actor target, int param, string cid)
         if target != PlayerRef
             _watchCasts(target)
         endif
-        return _castWithin(target, None, school, windowSec)
+        string[] noNames
+        return _castWithin(target, noNames, school, windowSec)
     endif
     return false
 EndFunction
@@ -322,7 +325,7 @@ EndFunction
 
 ; Papyrus compares strings without case, so "flames" matches Flames.
 bool Function _nameIn(string spellName, string[] wanted) global
-    if spellName == "" || wanted == None
+    if spellName == "" || !wanted
         return false
     endif
     int i = 0
@@ -490,7 +493,7 @@ EndFunction
 ; Without Papyrus Extender the list is None and the target never counts as hidden.
 bool Function _isDetected(Actor target)
     Actor[] nearby = PO3_SKSEFunctions.GetActorsByProcessingLevel(0)
-    if nearby == None
+    if !nearby
         return true
     endif
     bool skipTeammates = target == PlayerRef
@@ -1058,7 +1061,7 @@ EndFunction
 ; Stops combat for every living actor near the target that is hostile to it or fighting it.
 Function _calmAround(Actor target, float radius)
     Actor[] nearby = PO3_SKSEFunctions.GetActorsByProcessingLevel(0)
-    if nearby == None || radius <= 0.0
+    if !nearby || radius <= 0.0
         return
     endif
     int i = 0

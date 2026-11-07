@@ -261,7 +261,7 @@ All four keep their logic in an SKSE DLL, so a connector depends on what each ex
 
 Vanilla and DLC state that MTF's own plugins don't cover yet. These need no other mod, so a connector for them works for everyone.
 
-The [base connector](../connectors/base/README.md) (`proteux-mtf.base`, "Base Extended") now covers statistics, moon phase, darkness, season, holidays, bounty, wanted, hidden, sitting, sleeping, crafting, diseased, just made a kill, and just leveled up. Its effects are night vision, shout recovery, cure disease, rested bonuses, facial mood, calm enemies, no fall damage, and weather. Actor scale lives in the [RaceMenu connector](../connectors/racemenu/README.md) (`proteux-mtf.racemenu`), together with BodySlide body shapes. Everything else in this section is still open.
+The [Skyrim connector](../connectors/skyrim/README.md) (`proteux-mtf.skyrim`) now covers statistics, moon phase, darkness, season, holidays, bounty, wanted, hidden, sitting, sleeping, crafting, diseased, just made a kill, just leveled up, and spells and spell schools in hand or just cast. Its effects are night vision, shout recovery, cure disease, rested bonuses, facial mood, calm enemies, no fall damage, weather, and experience. Actor scale lives in the [RaceMenu connector](../connectors/racemenu/README.md) (`proteux-mtf.racemenu`), together with BodySlide body shapes. Everything else in this section is still open.
 
 MTF already has health, magicka and stamina, combat and hits, heavy or light cuirass, casting, burning, frozen, shocked and invisible, shouts and dragon souls, location type, weather, time of day, sprinting, sneaking, swimming, riding and bleedout, Lover's Comfort, followers, gold, and nearby factions or named NPCs.
 

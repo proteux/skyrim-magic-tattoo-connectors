@@ -1,12 +1,12 @@
-# MTF Plugin - Base Extended
+# MTF Plugin - Skyrim
 
 More of Skyrim for your magic tattoos.
 
 ## Description
 
-This patch adds base game conditions and effects to [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF), on top of the ones in MTF's own Base plugin. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, with Flames in hand, or for a few seconds after a kill or a cast of Fireball. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, or grant experience.
+This patch adds base game conditions and effects to [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF), on top of the ones built into MTF. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, with Flames in hand, or for a few seconds after a kill or a cast of Fireball. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, or grant experience.
 
-It adds a **Base Extended** plugin to MTF's menu and to [Magic Tattoos UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803). It doesn't edit any game records.
+It adds a **Skyrim** plugin to MTF's menu and to [Magic Tattoos UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803). It doesn't edit any game records.
 
 ## Requirements
 
@@ -19,7 +19,7 @@ Dawnguard and Dragonborn come with Skyrim Special Edition. The connector uses a 
 
 ## Installation
 
-Install with your mod manager and enable `MTF_Plugin_BaseExtended.esp`. It is ESL-flagged and only lists `Skyrim.esm` and `MagicTattoosFramework.esp` as masters, so it can go anywhere after MTF.
+Install with your mod manager and enable `MTF_Plugin_Skyrim.esp`. It is ESL-flagged and only lists `Skyrim.esm` and `MagicTattoosFramework.esp` as masters, so it can go anywhere after MTF.
 
 ## Conditions
 
@@ -43,8 +43,8 @@ Conditions marked "player" are always false on an NPC, because the game keeps th
 | Just leveled up | for 1 to 600 seconds after the actor gains a level |
 | Spell in hand | the actor has a named spell equipped in either hand, drawn or not |
 | Just cast a spell | for 1 to 120 seconds after the actor casts a named spell |
-| School in hand | the actor has an Alteration, Conjuration, Destruction, Illusion, or Restoration spell equipped in either hand, or a spell of any of them |
-| Just cast from a school | for 1 to 120 seconds after the actor casts a spell of that school, or of any school |
+| Spell school in hand | the actor has an Alteration, Conjuration, Destruction, Illusion, or Restoration spell equipped in either hand, or a spell of any of them |
+| Just cast from a spell school | for 1 to 120 seconds after the actor casts a spell of that spell school, or of any spell school |
 
 The General Stats page has no "dragons killed", so use Dragon souls collected for that. The moon phase follows the moons drawn in the sky: a 24-day cycle with three days per phase, starting full. Seasons go by month: Evening Star to Sun's Dawn is winter, First Seed to Second Seed is spring, Midyear to Last Seed is summer, and Hearthfire to Frostfall is autumn.
 
@@ -52,7 +52,7 @@ Bounty in this hold uses the hold of the actor's current location. Unnamed wilde
 
 Spell in hand and Just cast a spell take spell names as they appear in game, in any case, with commas between several: `Flames, Frostbite, Sparks` matches any of the three. A game in another language, or a mod that renames a spell, needs the name it shows. Pair Spell in hand with MTF's Weapon Drawn condition to need the hands raised. For the player, Just cast a spell counts every spell the game casts, powers included, but not scrolls or staffs. For an NPC it counts spells cast from either hand, starting from the first time MTF checks the condition on them, so a cast before that doesn't count.
 
-School in hand and Just cast from a school go by the spell's costliest effect, the same school the game gives the skill experience to, and work with spells from other mods without any setup. Powers have no school, so only Just cast a spell can match them, by name and on the player. The two cast conditions watch NPCs the same way.
+Spell school in hand and Just cast from a spell school go by the spell's costliest effect, the same spell school the game gives the skill experience to, and work with spells from other mods without any setup. Powers have no spell school, so only Just cast a spell can match them, by name and on the player. The two cast conditions watch NPCs the same way.
 
 ## Effects
 
@@ -86,15 +86,15 @@ Take off any tattoo whose tiers use Shout recovery, Rested bonus, Facial mood, N
 
 ## Troubleshooting
 
-The Papyrus log (`Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.0.log`) should show `[MTF_Main] Registered 'proteux-mtf.base'` a few seconds after loading a save. If it doesn't, check that `MTF_Plugin_BaseExtended.esp` is enabled and loads after `MagicTattoosFramework.esp`. Errors mentioning `PO3_SKSEFunctions` mean Papyrus Extender is missing.
+The Papyrus log (`Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.0.log`) should show `[MTF_Main] Registered 'proteux-mtf.skyrim'` a few seconds after loading a save. If it doesn't, check that `MTF_Plugin_Skyrim.esp` is enabled and loads after `MagicTattoosFramework.esp`. Errors mentioning `PO3_SKSEFunctions` mean Papyrus Extender is missing.
 
 [TESTING.md](TESTING.md) walks through checking each condition and effect in game.
 
 ## Building from source
 
-Run `make base` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live base` removes those files. `make package base` writes the release zip with the same files (it needs a `CHANGELOG.md` entry for the version; the Nexus page is `nexus/description.bbcode`), and `make staging base` builds it as its own Vortex mod, **MTF Plugin - Base Extended**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_BaseExtended.psc`.
+Run `make skyrim` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live skyrim` removes those files. `make package skyrim` writes the release zip with the same files (it needs a `CHANGELOG.md` entry for the version; the Nexus page is `nexus/description.bbcode`), and `make staging skyrim` builds it as its own Vortex mod, **MTF Plugin - Skyrim**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_Skyrim.psc`.
 
-The script isn't called `MTF_Plugin_Base`, because MTF ships a script by that name. A second script, `MTF_Plugin_BaseExtended_Load`, sits on the player alias (`ALIAS_SCRIPTS` in `build.sh`) and restores the night vision and the facial mood after a load. The game doesn't save either one, and MTF doesn't replay effects. It also passes the player's casts to Just cast a spell and Just cast from a school. NPCs' casts come from their `BeginCastLeft` and `BeginCastRight` animation events, read with the spell equipped in that hand.
+A second script, `MTF_Plugin_Skyrim_Load`, sits on the player alias (`ALIAS_SCRIPTS` in `build.sh`) and restores the night vision and the facial mood after a load. The game doesn't save either one, and MTF doesn't replay effects. It also passes the player's casts to Just cast a spell and Just cast from a spell school. NPCs' casts come from their `BeginCastLeft` and `BeginCastRight` animation events, read with the spell equipped in that hand.
 
 Game forms used, all looked up at runtime:
 
@@ -116,4 +116,4 @@ Game forms used, all looked up at runtime:
 
 ## License
 
-Copyright (C) 2026 Jack Whitehouse (proteux). Released under the [GNU General Public License v3.0 or later](../../LICENSE), with ABSOLUTELY NO WARRANTY. The download includes the license text and a notice in `SKSE/Plugins/MTF_Plugin_BaseExtended`, and the Papyrus source in `Scripts/Source`.
+Copyright (C) 2026 Jack Whitehouse (proteux). Released under the [GNU General Public License v3.0 or later](../../LICENSE), with ABSOLUTELY NO WARRANTY. The download includes the license text and a notice in `SKSE/Plugins/MTF_Plugin_Skyrim`, and the Papyrus source in `Scripts/Source`.

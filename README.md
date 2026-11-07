@@ -4,9 +4,9 @@ Small patch mods that let [Magic Tattoos Framework](https://www.nexusmods.com/sk
 
 | Connector | Connects | Mod name | Plugin id |
 | --- | --- | --- | --- |
-| [base](connectors/base/README.md) | Skyrim itself, beyond MTF's own Base plugin | MTF Plugin - Base Extended | `proteux-mtf.base` |
 | [racemenu](connectors/racemenu/README.md) | [RaceMenu](https://www.nexusmods.com/skyrimspecialedition/mods/19080) and BodySlide morphs | MTF Plugin - RaceMenu | `proteux-mtf.racemenu` |
 | [sacrosanct](connectors/sacrosanct/README.md) | [Sacrosanct - Vampires of Skyrim](https://www.nexusmods.com/skyrimspecialedition/mods/3928) | MTF Plugin - Sacrosanct | `proteux-mtf.sacrosanct` |
+| [skyrim](connectors/skyrim/README.md) | Skyrim itself, beyond what MTF has built in | MTF Plugin - Skyrim | `proteux-mtf.skyrim` |
 | [wetfunction](connectors/wetfunction/README.md) | [Wet Function Redux SE](https://www.nexusmods.com/skyrimspecialedition/mods/78804) | MTF Plugin - Wet Function Redux | `proteux-mtf.wetfunction` |
 
 See [docs/mtf-integration.md](docs/mtf-integration.md) for how MTF plugins work.

@@ -1,1 +1,1 @@
-More of Skyrim for your magic tattoos. This patch adds base game conditions and effects to Magic Tattoos Framework (MTF), on top of the ones in MTF's own Base plugin.
+More of Skyrim for your magic tattoos. This patch adds base game conditions and effects to Magic Tattoos Framework (MTF), on top of the ones built into MTF.
