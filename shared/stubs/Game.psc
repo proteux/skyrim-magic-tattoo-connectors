@@ -8,3 +8,9 @@ Form Function GetFormFromFile(int aiFormID, string asFilename) native global
 Actor Function GetPlayer() native global
 
 int Function QueryStat(string asStat) native global
+
+float Function GetPlayerExperience() native global
+
+Function SetPlayerExperience(float exp) native global
+
+float Function GetExperienceForLevel(int currentLevel) native global

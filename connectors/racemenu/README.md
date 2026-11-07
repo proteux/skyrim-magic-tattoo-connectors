@@ -25,7 +25,7 @@ Install with your mod manager and enable `MTF_Plugin_RaceMenu.esp`. It is ESL-fl
 | Effect | Kind | Does |
 | --- | --- | --- |
 | Actor scale | while shown | the actor is 50 to 200% of their usual size |
-| Body shape | while shown | the body takes one of 20 shapes at 5 to 100% strength |
+| Body shape | while shown | the body takes one of 23 shapes at 5 to 100% strength |
 
 Both effects have a **Transition** setting, 0 to 30 seconds (5 by default). The body eases from its current shape to the new one over that time instead of changing at once, starting and stopping gently, and eases back the same way when the tier stops. 0 changes it instantly. A change that arrives mid-transition carries on from wherever the body is. Loading a save finishes any transition that was under way.
 
@@ -45,7 +45,9 @@ Both effects have a **Transition** setting, 0 to 30 seconds (5 by default). The 
 | Smaller butt | `ButtSmall` +100 |
 | Rounder butt | `RoundAss` +100, `AppleCheeks` +50 |
 | Wider hips | `Hips` +100, `HipUpperWidth` +50 |
+| Narrower hips | `HipNarrow_v2` +100 |
 | Thicker thighs | `Thighs` +100, `ThighFBThicc_v2` and `ThighOutsideThicc_v2` +50 |
+| Thinner thighs | `SlimThighs` +100, `LegsThin` +50 |
 | Slender | `SlimThighs` +100, `LegsThin` and `ButtNarrow_v2` +50 |
 | Chubby | `ChubbyArms`, `ChubbyButt`, `ChubbyLegs`, `ChubbyWaist` +100; `BigBelly` +50 |
 | Pregnant | `PregnancyBelly` +100 |
@@ -55,10 +57,11 @@ Both effects have a **Transition** setting, 0 to 30 seconds (5 by default). The 
 | Thicker schlong | `Thickness`, `SOS - SchlongGirth` +100 |
 | Larger glans | `Head`, `SOS - GlansSize` +100 |
 | Larger balls | `SOS - BallsSize` +100 (futanari addon only) |
+| Smaller balls | `SOS - BallsSmall` +100 (futanari addon only) |
 
 Older and Younger only change the body. RaceMenu can't reshape a face from a script, so for an aged face, pair Older with an MTF face tattoo carrying a wrinkle texture.
 
-Shrinking uses 3BA's own shrink sliders (`BreastsSmall`, `ButtSmall`, `SlimThighs`) rather than taking away from the size sliders, which would push past the flat shape on a small preset.
+Shrinking uses the bodies' own shrink sliders (`BreastsSmall`, `ButtSmall`, `HipNarrow_v2`, `SlimThighs`, `SOS - BallsSmall`) rather than taking away from the size sliders, which would push past the flat shape on a small preset. TNG and the futanari addon have no shrink sliders for length, girth or the glans, so those shapes only grow.
 
 Several Body shape tiers combine: different shapes stack, so Muscular and Pregnant together give both. Two tiers that move the same slider don't add up; that slider takes the strongest value either asks for. Opposites such as Bigger and Smaller bust move different sliders, so they partly cancel.
 
@@ -72,9 +75,21 @@ Either kind needs to be built in BodySlide with **Build Morphs** checked. You'll
 
 Both effects work on the player and NPCs. RaceMenu saves them with the game, so they stay after a load until the tier stops.
 
+## Resetting
+
+If a body or size change ever stays after its tattoo is gone, you can undo everything the plugin has changed. Open the console and enter:
+
+```
+setpqv MTF_Plugin_RaceMenu ResetOnLoad 1
+```
+
+Then save and load that save. Every actor the plugin has changed goes back to their own shape and size, and the Papyrus log shows `[MTF_Plugin_RaceMenu] reset N actor(s)`. The setting turns itself off again, so later loads don't reset. Skyrim's console can't run a script directly, which is why it waits for a load.
+
+The reset only touches this plugin's own changes. RaceMenu sliders, OBody presets and other mods' morphs stay as they were. A tier that is still showing comes back the next time it starts.
+
 ## Uninstalling
 
-Take off any tattoo whose tiers use these effects, so the body goes back to normal. Then save, quit, and disable the plugin.
+Take off any tattoo whose tiers use these effects, so the body goes back to normal, or use the reset above. Then save, quit, and disable the plugin.
 
 ## Troubleshooting
 

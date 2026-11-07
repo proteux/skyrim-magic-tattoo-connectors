@@ -1,20 +1,28 @@
 ; Copyright (C) 2026 Jack Whitehouse (proteux). Licensed under the GNU General Public License v3.0 or later; see LICENSE.
-Scriptname MTF_Plugin_BaseExtended extends MTF_Plugin
-{Magic Tattoos Framework conditions and effects for the base game, beyond what MTF's own Base plugin covers.
+Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
+{Magic Tattoos Framework conditions and effects for the base game, beyond what MTF's built-in plugins cover.
  No soft dependency: everything here is Skyrim, its DLC, and SKSE.
- Catalog: SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/proteux-mtf.base.json
+ Catalog: SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/proteux-mtf.skyrim.json
 
  Optional: powerofthree's Papyrus Extender (hidden, diseased, disease.cure, calm).
  Without it those entries do nothing; everything else still works.
 
- MTF does not replay effects after a load, so MTF_Plugin_BaseExtended_Load, on the player alias,
- calls _onGameLoaded to restore state the game does not save (the Night Eye image space, expressions).}
+ MTF does not replay effects after a load, so MTF_Plugin_Skyrim_Load, on the player alias,
+ calls _onGameLoaded to restore state the game does not save (the Night Eye image space, expressions).
+ It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
 string Property MOD_VERSION = "0.1.0" AutoReadOnly Hidden
-string Property KEY_PREFIX = "proteux-mtf.base." AutoReadOnly Hidden
+string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
 int Property DISEASE_SPELL_TYPE = 1 AutoReadOnly Hidden
+; The largest Seconds and At least the Just made a kill catalog entry allows.
+float Property KILL_WINDOW_MAX = 120.0 AutoReadOnly Hidden
+int Property KILL_LOG_MAX = 20 AutoReadOnly Hidden
+; The largest Seconds the Just cast a spell catalog entry allows.
+float Property CAST_WINDOW_MAX = 120.0 AutoReadOnly Hidden
+int Property CAST_LOG_MAX = 10 AutoReadOnly Hidden
+int Property CAST_WATCH_MAX = 32 AutoReadOnly Hidden
 
 Actor Property PlayerRef Auto Hidden
 string Property ResolvedVersion Auto Hidden
@@ -30,7 +38,7 @@ ImageSpaceModifier Property NightEyeFX Auto Hidden
 Perk Property NoFallDamagePerk Auto Hidden
 
 string Function GetPluginId()
-    return "proteux-mtf.base"
+    return "proteux-mtf.skyrim"
 EndFunction
 
 bool Function _resolveDeps()
@@ -96,7 +104,7 @@ Function _setCraft(int i, int keywordId, string file, int group)
 EndFunction
 
 Function _onRegistered()
-    Debug.Trace("[MTF_Plugin_BaseExtended] " + MOD_VERSION + " registered as " + GetPluginId())
+    Debug.Trace("[MTF_Plugin_Skyrim] " + MOD_VERSION + " registered as " + GetPluginId())
 EndFunction
 
 Function _onGameLoaded()
@@ -105,6 +113,19 @@ Function _onGameLoaded()
         NightEyeFX.ApplyCrossFade(1.0)
     endif
     _applyMood(PlayerRef, false)
+    StorageUtil.UnsetFloatValue(PlayerRef, KEY_PREFIX + "kills.base")
+    StorageUtil.FloatListClear(PlayerRef, KEY_PREFIX + "kills.times")
+    _clearCasts(PlayerRef)
+    string watchKey = KEY_PREFIX + "cast.watched"
+    int i = StorageUtil.FormListCount(PlayerRef, watchKey)
+    while i > 0
+        i -= 1
+        Actor npc = StorageUtil.FormListGet(PlayerRef, watchKey, i) as Actor
+        if npc != None
+            _clearCasts(npc)
+        endif
+    endwhile
+    StorageUtil.FormListClear(PlayerRef, watchKey)
 EndFunction
 
 ; ── Conditions ──────────────────────────────────────────────────────────────
@@ -148,11 +169,198 @@ bool Function checkCondition(Actor target, int param, string cid)
     elseif cid == "diseased"
         return _countDiseases(target, false) > 0
     elseif cid == "kill.recent"
-        return target == PlayerRef && _transientIncrease(target, "kills", _killCount(), param as float)
+        if target != PlayerRef
+            return false
+        endif
+        int wanted = _host().GetEvalParam2()
+        if wanted < 1
+            wanted = 1
+        endif
+        return _recentKills(param as float) >= wanted
     elseif cid == "levelup.recent"
         return _transientIncrease(target, "level", target.GetLevel() as float, param as float)
+    elseif cid == "spell.equipped"
+        string[] wanted = StringUtil.Split(_host().GetEvalParamStr(), ",")
+        bool contains = _host().GetEvalParam2Str() == "contains"
+        return _inHands(target, wanted, contains, "")
+    elseif cid == "spell.school.equipped"
+        ; Unassigned rather than a None literal, which fails to cast to string[] at runtime.
+        string[] noNames
+        return _inHands(target, noNames, false, _host().GetEvalParamStr())
+    elseif cid == "spell.cast.recent"
+        ; All read before _watchCasts, whose calls wait a frame while another evaluation can reset them.
+        string[] wanted = StringUtil.Split(_host().GetEvalParamStr(), ",")
+        bool contains = _host().GetEvalParam2Str() == "contains"
+        float windowSec = _host().GetEvalParam3() as float
+        if target != PlayerRef
+            _watchCasts(target)
+        endif
+        return _castWithin(target, wanted, contains, "", windowSec)
+    elseif cid == "spell.school.cast.recent"
+        string school = _host().GetEvalParamStr()
+        float windowSec = _host().GetEvalParam2() as float
+        if target != PlayerRef
+            _watchCasts(target)
+        endif
+        string[] noNames
+        return _castWithin(target, noNames, false, school, windowSec)
     endif
     return false
+EndFunction
+
+; ── Spell casts ─────────────────────────────────────────────────────────────
+
+; NPCs' casts are seen through BeginCastLeft and BeginCastRight, registered the first time a Just cast
+; tier checks them. Registrations can be lost when the NPC unloads or a save loads, so every check
+; renews them. A cast before the first check is not seen.
+Function _watchCasts(Actor npc)
+    string watchKey = KEY_PREFIX + "cast.watched"
+    if StorageUtil.FormListAdd(PlayerRef, watchKey, npc, false) >= CAST_WATCH_MAX
+        ObjectReference oldest = StorageUtil.FormListGet(PlayerRef, watchKey, 0) as ObjectReference
+        StorageUtil.FormListRemoveAt(PlayerRef, watchKey, 0)
+        if oldest != None
+            UnregisterForAnimationEvent(oldest, "BeginCastLeft")
+            UnregisterForAnimationEvent(oldest, "BeginCastRight")
+        endif
+    endif
+    RegisterForAnimationEvent(npc, "BeginCastLeft")
+    RegisterForAnimationEvent(npc, "BeginCastRight")
+EndFunction
+
+Event OnAnimationEvent(ObjectReference akSource, string asEventName)
+    Actor caster = akSource as Actor
+    if caster == None
+        return
+    endif
+    int hand = 1
+    if asEventName == "BeginCastLeft"
+        hand = 0
+    elseif asEventName != "BeginCastRight"
+        return
+    endif
+    Spell cast = caster.GetEquippedSpell(hand)
+    if cast != None
+        _logCast(caster, cast)
+    endif
+EndEvent
+
+; Each caster keeps its last casts as parallel spell and real-time lists, shared by every tier.
+Function _logCast(Actor caster, Spell cast)
+    if caster == None || cast == None
+        return
+    endif
+    float now = Utility.GetCurrentRealTime()
+    _pruneCasts(caster, now)
+    StorageUtil.FormListAdd(caster, KEY_PREFIX + "cast.spells", cast)
+    StorageUtil.FloatListAdd(caster, KEY_PREFIX + "cast.times", now)
+    _pruneCasts(caster, now)
+EndFunction
+
+bool Function _castWithin(Actor caster, string[] names, bool contains, string school, float windowSec)
+    if windowSec <= 0.0
+        windowSec = 10.0
+    endif
+    float now = Utility.GetCurrentRealTime()
+    _pruneCasts(caster, now)
+    string spellsKey = KEY_PREFIX + "cast.spells"
+    string timesKey = KEY_PREFIX + "cast.times"
+    int i = StorageUtil.FloatListCount(caster, timesKey) - 1
+    while i >= 0 && StorageUtil.FloatListGet(caster, timesKey, i) >= now - windowSec
+        if _spellMatches(StorageUtil.FormListGet(caster, spellsKey, i) as Spell, names, contains, school)
+            return true
+        endif
+        i -= 1
+    endwhile
+    return false
+EndFunction
+
+; Drops casts older than the longest window and past the cap. Lists that disagree in length, or a time ahead
+; of now (real time restarts on load), start over.
+Function _pruneCasts(Actor caster, float now)
+    string spellsKey = KEY_PREFIX + "cast.spells"
+    string timesKey = KEY_PREFIX + "cast.times"
+    int n = StorageUtil.FloatListCount(caster, timesKey)
+    if n != StorageUtil.FormListCount(caster, spellsKey) || (n > 0 && StorageUtil.FloatListGet(caster, timesKey, n - 1) > now + 1.0)
+        _clearCasts(caster)
+        return
+    endif
+    while n > CAST_LOG_MAX || (n > 0 && StorageUtil.FloatListGet(caster, timesKey, 0) < now - CAST_WINDOW_MAX)
+        StorageUtil.FloatListRemoveAt(caster, timesKey, 0)
+        StorageUtil.FormListRemoveAt(caster, spellsKey, 0)
+        n -= 1
+    endwhile
+EndFunction
+
+Function _clearCasts(Actor caster)
+    StorageUtil.FormListClear(caster, KEY_PREFIX + "cast.spells")
+    StorageUtil.FloatListClear(caster, KEY_PREFIX + "cast.times")
+EndFunction
+
+bool Function _inHands(Actor target, string[] names, bool contains, string school) global
+    return _spellMatches(target.GetEquippedSpell(0), names, contains, school) || _spellMatches(target.GetEquippedSpell(1), names, contains, school)
+EndFunction
+
+; By school when one is given, otherwise by name. "any" is any spell with a school, so not a power.
+bool Function _spellMatches(Spell candidate, string[] names, bool contains, string school) global
+    if candidate == None
+        return false
+    elseif school == ""
+        return _nameIn(candidate.GetName(), names, contains)
+    endif
+    string actual = _schoolOf(candidate)
+    return actual != "" && (school == "any" || school == actual)
+EndFunction
+
+; The school of the costliest effect, as the game picks it for skill experience. Papyrus compares strings
+; without case, so the menu id "destruction" matches "Destruction".
+string Function _schoolOf(Spell candidate) global
+    MagicEffect costliest = candidate.GetNthEffectMagicEffect(candidate.GetCostliestEffectIndex())
+    if costliest == None
+        return ""
+    endif
+    string skill = costliest.GetAssociatedSkill()
+    if skill == "Alteration" || skill == "Conjuration" || skill == "Destruction" || skill == "Illusion" || skill == "Restoration"
+        return skill
+    endif
+    return ""
+EndFunction
+
+; Papyrus compares strings without case, so "flames" matches Flames.
+bool Function _nameIn(string spellName, string[] wanted, bool contains) global
+    if spellName == "" || !wanted
+        return false
+    endif
+    int i = 0
+    while i < wanted.Length
+        string want = _trim(wanted[i])
+        if want != ""
+            if contains
+                if StringUtil.Find(spellName, want) >= 0
+                    return true
+                endif
+            elseif want == spellName
+                return true
+            endif
+        endif
+        i += 1
+    endwhile
+    return false
+EndFunction
+
+string Function _trim(string s) global
+    int last = StringUtil.GetLength(s) - 1
+    int first = 0
+    while first <= last && StringUtil.GetNthChar(s, first) == " "
+        first += 1
+    endwhile
+    while last >= first && StringUtil.GetNthChar(s, last) == " "
+        last -= 1
+    endwhile
+    if last < first
+        return ""
+    endif
+    ; Substring reads a length of 0 as "to the end", but last >= first keeps it at 1 or more.
+    return StringUtil.Substring(s, first, last - first + 1)
 EndFunction
 
 ; Masser's cycle as the game draws it: 24 days, 3 per phase, full moon on day 0.
@@ -294,7 +502,7 @@ EndFunction
 ; Without Papyrus Extender the list is None and the target never counts as hidden.
 bool Function _isDetected(Actor target)
     Actor[] nearby = PO3_SKSEFunctions.GetActorsByProcessingLevel(0)
-    if nearby == None
+    if !nearby
         return true
     endif
     bool skipTeammates = target == PlayerRef
@@ -385,6 +593,48 @@ float Function _killCount()
     int kills = Game.QueryStat("People Killed") + Game.QueryStat("Animals Killed") + Game.QueryStat("Creatures Killed")
     kills += Game.QueryStat("Undead Killed") + Game.QueryStat("Daedra Killed") + Game.QueryStat("Automatons Killed")
     return kills as float
+EndFunction
+
+; The player's kills in the last windowSec real seconds. A poll that sees the kill count rise logs one
+; time per new kill. The log is shared by every tier, so it only drops times older than the longest
+; window. The first poll after a load only sets the baseline, and a time ahead of now is left over from
+; an earlier session (real time restarts on load), so the log starts over.
+int Function _recentKills(float windowSec)
+    if windowSec <= 0.0
+        windowSec = 10.0
+    endif
+    string baseKey = KEY_PREFIX + "kills.base"
+    string logKey = KEY_PREFIX + "kills.times"
+    float now = Utility.GetCurrentRealTime()
+    float current = _killCount()
+    float prev = StorageUtil.GetFloatValue(PlayerRef, baseKey, -1.0)
+    StorageUtil.SetFloatValue(PlayerRef, baseKey, current)
+    int n = StorageUtil.FloatListCount(PlayerRef, logKey)
+    if n > 0 && StorageUtil.FloatListGet(PlayerRef, logKey, n - 1) > now + 1.0
+        StorageUtil.FloatListClear(PlayerRef, logKey)
+    endif
+    if prev >= 0.0 && current > prev
+        int added = (current - prev) as int
+        if added > KILL_LOG_MAX
+            added = KILL_LOG_MAX
+        endif
+        while added > 0
+            StorageUtil.FloatListAdd(PlayerRef, logKey, now)
+            added -= 1
+        endwhile
+    endif
+    n = StorageUtil.FloatListCount(PlayerRef, logKey)
+    while n > KILL_LOG_MAX || (n > 0 && StorageUtil.FloatListGet(PlayerRef, logKey, 0) < now - KILL_WINDOW_MAX)
+        StorageUtil.FloatListRemoveAt(PlayerRef, logKey, 0)
+        n -= 1
+    endwhile
+    int count = 0
+    int i = n - 1
+    while i >= 0 && StorageUtil.FloatListGet(PlayerRef, logKey, i) >= now - windowSec
+        count += 1
+        i -= 1
+    endwhile
+    return count
 EndFunction
 
 ; Same contract as MTF_Plugin_Base._checkTransientIncrease: the first poll only sets a baseline, a rise
@@ -615,6 +865,11 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
                 sky.SetActive(false, true)
             endif
         endif
+    elseif eid == "xp.grant"
+        if target == PlayerRef && param > 0
+            float needed = Game.GetExperienceForLevel(PlayerRef.GetLevel())
+            Game.SetPlayerExperience(Game.GetPlayerExperience() + needed * param as float / 100.0)
+        endif
     elseif eid == "vision.night"
         if target != PlayerRef || NightEyeFX == None || !_claim(target, instKey, 0)
             return
@@ -815,7 +1070,7 @@ EndFunction
 ; Stops combat for every living actor near the target that is hostile to it or fighting it.
 Function _calmAround(Actor target, float radius)
     Actor[] nearby = PO3_SKSEFunctions.GetActorsByProcessingLevel(0)
-    if nearby == None || radius <= 0.0
+    if !nearby || radius <= 0.0
         return
     endif
     int i = 0

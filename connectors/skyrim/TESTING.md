@@ -1,4 +1,4 @@
-# Testing the Base Extended connector in game
+# Testing the Skyrim connector in game
 
 How to put the player or an NPC into each state the connector's conditions read, and how to check what its effects change. MTF re-evaluates tiers every couple of seconds, so a change shows up shortly after closing the console.
 
@@ -55,7 +55,22 @@ That's Rockjoint. **Diseased** should show. A tier with **Cure disease** removes
 ## Just made a kill and Just leveled up
 
 - **Just made a kill:** kill a chicken or a wolf. A 10-second tier shows right away and stops 10 real seconds later.
+- **Several kills:** set At least to 3 and Seconds to 30. Kill two chickens: nothing shows. Kill a third within 30 seconds of the first and the tier shows, then stops 30 seconds after the first of those three kills, unless more kills keep three inside the last 30 seconds.
 - **Just leveled up:** `player.advlevel` raises the level. On an NPC, `advlevel` on a selected NPC works too. The first check after a load only learns the current level and never fires.
+
+## Spell in hand and Just cast a spell
+
+Set the spell names to `Flames, Healing`. `player.addspell 00012fcd` adds Flames and `player.addspell 00012fcc` adds Healing if the character lacks them.
+
+- **Spell in hand:** equip Flames in either hand and the tier shows, with the hands lowered too. Swap both hands to Sparks or a weapon and it stops. Typing `flames` in lower case still matches. With Match on is, `Flame` doesn't match; switch it to contains and it does, and `FLAME` should too.
+- **Just cast a spell (player):** with Seconds at 10, cast Flames once; the tier shows and stops 10 real seconds after the last cast. Hold Flames for a while to see whether a long cast keeps it lit. Casting Sparks does nothing. A Flames scroll doesn't count. Try a power (Highborn, Battle Cry) with its name in the list: it counts.
+- **Just cast a spell (follower):** give a follower Flames in one hand and Healing in the other (`addspell` on the selected follower, then let them equip it, or use an outfit mod). Put the preset on the follower and start a fight. The tier shows once they cast either. With only `Healing` in the list, a Flames cast should not show it, which checks that the hand read matches the hand cast. Save and reload during the tier: it stops, and comes back on the follower's next cast.
+
+## Spell school in hand and Just cast from a spell school
+
+- **Spell school in hand:** with Destruction picked, equip Flames and the tier shows; swap to Healing and it stops, until Restoration is picked. "Any spell school" shows for either, but not with only a power or a weapon.
+- **Just cast from a spell school:** with Destruction and 10 seconds, cast Flames, Sparks, or Frostbite and the tier shows for 10 seconds; casting Healing does nothing. A spell from another mod counts under its own spell school. A power (Highborn) never counts, even with "Any spell school".
+- **On a follower:** the same steps as Just cast a spell, with Destruction picked. Casting Healing from the other hand should not show it.
 
 ## Effects
 
@@ -68,13 +83,14 @@ Put the effect on a tier, make the tier show, then check:
 - **Calm enemies:** hit a guard to start a fight, then show the tier. Nearby fighters stop. Bandits may attack again.
 - **No fall damage:** jump off a cliff that would normally kill you. `player.hasperk xx01e801` (Dragonborn's load order index in place of `xx`) reads 1 while the tier shows.
 - **Change the weather:** the sky changes to the chosen weather over a few seconds outdoors. It does nothing on an NPC tier.
+- **Grant experience:** the bar under the level on the Skills menu grows by the chosen share each time the tier appears. `player.advlevel` empties the bar first so it's easy to read. At 100% the bar fills, and the level-up shows on the Skills menu. It does nothing on an NPC tier.
 
 ## Registration
 
-The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.base'` and `[MTF_Plugin_BaseExtended] 0.1.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
+The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.1.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
 
 ```
-sqv MTF_Plugin_BaseExtended
+sqv MTF_Plugin_Skyrim
 ```
 
-It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.1.0`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_BaseExtended.esp` is enabled in the load order.
+It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.1.0`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.
