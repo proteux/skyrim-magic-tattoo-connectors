@@ -84,13 +84,31 @@ Put the effect on a tier, make the tier show, then check:
 - **No fall damage:** jump off a cliff that would normally kill you. `player.hasperk xx01e801` (Dragonborn's load order index in place of `xx`) reads 1 while the tier shows.
 - **Change the weather:** the sky changes to the chosen weather over a few seconds outdoors. It does nothing on an NPC tier.
 - **Grant experience:** the bar under the level on the Skills menu grows by the chosen share each time the tier appears. `player.advlevel` empties the bar first so it's easy to read. At 100% the bar fills, and the level-up shows on the Skills menu. It does nothing on an NPC tier.
+- **Magic aura:** see below.
+
+## Magic aura
+
+1. Put Enchanted glow, blue on a tier and show it. The actor glows; in first person, check in third person (F). It goes when the tier stops.
+2. **Stacking:** show two tiers, both with Enchanted glow, blue. The glow should look the same as with one tier, not brighter. Stop one tier: the glow stays. Stop the other: it goes.
+3. **Different auras:** one tier with Enchanted glow, blue and another with Steam. Both show, and stopping one leaves the other.
+4. **After a load:** save and reload while the aura shows. It should come back within a few seconds, and only once (not brighter than before). Reload a second time and check again.
+5. **On a follower:** put the preset on a follower and repeat steps 1 and 4.
+6. **Leaving and coming back:** with the aura on a follower, wait in another cell until they're unloaded, then come back. Note whether the aura is still there; the game may drop it when the actor unloads, and the effect only replays it after a load.
+7. **DLC auras:** try one Dawnguard aura (Mistform) and one Dragonborn aura (Dragon Aspect 1).
+
+To preview an aura without a tier, select an actor in the console and use `pms` (play magic shader) with its FormID, from the list in `_auraSkyrimId`, `_auraDawnguardId`, or `_auraDragonbornId`, then `sms` with the same FormID to stop it. Dawnguard and Dragonborn FormIDs need their load order index in front, usually `02` and `04`:
+
+```
+pms 0005d608
+sms 0005d608
+```
 
 ## Registration
 
-The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.1.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
+The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.2.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
 
 ```
 sqv MTF_Plugin_Skyrim
 ```
 
-It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.1.0`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.
+It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.2.0`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.

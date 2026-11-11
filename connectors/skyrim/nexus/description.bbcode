@@ -2,7 +2,7 @@
 
 [size=5][b]Description[/b][/size]
 
-This patch adds base game conditions and effects to [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF), on top of the ones built into MTF. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, with Flames in hand, or for a few seconds after a kill or a cast of Fireball. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, or grant experience.
+This patch adds base game conditions and effects to [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF), on top of the ones built into MTF. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, with Flames in hand, or for a few seconds after a kill or a cast of Fireball. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, grant experience, or wrap the actor in one of 80 magic auras.
 
 It adds a [b]Skyrim[/b] plugin to MTF's menu and to [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos UI[/url]. It doesn't edit any game records.
 
@@ -15,7 +15,7 @@ It adds a [b]Skyrim[/b] plugin to MTF's menu and to [url=https://www.nexusmods.c
 [*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos Framework - SKSE UI[/url], an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these conditions and effects far easier.
 [/list]
 
-Dawnguard and Dragonborn come with Skyrim Special Edition. The connector uses a few of their forms: the Aetherium Forge, the Staff Enchanter, Solstheim's bounty, and the Black Book perk behind No fall damage.
+Dawnguard and Dragonborn come with Skyrim Special Edition. The connector uses a few of their forms: the Aetherium Forge, the Staff Enchanter, Solstheim's bounty, the Black Book perk behind No fall damage, and some of the magic auras.
 
 [size=5][b]Installation[/b][/size]
 
@@ -66,6 +66,7 @@ Spell school in hand and Just cast from a spell school go by the spell's costlie
 [*][b]No fall damage[/b] ([i]while shown[/i]): (player) falling does no harm
 [*][b]Change the weather[/b] ([i]once[/i]): (player) the weather turns clear, cloudy, foggy, rainy, stormy, snowy, or to a blizzard
 [*][b]Grant experience[/b] ([i]once[/i]): (player) gains 1 to 100% of the experience their current level needs
+[*][b]Magic aura[/b] ([i]while shown[/i]): the actor wears one of 80 visual effects, listed below
 [/list]
 
 How the effects behave:
@@ -80,11 +81,28 @@ How the effects behave:
 [*][b]No fall damage.[/b] This uses the perk from the Black Book "The Hidden Twilight". If the player has already earned that perk, it stays when the tier goes.
 [*][b]Change the weather.[/b] The new weather lasts until the climate changes it again on its own.
 [*][b]Grant experience.[/b] The amount is a share of the current level, so 10% is always a tenth of a level, at level 5 or level 50. It goes to the character level, not to any skill, and is granted each time the tier appears.
+[*][b]Magic aura.[/b] These are the game's own spell and power visuals, picked from the ones MTF's Shader effect doesn't already offer. Different auras stack. Two tiers with the same aura show it once, and it stays until both stop. The game doesn't save auras, so after a load each one comes back within a few seconds. When the tier stops it removes its aura from the actor, including the same visual from a real spell: Oakflesh cast while an Oakflesh tier shows loses its glow early when the tier goes.
 [/list]
+
+The auras, by group:
+
+[list]
+[*][b]Armor and elements[/b]: Oakflesh, Ironflesh, Shield spell, Shield Charge, Lightning cloak, Frost (light), Frost spikes, Ice Form, Steam, Webbed, Chaurus poison
+[*][b]Enchantments[/b]: Enchanted glow (red, blue, purple, green), Fire, Frost, and Shock enchantment, Elemental Fury, Bound weapon, Potion glow (fire, frost, magicka, shock, poison)
+[*][b]Illusion[/b]: Illusion (positive, negative), Fear, Paralysis, Berserker rage, Nightmare, Kyne's Peace, Animal Allegiance, Disguise
+[*][b]Absorb[/b]: Absorb magicka, Absorb stamina, Dragon soul absorb, Greybeard power
+[*][b]Ghosts and shadows[/b]: Ghost (violet), Wolf spirit, Call of Valor, Ghost (College of Winterhold), Nightingale spirit, Nightingale (corrupted), Nightingale shadow, Boethiah's shadow
+[*][b]Racial powers and healing[/b]: Dragonskin, Highborn, Command Animal, Ancestor's Wrath, Histskin, Adrenaline Rush, Healing circle, Mystic healing, Water breathing
+[*][b]Daedra and legends[/b]: Azura (radiant, corrupted), Boethiah, Sovngarde, Ancano's power, Flame Atronach
+[*][b]Dawnguard[/b]: Sun fire cloak, Sun fire, Soul Cairn ghost, Soul Cairn, Mistform, Drain Vitality, Auriel's fire
+[*][b]Dragonborn[/b]: Miraak's magic, Miraak's smoke, Dragon Aspect 1 to 3, Ash Shell, Ash Guardian, Whirlwind cloak, Mora's Grasp, Omen of danger, Apocrypha magic, Seeker
+[/list]
+
+Some were made for one creature or scene and may look different on a person.
 
 [size=5][b]Uninstalling[/b][/size]
 
-Take off any tattoo whose tiers use Shout recovery, Rested bonus, Facial mood, Night vision, or No fall damage, so their changes are undone. Then save, quit, and disable the plugin.
+Take off any tattoo whose tiers use Shout recovery, Rested bonus, Facial mood, Night vision, No fall damage, or Magic aura, so their changes are undone. Then save, quit, and disable the plugin.
 
 [size=5][b]Troubleshooting[/b][/size]
 

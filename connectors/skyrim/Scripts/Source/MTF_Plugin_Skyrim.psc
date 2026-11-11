@@ -8,10 +8,11 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  Without it those entries do nothing; everything else still works.
 
  MTF does not replay effects after a load, so MTF_Plugin_Skyrim_Load, on the player alias,
- calls _onGameLoaded to restore state the game does not save (the Night Eye image space, expressions).
+ calls _onGameLoaded to restore state the game does not save (the Night Eye image space, expressions)
+ and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.1.0" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.2.0" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -109,6 +110,7 @@ EndFunction
 
 Function _onGameLoaded()
     _resolveDeps()
+    StorageUtil.AdjustIntValue(PlayerRef, KEY_PREFIX + "session", 1)
     if NightEyeFX != None && StorageUtil.GetIntValue(PlayerRef, KEY_PREFIX + "nighteye.count") > 0
         NightEyeFX.ApplyCrossFade(1.0)
     endif
@@ -912,6 +914,20 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
             StorageUtil.SetIntValue(target, KEY_PREFIX + "fall.added", 1)
             target.AddPerk(NoFallDamagePerk)
         endif
+    elseif eid == "aura"
+        if StorageUtil.HasStringValue(target, instKey)
+            return
+        endif
+        string auraId = _paramNStrEx(slot, effectIdx, useScratch, presetName, 1)
+        StorageUtil.SetStringValue(target, instKey, auraId)
+        EffectShader shader = _auraShader(auraId)
+        if shader == None
+            StorageUtil.UnsetStringValue(target, instKey)
+            return
+        endif
+        if StorageUtil.AdjustIntValue(target, _auraKey(auraId, "count"), 1) == 1
+            _playAura(target, auraId, shader)
+        endif
     endif
 EndFunction
 
@@ -964,11 +980,26 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
                 target.RemovePerk(NoFallDamagePerk)
             endif
         endif
+    elseif eid == "aura"
+        if !StorageUtil.HasStringValue(target, instKey)
+            return
+        endif
+        string auraId = StorageUtil.GetStringValue(target, instKey)
+        StorageUtil.UnsetStringValue(target, instKey)
+        if StorageUtil.AdjustIntValue(target, _auraKey(auraId, "count"), -1) <= 0
+            StorageUtil.UnsetIntValue(target, _auraKey(auraId, "count"))
+            StorageUtil.UnsetIntValue(target, _auraKey(auraId, "session"))
+            EffectShader shader = _auraShader(auraId)
+            if shader != None
+                shader.Stop(target)
+            endif
+        endif
     endif
 EndFunction
 
 ; Sleeping replaces the rested bonuses and they expire on their own, and dialogue or combat resets the
-; face, so both are put back while their effect is shown.
+; face, so both are put back while their effect is shown. The game doesn't save shaders, so an aura last
+; played before the latest load is played again.
 Function onTick(Actor target, int param, int param2, string eid, int slot, int effectIdx, bool useScratch, int baseSlot, int area, string presetName)
     if target == None || PlayerRef == None
         return
@@ -981,6 +1012,16 @@ Function onTick(Actor target, int param, int param2, string eid, int slot, int e
     elseif eid == "mood"
         if StorageUtil.HasIntValue(target, instKey)
             _applyMood(target, false)
+        endif
+    elseif eid == "aura"
+        if StorageUtil.HasStringValue(target, instKey)
+            string auraId = StorageUtil.GetStringValue(target, instKey)
+            if StorageUtil.GetIntValue(target, _auraKey(auraId, "session"), -1) != _session()
+                EffectShader shader = _auraShader(auraId)
+                if shader != None
+                    _playAura(target, auraId, shader)
+                endif
+            endif
         endif
     endif
 EndFunction
@@ -1106,6 +1147,215 @@ Weather Function _weatherForm(string weatherId) global
         return None
     endif
     return Game.GetFormFromFile(formId, "Skyrim.esm") as Weather
+EndFunction
+
+; ── Magic aura ──────────────────────────────────────────────────────────────
+
+; EffectShader.Play stacks rather than replacing, so each actor counts its shown instances per aura: the
+; first plays it, the last stops it, and a replay only happens once per session.
+int Function _session()
+    return StorageUtil.GetIntValue(PlayerRef, KEY_PREFIX + "session")
+EndFunction
+
+string Function _auraKey(string auraId, string suffix)
+    return KEY_PREFIX + "aura." + auraId + "." + suffix
+EndFunction
+
+; The session is stored before Play, which waits a frame while another tick could see a stale session.
+Function _playAura(Actor target, string auraId, EffectShader shader)
+    StorageUtil.SetIntValue(target, _auraKey(auraId, "session"), _session())
+    shader.Play(target, -1.0)
+EndFunction
+
+EffectShader Function _auraShader(string auraId) global
+    int formId = _auraSkyrimId(auraId)
+    if formId > 0
+        return Game.GetFormFromFile(formId, "Skyrim.esm") as EffectShader
+    endif
+    formId = _auraDawnguardId(auraId)
+    if formId > 0
+        return Game.GetFormFromFile(formId, "Dawnguard.esm") as EffectShader
+    endif
+    formId = _auraDragonbornId(auraId)
+    if formId > 0
+        return Game.GetFormFromFile(formId, "Dragonborn.esm") as EffectShader
+    endif
+    return None
+EndFunction
+
+int Function _auraSkyrimId(string auraId) global
+    if auraId == "oakflesh"
+        return 0x094160 ; MagicArmorOakFleshFXS
+    elseif auraId == "ironflesh"
+        return 0x094163 ; MagicArmorIronFleshFXS
+    elseif auraId == "shield_spell"
+        return 0x056AC9 ; ShieldSpellFXS
+    elseif auraId == "shield_charge"
+        return 0x10F803 ; PerkShieldChargeFXShader
+    elseif auraId == "lightning_cloak"
+        return 0x10F9A6 ; ShockPlayerCloakFXShader
+    elseif auraId == "frost_light"
+        return 0x0435A3 ; FrostShortFXShader
+    elseif auraId == "frost_spikes"
+        return 0x0647B9 ; FrostSpikeFXShader
+    elseif auraId == "ice_form"
+        return 0x0DC20D ; FrostIceFormFXShader
+    elseif auraId == "steam"
+        return 0x10FDF9 ; SteamFXShader
+    elseif auraId == "webbed"
+        return 0x02E1CD ; WebbedFXS
+    elseif auraId == "chaurus_poison"
+        return 0x10CC64 ; ChaurusPoisonFXShader
+    elseif auraId == "ench_red"
+        return 0x0D7661 ; EnchRedFXShader
+    elseif auraId == "ench_blue"
+        return 0x05D608 ; EnchBlueFXShader
+    elseif auraId == "ench_purple"
+        return 0x05D607 ; EnchPurpleFXShader
+    elseif auraId == "ench_green"
+        return 0x05D606 ; EnchGreenFXShader
+    elseif auraId == "ench_fire"
+        return 0x04E810 ; EnchFireFXShader
+    elseif auraId == "ench_frost"
+        return 0x04FA1D ; EnchFrostFXShader
+    elseif auraId == "ench_shock"
+        return 0x059EDA ; EnchShockFXShader
+    elseif auraId == "elemental_fury"
+        return 0x0510D3 ; EnchElementalFuryFXS
+    elseif auraId == "bound_weapon"
+        return 0x069CE8 ; EnchBoundSwordFXS
+    elseif auraId == "potion_fire"
+        return 0x10BEA9 ; AlchArmorFireFXS
+    elseif auraId == "potion_frost"
+        return 0x10BEAA ; AlchArmorFrostFXS
+    elseif auraId == "potion_magicka"
+        return 0x10BEAB ; AlchArmorMagickaFXS
+    elseif auraId == "potion_shock"
+        return 0x10BEAC ; AlchArmorShockFXS
+    elseif auraId == "potion_poison"
+        return 0x10BEAD ; AlchArmorPoisonFXS
+    elseif auraId == "illusion_positive"
+        return 0x073321 ; IllusionPositiveFXS
+    elseif auraId == "illusion_negative"
+        return 0x074799 ; IllusionNegativeFXS
+    elseif auraId == "fear"
+        return 0x07D450 ; IllusionFearFXS
+    elseif auraId == "paralysis"
+        return 0x06DE84 ; ParalyzeFxShader
+    elseif auraId == "berserk"
+        return 0x0FD7D9 ; BerserkerFXS
+    elseif auraId == "nightmare"
+        return 0x0BF743 ; NightmareFXShader
+    elseif auraId == "kynes_peace"
+        return 0x084B39 ; KynesPeaceFXS
+    elseif auraId == "animal_allegiance"
+        return 0x084B3A ; AnimalAllyFXS
+    elseif auraId == "disguise"
+        return 0x07876B ; Disguise01FXS
+    elseif auraId == "absorb_magicka"
+        return 0x0ABF08 ; AbsorbBlueFXS
+    elseif auraId == "absorb_stamina"
+        return 0x0ABF07 ; AbsorbGreenFXS
+    elseif auraId == "dragon_soul"
+        return 0x0280C0 ; DragonPowerAbsorbFXS
+    elseif auraId == "greybeard_power"
+        return 0x09186F ; GreybeardPowerAbsorbFXS
+    elseif auraId == "ghost_violet"
+        return 0x103129 ; GhostVioletFXShader
+    elseif auraId == "wolf_spirit"
+        return 0x0FE68D ; GhostWolfSpiritFXShader
+    elseif auraId == "call_of_valor"
+        return 0x01A1E9 ; GhostCallValorFXShader
+    elseif auraId == "mage_ghost"
+        return 0x06A155 ; MGGhostFXShader
+    elseif auraId == "nightingale"
+        return 0x0C5EF7 ; GhostFXShaderNightingale
+    elseif auraId == "nightingale_corrupt"
+        return 0x0C7908 ; GhostFXShaderNightingaleCorrupt
+    elseif auraId == "nightingale_shadow"
+        return 0x000E5C ; InvisFXShaderNightingale
+    elseif auraId == "shadow_armor"
+        return 0x081180 ; DA02ArmorShadow
+    elseif auraId == "dragonskin"
+        return 0x10F566 ; PowerRacialBretonFXShader
+    elseif auraId == "highborn"
+        return 0x10CC48 ; PowerRacialHighbornFXS
+    elseif auraId == "command_animal"
+        return 0x10F927 ; PowerRacialCommandAnimalFXShader
+    elseif auraId == "ancestors_wrath"
+        return 0x10F56C ; DarkElfAncestorsWrathFXShader
+    elseif auraId == "histskin"
+        return 0x10F4A9 ; ArgonianHistHealFXS
+    elseif auraId == "adrenaline_rush"
+        return 0x10F4A8 ; AdrenalineRushFXS
+    elseif auraId == "healing_circle"
+        return 0x10CDC9 ; HealCircleFXS
+    elseif auraId == "mystic_healing"
+        return 0x04E220 ; HealMysticFXS
+    elseif auraId == "water_breathing"
+        return 0x0BCF27 ; WaterBreathingFXS
+    elseif auraId == "azura_radiant"
+        return 0x08CA2F ; AzuraGood
+    elseif auraId == "azura_corrupted"
+        return 0x050F02 ; AzuraEvil
+    elseif auraId == "boethiah"
+        return 0x0CC6E6 ; DA02BoethiahFXS
+    elseif auraId == "sovngarde"
+        return 0x10B2DF ; SovengardeFXS01
+    elseif auraId == "ancano"
+        return 0x025226 ; MGAncanoEffectShader
+    elseif auraId == "flame_atronach"
+        return 0x078ED3 ; AtronachFlameGlowFXS
+    endif
+    return 0
+EndFunction
+
+int Function _auraDawnguardId(string auraId) global
+    if auraId == "sun_fire_cloak"
+        return 0x00A3BC ; DLC1SunFireCloakFXShader
+    elseif auraId == "sun_fire"
+        return 0x00A3BB ; DLC1SunFireFXShader
+    elseif auraId == "soul_cairn_ghost"
+        return 0x019AB3 ; DLC1SoulCairnGhostFXShader
+    elseif auraId == "soul_cairn"
+        return 0x00939B ; DLC01SoulCairnFXShader
+    elseif auraId == "mistform"
+        return 0x01AA2E ; DLC1VampireMistform01FXS
+    elseif auraId == "drain_vitality"
+        return 0x00CBC1 ; DLC1DrainVital01FXS
+    elseif auraId == "auriel"
+        return 0x00AEB3 ; DLC1AurielsBowFireFXShader
+    endif
+    return 0
+EndFunction
+
+int Function _auraDragonbornId(string auraId) global
+    if auraId == "miraak_magic"
+        return 0x03D30E ; DLC2MiraakMagicFXS
+    elseif auraId == "miraak_smoke"
+        return 0x03D30D ; DLC2MiraakSmokeFXS
+    elseif auraId == "dragon_aspect_1"
+        return 0x021735 ; DLC2DragonbornAspectFXS01
+    elseif auraId == "dragon_aspect_2"
+        return 0x021734 ; DLC2DragonbornAspectFXS02
+    elseif auraId == "dragon_aspect_3"
+        return 0x021733 ; DLC2DragonbornAspectFXS03
+    elseif auraId == "ash_shell"
+        return 0x027E34 ; DLC2AshShellFXS
+    elseif auraId == "ash_guardian"
+        return 0x027E33 ; DLC2AshGuardianFXS
+    elseif auraId == "whirlwind_cloak"
+        return 0x02502A ; DLC2WhirlWindCloakFXS
+    elseif auraId == "moras_grasp"
+        return 0x03A299 ; DLC2MorasGraspFXShader
+    elseif auraId == "omen_of_danger"
+        return 0x0324C1 ; DLC2OmenOfDangerFXS
+    elseif auraId == "apocrypha"
+        return 0x03CD84 ; DLC2ApocryphaSpellFXS
+    elseif auraId == "seeker"
+        return 0x023F87 ; DLC2HMDaedraFXS
+    endif
+    return 0
 EndFunction
 
 int Function _clampInt(int value, int low, int high) global
