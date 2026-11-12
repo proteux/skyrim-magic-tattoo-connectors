@@ -13,6 +13,7 @@ It adds a [b]RaceMenu[/b] plugin to MTF's menu and to [url=https://www.nexusmods
 [*][url=https://www.nexusmods.com/skyrimspecialedition/mods/19080]RaceMenu[/url]
 [*][url=https://www.nexusmods.com/skyrimspecialedition/mods/13048]PapyrusUtil SE[/url]
 [*]For Body shape: a body with BodySlide morphs, such as [url=https://www.nexusmods.com/skyrimspecialedition/mods/30174]CBBE 3BA[/url], built in BodySlide with [b]Build Morphs[/b] checked. Outfits need morphs built too, or the body grows through them.
+[*]For Hair color (any wig): [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url].
 [*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos Framework - SKSE UI[/url], an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these effects far easier.
 [/list]
 
@@ -26,6 +27,7 @@ Install with your mod manager and enable [font=Courier New]MTF_Plugin_RaceMenu.e
 [*][b]Actor scale[/b] ([i]while shown[/i]): the actor is 50 to 200% of their usual size
 [*][b]Body shape[/b] ([i]while shown[/i]): the body takes one of 23 shapes at 5 to 100% strength
 [*][b]Hair color[/b] ([i]while shown[/i]): the hair, and optionally the brows and beard, are tinted any color
+[*][b]Hair color (any wig)[/b] ([i]while shown[/i]): everything drawn as hair, any wig included, is tinted any color
 [/list]
 
 Every effect has a [b]Transition[/b] setting, 0 to 30 seconds (5 by default). The body or hair eases from how it looks now to the new look over that time instead of changing at once, starting and stopping gently, and eases back the same way when the tier stops. 0 changes it instantly. A change that arrives mid-transition carries on from wherever it is. Loading a save finishes any transition that was under way.
@@ -85,7 +87,9 @@ Wigs from [url=https://www.nexusmods.com/skyrimspecialedition/mods/31300]KS Hair
 
 A new hairstyle or wig picks up the color within a couple of seconds, and so does a wig taken off and put back on, or hair whose physics reset.
 
-All three effects work on the player and NPCs. RaceMenu saves them with the game, so they stay after a load until the tier stops.
+[b]Hair color (any wig)[/b] is the same tint applied a different way, through [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url], for when Hair color misses a wig. It tints every part of the actor drawn with the hair shader, whatever mod it comes from, so it works on any wig, but it always includes the brows and beard. Its Color and Transition settings work like Hair color's, and so does the newest tier winning. The tint isn't saved with the game, so after loading a save, or putting a wig on, the hair shows its own color for a couple of seconds before the tint comes back. Use one hair effect or the other on an actor, not both at once.
+
+All the effects work on the player and NPCs. They stay after a load until the tier stops: RaceMenu saves all but Hair color (any wig), which the plugin puts back itself.
 
 [size=5][b]Resetting[/b][/size]
 
@@ -110,6 +114,8 @@ Each Body shape change logs a line such as [font=Courier New][MTF_Plugin_RaceMen
 Each Hair color change logs a line such as [font=Courier New][MTF_Plugin_RaceMenu] hair color on Lydia: HairFemaleNord06=#C0392B[/font] once it finishes, listing each hair, brow and beard part it tinted ([font=Courier New]none[/font] when the hair goes back to its own color). If the line lists parts but the hair doesn't change, that hair's texture is too dark to show the tint, or it's a wig the plugin can't find parts for.
 
 Each time a Hair color tier starts, the log also lists what the effect can see, in lines starting [font=Courier New][MTF_Plugin_RaceMenu] hair debug:[/font]: the actor's head parts, anything worn in the hair slots (31 and 41) with the part names its mesh suggests, and the parts being tinted. Each part shows [font=Courier New](no node)[/font] if the actor doesn't have it, or its color right now.
+
+Hair color (any wig) logs [font=Courier New][MTF_Plugin_RaceMenu] hair tint on Lydia: #C0392B[/font] once each change finishes ([font=Courier New]none[/font] when the hair goes back to its own color). If a tier logs [font=Courier New]needs powerofthree's Papyrus Extender, which isn't installed[/font] instead, the Papyrus Extender isn't loaded.
 
 [url=https://github.com/proteux/skyrim-magic-tattoo-connectors/blob/main/connectors/racemenu/TESTING.md]TESTING.md[/url] walks through checking each effect in game.
 

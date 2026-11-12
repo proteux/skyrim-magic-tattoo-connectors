@@ -3,9 +3,11 @@
 // (vendor/magic-tattoos-framework/spriggit/MTF_Plugin_BFNG):
 // one Start Game Enabled quest carrying the plugin script, and a PluginKickAlias
 // forced to the player carrying MTF_PluginAliasKick, plus any --alias-scripts.
+// --color-forms adds that many color records (CLFM) after the quest, FormIDs 0x801 up, for scripts that
+// set their color at runtime.
 //
 // Usage: PluginGen --out <path/To/MTF_Plugin_X.esp> --script <MTF_Plugin_X> --name <quest name>
-//                  [--author <text>] [--description <text>] [--alias-scripts <name,name>]
+//                  [--author <text>] [--description <text>] [--alias-scripts <name,name>] [--color-forms <count>]
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Binary.Parameters;
@@ -16,7 +18,7 @@ var options = ParseArgs(args);
 string Required(string key) =>
     options.TryGetValue(key, out var value) && value.Length > 0
         ? value
-        : throw new ArgumentException($"Missing --{key}. Usage: PluginGen --out <esp> --script <name> --name <quest name> [--author <text>] [--description <text>] [--alias-scripts <name,name>]");
+        : throw new ArgumentException($"Missing --{key}. Usage: PluginGen --out <esp> --script <name> --name <quest name> [--author <text>] [--description <text>] [--alias-scripts <name,name>] [--color-forms <count>]");
 
 var outputPath = Path.GetFullPath(Required("out"));
 var scriptName = Required("script");
@@ -26,6 +28,9 @@ options.TryGetValue("description", out var description);
 var aliasScripts = options.TryGetValue("alias-scripts", out var aliasList)
     ? aliasList.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
     : [];
+var colorForms = options.TryGetValue("color-forms", out var colorCount) ? int.Parse(colorCount) : 0;
+if (colorForms < 0 || 0x801 + colorForms > 0x1000)
+    throw new ArgumentException("--color-forms must be 0 to 2047, so every FormID fits the light plugin range.");
 
 var modKey = ModKey.FromFileName(Path.GetFileName(outputPath));
 var mod = new SkyrimMod(modKey, SkyrimRelease.SkyrimSE);
@@ -81,6 +86,15 @@ questAdapter.Aliases.Add(kickAlias);
 quest.VirtualMachineAdapter = questAdapter;
 mod.Quests.Add(quest);
 
+for (var i = 0; i < colorForms; i++)
+{
+    mod.Colors.Add(new ColorRecord(new FormKey(modKey, (uint)(0x801 + i)), SkyrimRelease.SkyrimSE)
+    {
+        EditorID = $"{scriptName}_Color{i:D2}",
+        Color = System.Drawing.Color.White,
+    });
+}
+
 mod.ModHeader.Author = string.IsNullOrEmpty(author) ? null : author;
 mod.ModHeader.Description = string.IsNullOrEmpty(description) ? null : description;
 mod.ModHeader.MasterReferences.Clear();
@@ -124,6 +138,8 @@ foreach (var alias in savedQuest.Aliases)
     Console.WriteLine($"  Alias {alias.ID} {alias.Name} forced {alias.ForcedReference.FormKeyNullable}");
 foreach (var alias in ((IQuestAdapterGetter)savedAdapter).Aliases)
     Console.WriteLine($"  Alias scripts [{string.Join(", ", alias.Scripts.Select(s => s.Name))}]");
+if (check.Colors.Count > 0)
+    Console.WriteLine($"Color records {check.Colors.Count}: {check.Colors.First().FormKey.ID:X6} to {check.Colors.Last().FormKey.ID:X6}");
 
 static Dictionary<string, string> ParseArgs(string[] args)
 {

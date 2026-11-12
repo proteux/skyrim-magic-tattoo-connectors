@@ -53,6 +53,19 @@ Use an actor with pale or neutral hair, such as most KS Hairdos styles, so the t
 8. Equip a KS Wigs SMP wig and start the tier. The wig takes the color, and the `hair color on` line lists its `KSSMP_<name>`, `KSSMP_<name>_HL` and `Hairline` nodes along with the hair under it. Take the wig off and put it back on: within a couple of seconds the log shows `put back` lines and the wig is colored again. Stop the tier: the wig goes back to the actor's own hair color. If it doesn't change, the `hair debug` lines show which node names were tried and whether each exists.
 9. Try an NPC follower too. NPC hair comes from their FaceGen head, so the log's node names should still match and the hair should change the same way.
 
+## Hair color (any wig)
+
+Needs powerofthree's Papyrus Extender. Every change logs `[MTF_Plugin_RaceMenu] hair tint on <name>: #RRGGBB` (or `none`) once it finishes. Don't run Hair color on the same actor at the same time.
+
+1. Put Hair color (any wig) on a tier with pure green, Transition 0. When it shows, the hair, brows and beard turn green. **This is the first thing to check:** if the log line appears but nothing changes, `SetHairColor` isn't taking the pool's color record.
+2. Stop the tier. The hair goes back to its own color. On the player, compare with RaceMenu's hair color: it should match.
+3. Set Transition to 10 seconds. The color fades smoothly to green and back.
+4. Show two tiers, red then blue. The hair is blue; stop blue and it eases to red; stop red and it eases back.
+5. Equip a wig that Hair color misses (any wig that isn't KS, or a KS elf wig) and start the tier. The wig takes the color. Take it off and put it back on: within a couple of seconds it's green again.
+6. Save and reload while the tier shows. The hair shows its own color briefly, then green again within a couple of seconds.
+7. Show the tier on the player and two NPCs at once with different colors, Transition 5. Each actor keeps its own color, with no flicker of another's.
+8. Uninstall test: disable powerofthree's Papyrus Extender and start the tier. The log shows `needs powerofthree's Papyrus Extender, which isn't installed` and nothing else happens.
+
 ## Reset
 
 1. Show a Bigger bust tier and an Actor scale tier at 150% on the player, and a Body shape tier and a Hair color tier on an NPC.

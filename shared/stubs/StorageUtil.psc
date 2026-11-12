@@ -4,6 +4,9 @@ Scriptname StorageUtil Hidden
 int Function SetIntValue(Form ObjKey, string KeyName, int value) global native
 float Function SetFloatValue(Form ObjKey, string KeyName, float value) global native
 string Function SetStringValue(Form ObjKey, string KeyName, string value) global native
+Form Function SetFormValue(Form ObjKey, string KeyName, Form value) global native
+Form Function GetFormValue(Form ObjKey, string KeyName, Form missing = None) global native
+bool Function UnsetFormValue(Form ObjKey, string KeyName) global native
 
 int Function GetIntValue(Form ObjKey, string KeyName, int missing = 0) global native
 float Function GetFloatValue(Form ObjKey, string KeyName, float missing = 0.0) global native

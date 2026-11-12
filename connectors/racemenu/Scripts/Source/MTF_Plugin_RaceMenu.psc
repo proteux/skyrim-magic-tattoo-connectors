@@ -10,6 +10,9 @@ Scriptname MTF_Plugin_RaceMenu extends MTF_Plugin
  node's color beforehand and puts it back. RaceMenu saves node transforms, body morphs and node overrides in
  its co-save, so nothing needs replaying after a load.
 
+ Hair color (any wig) instead tints everything drawn as hair through powerofthree's SetHairColor,
+ a second soft dependency checked when an instance starts. That tint isn't saved, so onTick keeps putting it back.
+
  Changes ease in and out over each instance's Transition seconds. MTF's onTick is too coarse for that, so
  MTF_Plugin_RaceMenu_Loop, on the player alias, calls _step every STEP_SECONDS while any actor is moving.}
 
@@ -20,6 +23,9 @@ string Property RAMP_LIST = "proteux-mtf.racemenu.moving" AutoReadOnly Hidden
 string Property ACTOR_LIST = "proteux-mtf.racemenu.actors" AutoReadOnly Hidden
 float Property STEP_SECONDS = 0.25 AutoReadOnly Hidden
 int Property MAX_TRANSITION = 30 AutoReadOnly Hidden
+string Property ESP_NAME = "MTF_Plugin_RaceMenu.esp" AutoReadOnly Hidden
+; Must match COLOR_FORMS in build.sh: the ESP's color records, FormIDs 0x801 up.
+int Property HAIR_TINT_FORMS = 32 AutoReadOnly Hidden
 
 Actor Property PlayerRef Auto Hidden
 ; Set to 1 from the console (setpqv MTF_Plugin_RaceMenu ResetOnLoad 1); the next save load undoes every
@@ -65,6 +71,7 @@ Function _onGameLoaded()
             StorageUtil.SetFloatValue(moving, KEY_PREFIX + "shape.ramp.duration", 0.0)
             StorageUtil.SetFloatValue(moving, KEY_PREFIX + "scale.ramp.duration", 0.0)
             StorageUtil.SetFloatValue(moving, KEY_PREFIX + "hair.ramp.duration", 0.0)
+            StorageUtil.SetFloatValue(moving, KEY_PREFIX + "hairtint.ramp.duration", 0.0)
         endif
     endwhile
     GetAlias(0).RegisterForSingleUpdate(STEP_SECONDS)
@@ -111,6 +118,20 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
         _startHair(target, fade)
         _logHairDebug(target)
+    elseif eid == "hairtint"
+        if StorageUtil.HasIntValue(target, instKey)
+            return
+        endif
+        if !_hasPapyrusExtender()
+            Debug.Trace("[MTF_Plugin_RaceMenu] Hair color (any wig) needs powerofthree's Papyrus Extender, which isn't installed")
+            return
+        endif
+        float fade = _clampInt(param2, 0, MAX_TRANSITION) as float
+        StorageUtil.SetIntValue(target, instKey, _rgb(param))
+        StorageUtil.SetFloatValue(target, instKey + ".fade", fade)
+        StorageUtil.StringListAdd(target, KEY_PREFIX + "hairtint.instances", instKey, false)
+        StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
+        _startHairTint(target, fade)
     endif
 EndFunction
 
@@ -145,13 +166,29 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
         StorageUtil.UnsetFloatValue(target, instKey + ".fade")
         StorageUtil.StringListRemove(target, KEY_PREFIX + "hair.instances", instKey, true)
         _startHair(target, fade)
+    elseif eid == "hairtint"
+        if !StorageUtil.HasIntValue(target, instKey)
+            return
+        endif
+        StorageUtil.UnsetIntValue(target, instKey)
+        StorageUtil.UnsetFloatValue(target, instKey + ".fade")
+        StorageUtil.StringListRemove(target, KEY_PREFIX + "hairtint.instances", instKey, true)
+        _startHairTint(target, fade)
     endif
 EndFunction
 
 ; A new hairstyle or wig has nodes the tint isn't on yet, and a wig put back on, or hair physics rebuilding the
 ; mesh, loses the tint. Between transitions, picks up new nodes or puts the color back.
 Function onTick(Actor target, int param, int param2, string eid, int slot, int effectIdx, bool useScratch, int baseSlot, int area, string presetName)
-    if eid != "hair" || target == None || PlayerRef == None || !target.Is3DLoaded()
+    if target == None || PlayerRef == None || !target.Is3DLoaded()
+        return
+    endif
+    if eid == "hairtint"
+        if !StorageUtil.HasFloatValue(target, KEY_PREFIX + "hairtint.ramp.start")
+            _reapplyHairTint(target)
+        endif
+        return
+    elseif eid != "hair"
         return
     endif
     if StorageUtil.HasFloatValue(target, KEY_PREFIX + "hair.ramp.start")
@@ -199,6 +236,8 @@ Function _resetActor(Actor target)
     _setScale(target, 1.0)
     _forgetInstances(target, "hair")
     _startHair(target, 0.0)
+    _forgetInstances(target, "hairtint")
+    _startHairTint(target, 0.0)
 EndFunction
 
 Function _forgetInstances(Actor target, string kind)
@@ -229,7 +268,8 @@ bool Function _step()
             bool shapeMoving = _stepShapes(moving, now)
             bool scaleMoving = _stepScale(moving, now)
             bool hairMoving = _stepHair(moving, now)
-            stillMoving = shapeMoving || scaleMoving || hairMoving
+            bool tintMoving = _stepHairTint(moving, now)
+            stillMoving = shapeMoving || scaleMoving || hairMoving || tintMoving
         endif
         if !stillMoving
             StorageUtil.FormListRemoveAt(self, RAMP_LIST, i)
@@ -854,6 +894,198 @@ string Function _hex(int color) global
         i += 1
     endwhile
     return s
+EndFunction
+
+; ── Hair color (any wig) ────────────────────────────────────────────────────
+
+; powerofthree's SetHairColor tints every mesh in the actor's 3D drawn as hair, from whatever mod, wigs
+; included. It reads the color record when its queued task runs, so each actor borrows its own record from
+; the ESP's pool and two actors changing at once can't swap colors. The newest instance wins. The tint
+; lives only on the loaded 3D: a load, a rebuilt mesh or a wig put on shows the hair's own color until
+; onTick puts the tint back.
+
+bool Function _hasPapyrusExtender()
+    if SKSE.GetPluginVersion("powerofthree's Papyrus Extender") > 0 || SKSE.GetPluginVersion("po3_PapyrusExtender") > 0
+        return true
+    endif
+    int[] version = PO3_SKSEFunctions.GetPapyrusExtenderVersion()
+    return version.Length > 0
+EndFunction
+
+; Starts from the color shown right now, so a change mid-transition carries on smoothly. An actor that
+; isn't loaded jumps straight to the goal, which onTick applies once it is.
+Function _startHairTint(Actor target, float fade)
+    _clearHairTintRamp(target)
+    string curKey = KEY_PREFIX + "hairtint.cur"
+    bool shown = StorageUtil.StringListCount(target, KEY_PREFIX + "hairtint.instances") > 0
+    if !shown && !StorageUtil.HasIntValue(target, curKey)
+        _forgetHairTint(target)
+        return
+    endif
+    if fade <= 0.0 || !target.Is3DLoaded()
+        _finishHairTint(target)
+        return
+    endif
+    int from = StorageUtil.GetIntValue(target, curKey)
+    if !StorageUtil.HasIntValue(target, curKey)
+        from = _hairTintOwn(target)
+    endif
+    StorageUtil.SetIntValue(target, KEY_PREFIX + "hairtint.from", from)
+    StorageUtil.SetIntValue(target, KEY_PREFIX + "hairtint.to", _hairTintGoal(target))
+    _beginRamp(target, "hairtint", fade)
+EndFunction
+
+bool Function _stepHairTint(Actor target, float now)
+    float eased = _rampProgress(target, "hairtint", now)
+    if eased < 0.0
+        return false
+    endif
+    if eased >= 1.0
+        _finishHairTint(target)
+        return false
+    endif
+    if target.Is3DLoaded()
+        int from = StorageUtil.GetIntValue(target, KEY_PREFIX + "hairtint.from")
+        int goal = StorageUtil.GetIntValue(target, KEY_PREFIX + "hairtint.to")
+        int color = _blendColor(from, goal, eased)
+        StorageUtil.SetIntValue(target, KEY_PREFIX + "hairtint.cur", color)
+        _applyHairTint(target, color)
+    endif
+    return true
+EndFunction
+
+; With no instance left, the hair's own color goes back on and the actor's color record is freed. An actor
+; that isn't loaded shows its own color anyway once its 3D is built again.
+Function _finishHairTint(Actor target)
+    _clearHairTintRamp(target)
+    string ownKey = KEY_PREFIX + "hairtint.own"
+    if StorageUtil.StringListCount(target, KEY_PREFIX + "hairtint.instances") > 0
+        int goal = _hairTintGoal(target)
+        StorageUtil.SetIntValue(target, KEY_PREFIX + "hairtint.cur", goal)
+        if target.Is3DLoaded()
+            _applyHairTint(target, goal)
+        endif
+        Debug.Trace("[MTF_Plugin_RaceMenu] hair tint on " + _actorName(target) + ": #" + _hex(goal))
+        return
+    endif
+    if target.Is3DLoaded() && StorageUtil.HasIntValue(target, ownKey)
+        _applyHairTint(target, StorageUtil.GetIntValue(target, ownKey))
+    endif
+    Debug.Trace("[MTF_Plugin_RaceMenu] hair tint on " + _actorName(target) + ": none")
+    _forgetHairTint(target)
+EndFunction
+
+Function _clearHairTintRamp(Actor target)
+    StorageUtil.UnsetIntValue(target, KEY_PREFIX + "hairtint.from")
+    StorageUtil.UnsetIntValue(target, KEY_PREFIX + "hairtint.to")
+    _endRamp(target, "hairtint")
+EndFunction
+
+Function _forgetHairTint(Actor target)
+    StorageUtil.UnsetIntValue(target, KEY_PREFIX + "hairtint.own")
+    StorageUtil.UnsetIntValue(target, KEY_PREFIX + "hairtint.cur")
+    _releaseHairTintForm(target)
+EndFunction
+
+Function _reapplyHairTint(Actor target)
+    string curKey = KEY_PREFIX + "hairtint.cur"
+    if StorageUtil.HasIntValue(target, curKey)
+        _applyHairTint(target, StorageUtil.GetIntValue(target, curKey))
+    endif
+EndFunction
+
+; Only call with the actor's 3D loaded, so the hair's own color is read before the first tint covers it.
+Function _applyHairTint(Actor target, int color)
+    _hairTintOwn(target)
+    ColorForm record = _hairTintForm(target)
+    if record != None
+        record.SetColor(color)
+        PO3_SKSEFunctions.SetHairColor(target, record)
+    endif
+EndFunction
+
+int Function _hairTintGoal(Actor target)
+    string listKey = KEY_PREFIX + "hairtint.instances"
+    int n = StorageUtil.StringListCount(target, listKey)
+    if n > 0
+        return StorageUtil.GetIntValue(target, StorageUtil.StringListGet(target, listKey, n - 1))
+    endif
+    return _hairTintOwn(target)
+EndFunction
+
+; The color the hair showed before the first tint, remembered once it can be read from the loaded hair:
+; the hair head part's live tint, which includes a RaceMenu hair color, else the hair color record.
+int Function _hairTintOwn(Actor target)
+    string ownKey = KEY_PREFIX + "hairtint.own"
+    if StorageUtil.HasIntValue(target, ownKey)
+        return StorageUtil.GetIntValue(target, ownKey)
+    endif
+    int own = 0
+    if target.Is3DLoaded()
+        ActorBase base = target.GetLeveledActorBase()
+        if base != None
+            int i = base.GetNumHeadParts()
+            while i > 0 && own == 0
+                i -= 1
+                HeadPart part = base.GetNthHeadPart(i)
+                if part != None && part.GetType() == 3 && NetImmerse.HasNode(target, part.GetPartName(), false)
+                    own = _rgb(NiOverride.GetNodePropertyInt(target, false, part.GetPartName(), 7, -1))
+                endif
+            endwhile
+        endif
+    endif
+    if own == 0
+        own = _baseHairColor(target)
+    endif
+    if target.Is3DLoaded()
+        StorageUtil.SetIntValue(target, ownKey, own)
+    endif
+    return own
+EndFunction
+
+ColorForm Function _hairTintForm(Actor target)
+    string slotKey = KEY_PREFIX + "hairtint.form"
+    int slot = StorageUtil.GetIntValue(target, slotKey) - 1
+    if slot < 0
+        slot = _claimHairTintForm(target)
+        if slot < 0
+            return None
+        endif
+        StorageUtil.SetIntValue(target, slotKey, slot + 1)
+    endif
+    ColorForm record = Game.GetFormFromFile(0x801 + slot, ESP_NAME) as ColorForm
+    if record == None
+        Debug.Trace("[MTF_Plugin_RaceMenu] hair tint: color record " + (0x801 + slot) + " is missing from " + ESP_NAME)
+    endif
+    return record
+EndFunction
+
+; A record is free when no actor holds it, or its holder has let go of it, such as after a reset.
+int Function _claimHairTintForm(Actor target)
+    int i = 0
+    while i < HAIR_TINT_FORMS
+        string ownerKey = KEY_PREFIX + "hairtint.owner." + i
+        Form owner = StorageUtil.GetFormValue(self, ownerKey)
+        if owner == None || StorageUtil.GetIntValue(owner, KEY_PREFIX + "hairtint.form") != i + 1
+            StorageUtil.SetFormValue(self, ownerKey, target)
+            return i
+        endif
+        i += 1
+    endwhile
+    Debug.Trace("[MTF_Plugin_RaceMenu] hair tint: all " + HAIR_TINT_FORMS + " colors are in use, so " + _actorName(target) + " keeps their hair color")
+    return -1
+EndFunction
+
+Function _releaseHairTintForm(Actor target)
+    string slotKey = KEY_PREFIX + "hairtint.form"
+    int slot = StorageUtil.GetIntValue(target, slotKey) - 1
+    if slot >= 0
+        string ownerKey = KEY_PREFIX + "hairtint.owner." + slot
+        if StorageUtil.GetFormValue(self, ownerKey) == target
+            StorageUtil.UnsetFormValue(self, ownerKey)
+        endif
+    endif
+    StorageUtil.UnsetIntValue(target, slotKey)
 EndFunction
 
 ; ── Body shapes ─────────────────────────────────────────────────────────────

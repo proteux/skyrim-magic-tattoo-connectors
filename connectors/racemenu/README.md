@@ -14,6 +14,7 @@ It adds a **RaceMenu** plugin to MTF's menu and to [Magic Tattoos UI](https://ww
 - [RaceMenu](https://www.nexusmods.com/skyrimspecialedition/mods/19080)
 - [PapyrusUtil SE](https://www.nexusmods.com/skyrimspecialedition/mods/13048)
 - For Body shape: a body with BodySlide morphs, such as [CBBE 3BA](https://www.nexusmods.com/skyrimspecialedition/mods/30174), built in BodySlide with **Build Morphs** checked. Outfits need morphs built too, or the body grows through them.
+- For Hair color (any wig): [powerofthree's Papyrus Extender](https://www.nexusmods.com/skyrimspecialedition/mods/22854).
 - Optional: [Magic Tattoos Framework - SKSE UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803), an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these effects far easier.
 
 ## Installation
@@ -26,7 +27,8 @@ Install with your mod manager and enable `MTF_Plugin_RaceMenu.esp`. It is ESL-fl
 | --- | --- | --- |
 | Actor scale | while shown | the actor is 50 to 200% of their usual size |
 | Body shape | while shown | the body takes one of 23 shapes at 5 to 100% strength |
-| Hair color | while shown | the hair, and optionally the brows and beard, are tinted any color |
+| Hair color | while shown | the hair, and optionally the brows and beard, are tinted any color; works on the actor's own hair and KS Hairdos wigs |
+| Hair color (any wig) | while shown | the hair, brows, beard and any wig are tinted any color; needs powerofthree's Papyrus Extender |
 
 Every effect has a **Transition** setting, 0 to 30 seconds (5 by default). The body or hair eases from how it looks now to the new look over that time instead of changing at once, starting and stopping gently, and eases back the same way when the tier stops. 0 changes it instantly. A change that arrives mid-transition carries on from wherever it is. Loading a save finishes any transition that was under way.
 
@@ -82,7 +84,9 @@ Wigs from [KS Hairdos SMP](https://www.nexusmods.com/skyrimspecialedition/mods/3
 
 A new hairstyle or wig picks up the color within a couple of seconds, and so does a wig taken off and put back on, or hair whose physics reset.
 
-All three effects work on the player and NPCs. RaceMenu saves them with the game, so they stay after a load until the tier stops.
+**Hair color (any wig)** is the same tint applied a different way, through [powerofthree's Papyrus Extender](https://www.nexusmods.com/skyrimspecialedition/mods/22854), for when Hair color misses a wig. It tints every part of the actor drawn with the hair shader, whatever mod it comes from, so it works on any wig, but it always includes the brows and beard. Its Color and Transition settings work like Hair color's, and so does the newest tier winning. The tint isn't saved with the game, so after loading a save, or putting a wig on, the hair shows its own color for a couple of seconds before the tint comes back. Use one hair effect or the other on an actor, not both at once.
+
+All the effects work on the player and NPCs. They stay after a load until the tier stops: RaceMenu saves all but Hair color (any wig), which the plugin puts back itself.
 
 ## Resetting
 
@@ -110,13 +114,15 @@ Each Hair color change logs a line such as `[MTF_Plugin_RaceMenu] hair color on 
 
 Each time a Hair color tier starts, the log also lists what the effect can see, in lines starting `[MTF_Plugin_RaceMenu] hair debug:`: the actor's head parts, anything worn in the hair slots (31 and 41) with the part names its mesh suggests, and the parts being tinted. Each part shows `(no node)` if the actor doesn't have it, or its color right now.
 
+Hair color (any wig) logs `[MTF_Plugin_RaceMenu] hair tint on Lydia: #C0392B` once each change finishes (`none` when the hair goes back to its own color). If a tier logs `needs powerofthree's Papyrus Extender, which isn't installed` instead, the Papyrus Extender isn't loaded.
+
 [TESTING.md](TESTING.md) walks through checking each effect in game.
 
 ## Building from source
 
 Run `make racemenu` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live racemenu` removes those files. `make package racemenu` writes the release zip with the same files (it needs a `CHANGELOG.md` entry for the version; the Nexus page is `nexus/description.bbcode`), and `make staging racemenu` builds it as its own Vortex mod, **MTF Plugin - RaceMenu**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_RaceMenu.psc`.
 
-All changes go through RaceMenu's `NiOverride` script. Scale and shapes use the key `proteux-mtf.racemenu`: `AddNodeTransformScale` for scale, and `SetBodyMorph` with `UpdateModelWeight` for shapes. Hair color sets the tint override (key 7) with `AddNodeOverrideInt` on each hair, brow and beard node, which is named after its head part's editor ID (SKSE's `ActorBase.GetNthHeadPart` and `HeadPart.GetPartName`). A wig is armor, so its node names are guessed from the mesh of each armor addon in slot 31 or 41 (KS's `Angels_1.nif` holds `KSSMP_Angels`, `KSSMP_Angels_HL` and `Hairline`) and kept if SKSE's `NetImmerse.HasNode` finds them. Each tick while the effect shows, a node whose live tint has drifted (a wig re-equipped, SMP physics rebuilding the mesh) gets its color put back. Node overrides have no key of their own, so the plugin records each node's color before touching it, from another mod's override, the live shader or the NPC's hair color record, and puts it back when it's done. Transition steps aren't saved (`persist` false); only the final color is. Transitions step four times a second from a second script, `MTF_Plugin_RaceMenu_Loop`, on the player alias (`ALIAS_SCRIPTS` in `build.sh`), which only runs while some actor is changing. Each step of a shape rebuilds the body mesh once per changing actor. A new shape needs an id in the catalog menu, a branch in `_shapeIndex`, its slider weights in `_shapeWeight`, and any slider it uses that isn't already in `_sliderNames` added there (a slider missing from that list is never set). Slider names come from the CBBE 3BA reference slider set, `CalienteTools/BodySlide/RefTemplates/CBBE 3BA/CBBE 3BA Reference.osp`.
+All changes go through RaceMenu's `NiOverride` script. Scale and shapes use the key `proteux-mtf.racemenu`: `AddNodeTransformScale` for scale, and `SetBodyMorph` with `UpdateModelWeight` for shapes. Hair color sets the tint override (key 7) with `AddNodeOverrideInt` on each hair, brow and beard node, which is named after its head part's editor ID (SKSE's `ActorBase.GetNthHeadPart` and `HeadPart.GetPartName`). A wig is armor, so its node names are guessed from the mesh of each armor addon in slot 31 or 41 (KS's `Angels_1.nif` holds `KSSMP_Angels`, `KSSMP_Angels_HL` and `Hairline`) and kept if SKSE's `NetImmerse.HasNode` finds them. Each tick while the effect shows, a node whose live tint has drifted (a wig re-equipped, SMP physics rebuilding the mesh) gets its color put back. Node overrides have no key of their own, so the plugin records each node's color before touching it, from another mod's override, the live shader or the NPC's hair color record, and puts it back when it's done. Transition steps aren't saved (`persist` false); only the final color is. Hair color (any wig) calls powerofthree's `SetHairColor(Actor, ColorForm)`, which tints every hair-shaded geometry in the actor's 3D from a color record's color, unscaled, so the record holds the chosen color as it is. That call reads the record when its queued task runs, so each actor borrows its own record from a pool of 32 in the ESP (`COLOR_FORMS` in `build.sh`, FormIDs `0x801` up, matching `HAIR_TINT_FORMS` in the script) and the script sets it with `ColorForm.SetColor` before each call. The tint lives only on the loaded 3D, so the plugin re-applies it each tick. The color it goes back to is read from the hair head part's live tint before the first change, or the hair color record doubled. Transitions step four times a second from a second script, `MTF_Plugin_RaceMenu_Loop`, on the player alias (`ALIAS_SCRIPTS` in `build.sh`), which only runs while some actor is changing. Each step of a shape rebuilds the body mesh once per changing actor. A new shape needs an id in the catalog menu, a branch in `_shapeIndex`, its slider weights in `_shapeWeight`, and any slider it uses that isn't already in `_sliderNames` added there (a slider missing from that list is never set). Slider names come from the CBBE 3BA reference slider set, `CalienteTools/BodySlide/RefTemplates/CBBE 3BA/CBBE 3BA Reference.osp`.
 
 ## Credits
 
