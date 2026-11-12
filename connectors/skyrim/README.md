@@ -4,7 +4,7 @@ More of Skyrim for your magic tattoos.
 
 ## Description
 
-This patch adds base game conditions and effects to [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF), on top of the ones built into MTF. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, with Flames in hand, or for a few seconds after a kill or a cast of Fireball. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, or grant experience.
+This patch adds base game conditions and effects to [Magic Tattoos Framework](https://www.nexusmods.com/skyrimspecialedition/mods/180775) (MTF), on top of the ones built into MTF. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, with Flames in hand, or for a few seconds after a kill or a cast of Fireball. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, grant experience, or wrap the actor in one of 80 magic auras.
 
 It adds a **Skyrim** plugin to MTF's menu and to [Magic Tattoos UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803). It doesn't edit any game records.
 
@@ -15,7 +15,7 @@ It adds a **Skyrim** plugin to MTF's menu and to [Magic Tattoos UI](https://www.
 - Optional: [powerofthree's Papyrus Extender](https://www.nexusmods.com/skyrimspecialedition/mods/22854) for Hidden, Diseased, Cure disease, and Calm enemies. Without it, those four do nothing.
 - Optional: [Magic Tattoos Framework - SKSE UI](https://www.nexusmods.com/skyrimspecialedition/mods/196803), an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these conditions and effects far easier.
 
-Dawnguard and Dragonborn come with Skyrim Special Edition. The connector uses a few of their forms: the Aetherium Forge, the Staff Enchanter, Solstheim's bounty, and the Black Book perk behind No fall damage.
+Dawnguard and Dragonborn come with Skyrim Special Edition. The connector uses a few of their forms: the Aetherium Forge, the Staff Enchanter, Solstheim's bounty, the Black Book perk behind No fall damage, and some of the magic auras.
 
 ## Installation
 
@@ -67,6 +67,7 @@ Spell school in hand and Just cast from a spell school go by the spell's costlie
 | No fall damage | while shown | (player) falling does no harm |
 | Change the weather | once | (player) the weather turns clear, cloudy, foggy, rainy, stormy, snowy, or to a blizzard |
 | Grant experience | once | (player) gains 1 to 100% of the experience their current level needs |
+| Magic aura | while shown | the actor wears one of 80 visual effects, listed below |
 
 How the effects behave:
 
@@ -79,10 +80,27 @@ How the effects behave:
 - **No fall damage.** This uses the perk from the Black Book "The Hidden Twilight". If the player has already earned that perk, it stays when the tier goes.
 - **Change the weather.** The new weather lasts until the climate changes it again on its own.
 - **Grant experience.** The amount is a share of the current level, so 10% is always a tenth of a level, at level 5 or level 50. It goes to the character level, not to any skill, and is granted each time the tier appears.
+- **Magic aura.** These are the game's own spell and power visuals, picked from the ones MTF's Shader effect doesn't already offer. Different auras stack. Two tiers with the same aura show it once, and it stays until both stop. The game doesn't save auras, so after a load each one comes back within a few seconds. When the tier stops it removes its aura from the actor, including the same visual from a real spell: Oakflesh cast while an Oakflesh tier shows loses its glow early when the tier goes.
+
+The auras, by group:
+
+| Group | Auras |
+| --- | --- |
+| Armor and elements | Oakflesh, Ironflesh, Shield spell, Shield Charge, Lightning cloak, Frost (light), Frost spikes, Ice Form, Steam, Webbed, Chaurus poison |
+| Enchantments | Enchanted glow (red, blue, purple, green), Fire, Frost, and Shock enchantment, Elemental Fury, Bound weapon, Potion glow (fire, frost, magicka, shock, poison) |
+| Illusion | Illusion (positive, negative), Fear, Paralysis, Berserker rage, Nightmare, Kyne's Peace, Animal Allegiance, Disguise |
+| Absorb | Absorb magicka, Absorb stamina, Dragon soul absorb, Greybeard power |
+| Ghosts and shadows | Ghost (violet), Wolf spirit, Call of Valor, Ghost (College of Winterhold), Nightingale spirit, Nightingale (corrupted), Nightingale shadow, Boethiah's shadow |
+| Racial powers and healing | Dragonskin, Highborn, Command Animal, Ancestor's Wrath, Histskin, Adrenaline Rush, Healing circle, Mystic healing, Water breathing |
+| Daedra and legends | Azura (radiant, corrupted), Boethiah, Sovngarde, Ancano's power, Flame Atronach |
+| Dawnguard | Sun fire cloak, Sun fire, Soul Cairn ghost, Soul Cairn, Mistform, Drain Vitality, Auriel's fire |
+| Dragonborn | Miraak's magic, Miraak's smoke, Dragon Aspect 1 to 3, Ash Shell, Ash Guardian, Whirlwind cloak, Mora's Grasp, Omen of danger, Apocrypha magic, Seeker |
+
+Some were made for one creature or scene and may look different on a person; [TESTING.md](TESTING.md) has a quick way to preview them.
 
 ## Uninstalling
 
-Take off any tattoo whose tiers use Shout recovery, Rested bonus, Facial mood, Night vision, or No fall damage, so their changes are undone. Then save, quit, and disable the plugin.
+Take off any tattoo whose tiers use Shout recovery, Rested bonus, Facial mood, Night vision, No fall damage, or Magic aura, so their changes are undone. Then save, quit, and disable the plugin.
 
 ## Troubleshooting
 
@@ -94,7 +112,7 @@ The Papyrus log (`Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.
 
 Run `make skyrim` from the repository root (or `make` in this folder) to build and copy it straight into the game's Data folder, then restart Skyrim. `make uninstall-live skyrim` removes those files. `make package skyrim` writes the release zip with the same files (it needs a `CHANGELOG.md` entry for the version; the Nexus page is `nexus/description.bbcode`), and `make staging skyrim` builds it as its own Vortex mod, **MTF Plugin - Skyrim**, instead. See the [repository README](../../README.md) for requirements. The version in `VERSION` must match `MOD_VERSION` in `Scripts/Source/MTF_Plugin_Skyrim.psc`.
 
-A second script, `MTF_Plugin_Skyrim_Load`, sits on the player alias (`ALIAS_SCRIPTS` in `build.sh`) and restores the night vision and the facial mood after a load. The game doesn't save either one, and MTF doesn't replay effects. It also passes the player's casts to Just cast a spell and Just cast from a spell school. NPCs' casts come from their `BeginCastLeft` and `BeginCastRight` animation events, read with the spell equipped in that hand.
+A second script, `MTF_Plugin_Skyrim_Load`, sits on the player alias (`ALIAS_SCRIPTS` in `build.sh`) and restores the night vision and the facial mood after a load. The game doesn't save either one, and MTF doesn't replay effects. It also counts loads as sessions: each aura remembers the session it was played in, and the effect's tick plays it again when that is an earlier one. A new aura needs a menu id in the catalog and a branch in `_auraSkyrimId`, `_auraDawnguardId`, or `_auraDragonbornId`; never rename an id once released. It also passes the player's casts to Just cast a spell and Just cast from a spell school. NPCs' casts come from their `BeginCastLeft` and `BeginCastRight` animation events, read with the spell equipped in that hand.
 
 Game forms used, all looked up at runtime:
 
@@ -107,6 +125,7 @@ Game forms used, all looked up at runtime:
 | Rested bonus | the `Rested`, `WellRested`, and `MarriageRested` abilities |
 | No fall damage | the Dragonborn perk `DLC2BlackBookNoFallingDamagePerk` |
 | Weather | the `SkyrimClear`, `SkyrimCloudy`, `SkyrimFog`, `SkyrimOvercastRain`, `SkyrimStormRain`, `SkyrimOvercastSnow`, and `SkyrimStormSnow` weathers |
+| Magic aura | 80 effect shaders from Skyrim, Dawnguard, and Dragonborn, each named next to its FormID in `_auraSkyrimId`, `_auraDawnguardId`, and `_auraDragonbornId` |
 
 ## Credits
 
