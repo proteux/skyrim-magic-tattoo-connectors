@@ -50,7 +50,8 @@ Use an actor with pale or neutral hair, such as most KS Hairdos styles, so the t
 5. Show two Hair color tiers, red then blue. The hair is blue (the newer one); stop blue and it eases to red; stop red and it eases back to its own color.
 6. While a tier shows, change the hairstyle at a barber or in RaceMenu (`showracemenu`). Within a couple of seconds the new hair takes the color too. Stop the tier: the new hair goes back to its own color.
 7. Save and reload while the tier shows. The color stays. Reload mid-transition: it lands on the final color within a moment.
-8. Try an NPC follower too. NPC hair comes from their FaceGen head, so the log's node names should still match and the hair should change the same way.
+8. Equip a KS Wigs SMP wig and start the tier. The wig takes the color, and the `hair color on` line lists its `KSSMP_<name>`, `KSSMP_<name>_HL` and `Hairline` nodes along with the hair under it. Take the wig off and put it back on: within a couple of seconds the log shows `put back` lines and the wig is colored again. Stop the tier: the wig goes back to the actor's own hair color. If it doesn't change, the `hair debug` lines show which node names were tried and whether each exists.
+9. Try an NPC follower too. NPC hair comes from their FaceGen head, so the log's node names should still match and the hair should change the same way.
 
 ## Reset
 
