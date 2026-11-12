@@ -1,1 +1,1 @@
-Tattoos that change the body wearing them. This patch connects Magic Tattoos Framework (MTF) to RaceMenu.
+Tattoos that change the body and hair wearing them. This patch connects Magic Tattoos Framework (MTF) to RaceMenu.

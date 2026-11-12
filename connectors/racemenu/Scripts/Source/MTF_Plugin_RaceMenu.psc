@@ -1,17 +1,19 @@
 ; Copyright (C) 2026 Jack Whitehouse (proteux). Licensed under the GNU General Public License v3.0 or later; see LICENSE.
 Scriptname MTF_Plugin_RaceMenu extends MTF_Plugin
-{Magic Tattoos Framework effects backed by RaceMenu: actor scale and BodySlide body shapes.
+{Magic Tattoos Framework effects backed by RaceMenu: actor scale, BodySlide body shapes, and hair color.
  Soft dependency: RaceMenu's skee plugin is checked at runtime, and the plugin stays unregistered without it.
  Catalog: SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/proteux-mtf.racemenu.json
 
- Everything goes through NiOverride under this plugin's own key, so it adds to RaceMenu's sliders, OBody
+ Scale and shapes go through NiOverride under this plugin's own key, so they add to RaceMenu's sliders, OBody
  presets, and other mods instead of overwriting them, and clearing the key undoes only this plugin's part.
- RaceMenu saves node transforms and body morphs in its co-save, so nothing needs replaying after a load.
+ Hair color is a tint override on the hair's own nodes. Those aren't keyed, so the plugin remembers each
+ node's color beforehand and puts it back. RaceMenu saves node transforms, body morphs and node overrides in
+ its co-save, so nothing needs replaying after a load.
 
  Changes ease in and out over each instance's Transition seconds. MTF's onTick is too coarse for that, so
  MTF_Plugin_RaceMenu_Loop, on the player alias, calls _step every STEP_SECONDS while any actor is moving.}
 
-string Property MOD_VERSION = "0.1.0" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.2.0" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.racemenu." AutoReadOnly Hidden
 string Property NI_KEY = "proteux-mtf.racemenu" AutoReadOnly Hidden
 string Property RAMP_LIST = "proteux-mtf.racemenu.moving" AutoReadOnly Hidden
@@ -62,6 +64,7 @@ Function _onGameLoaded()
         if moving != None
             StorageUtil.SetFloatValue(moving, KEY_PREFIX + "shape.ramp.duration", 0.0)
             StorageUtil.SetFloatValue(moving, KEY_PREFIX + "scale.ramp.duration", 0.0)
+            StorageUtil.SetFloatValue(moving, KEY_PREFIX + "hair.ramp.duration", 0.0)
         endif
     endwhile
     GetAlias(0).RegisterForSingleUpdate(STEP_SECONDS)
@@ -95,6 +98,18 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         StorageUtil.StringListAdd(target, KEY_PREFIX + "shape.instances", instKey, false)
         StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
         _startShapes(target, fade)
+    elseif eid == "hair"
+        if StorageUtil.HasIntValue(target, instKey)
+            return
+        endif
+        float fade = _clampInt(param2, 0, MAX_TRANSITION) as float
+        bool hairOnly = _paramNStrEx(slot, effectIdx, useScratch, presetName, 3) == "hair"
+        StorageUtil.SetIntValue(target, instKey, _rgb(param))
+        StorageUtil.SetIntValue(target, instKey + ".parts", hairOnly as int)
+        StorageUtil.SetFloatValue(target, instKey + ".fade", fade)
+        StorageUtil.StringListAdd(target, KEY_PREFIX + "hair.instances", instKey, false)
+        StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
+        _startHair(target, fade)
     endif
 EndFunction
 
@@ -120,6 +135,28 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
         StorageUtil.UnsetFloatValue(target, instKey + ".fade")
         StorageUtil.StringListRemove(target, KEY_PREFIX + "shape.instances", instKey, true)
         _startShapes(target, fade)
+    elseif eid == "hair"
+        if !StorageUtil.HasIntValue(target, instKey)
+            return
+        endif
+        StorageUtil.UnsetIntValue(target, instKey)
+        StorageUtil.UnsetIntValue(target, instKey + ".parts")
+        StorageUtil.UnsetFloatValue(target, instKey + ".fade")
+        StorageUtil.StringListRemove(target, KEY_PREFIX + "hair.instances", instKey, true)
+        _startHair(target, fade)
+    endif
+EndFunction
+
+; A new hairstyle, from a barber or RaceMenu, has nodes the tint isn't on yet. Picks them up between transitions.
+Function onTick(Actor target, int param, int param2, string eid, int slot, int effectIdx, bool useScratch, int baseSlot, int area, string presetName)
+    if eid != "hair" || target == None || PlayerRef == None || !target.Is3DLoaded()
+        return
+    endif
+    if StorageUtil.HasFloatValue(target, KEY_PREFIX + "hair.ramp.start")
+        return
+    endif
+    if _findHairNodes(target, _hairIncludesBeard(target))
+        _startHair(target, 0.0)
     endif
 EndFunction
 
@@ -155,6 +192,8 @@ Function _resetActor(Actor target)
     NiOverride.ClearBodyMorphKeys(target, NI_KEY)
     NiOverride.UpdateModelWeight(target)
     _setScale(target, 1.0)
+    _forgetInstances(target, "hair")
+    _startHair(target, 0.0)
 EndFunction
 
 Function _forgetInstances(Actor target, string kind)
@@ -164,6 +203,7 @@ Function _forgetInstances(Actor target, string kind)
         i -= 1
         string instKey = StorageUtil.StringListGet(target, listKey, i)
         StorageUtil.UnsetIntValue(target, instKey)
+        StorageUtil.UnsetIntValue(target, instKey + ".parts")
         StorageUtil.UnsetFloatValue(target, instKey)
         StorageUtil.UnsetFloatValue(target, instKey + ".fade")
     endwhile
@@ -183,7 +223,8 @@ bool Function _step()
         if moving != None
             bool shapeMoving = _stepShapes(moving, now)
             bool scaleMoving = _stepScale(moving, now)
-            stillMoving = shapeMoving || scaleMoving
+            bool hairMoving = _stepHair(moving, now)
+            stillMoving = shapeMoving || scaleMoving || hairMoving
         endif
         if !stillMoving
             StorageUtil.FormListRemoveAt(self, RAMP_LIST, i)
@@ -294,6 +335,269 @@ EndFunction
 bool Function _isFemale(Actor target)
     ActorBase base = target.GetLeveledActorBase()
     return base != None && base.GetSex() == 1
+EndFunction
+
+; ── Hair color ──────────────────────────────────────────────────────────────
+
+; The hair shader multiplies its texture by one tint color, NiOverride key 7. The newest instance wins; on
+; the hair alone, or the brows and beard too. Every node starts from the color it showed before the plugin
+; touched it, and gets that color back when no instance covers it any more.
+
+; Starts each node from the color it shows right now, so a change mid-transition carries on smoothly.
+Function _startHair(Actor target, float fade)
+    if StorageUtil.StringListCount(target, KEY_PREFIX + "hair.instances") > 0
+        _findHairNodes(target, _hairIncludesBeard(target))
+    endif
+    _clearHairRamp(target)
+    string listKey = KEY_PREFIX + "hair.nodes"
+    string movingKey = KEY_PREFIX + "hair.moving"
+    int n = StorageUtil.StringListCount(target, listKey)
+    if n <= 0
+        return
+    endif
+    int i = 0
+    while i < n
+        string node = StorageUtil.StringListGet(target, listKey, i)
+        string nodeKey = _hairNodeKey(node)
+        StorageUtil.SetIntValue(target, nodeKey + ".from", StorageUtil.GetIntValue(target, nodeKey + ".cur"))
+        StorageUtil.SetIntValue(target, nodeKey + ".to", _hairGoal(target, nodeKey))
+        StorageUtil.StringListAdd(target, movingKey, node, false)
+        i += 1
+    endwhile
+    if fade <= 0.0
+        _finishHair(target)
+        return
+    endif
+    _beginRamp(target, "hair", fade)
+EndFunction
+
+; Steps aren't saved: RaceMenu keeps the last finished color until the transition ends.
+bool Function _stepHair(Actor target, float now)
+    float eased = _rampProgress(target, "hair", now)
+    if eased < 0.0
+        return false
+    endif
+    if eased >= 1.0
+        _finishHair(target)
+        return false
+    endif
+    if !target.Is3DLoaded()
+        return true
+    endif
+    bool isFemale = _isFemale(target)
+    string movingKey = KEY_PREFIX + "hair.moving"
+    int n = StorageUtil.StringListCount(target, movingKey)
+    int i = 0
+    while i < n
+        string node = StorageUtil.StringListGet(target, movingKey, i)
+        string nodeKey = _hairNodeKey(node)
+        int from = StorageUtil.GetIntValue(target, nodeKey + ".from")
+        int goal = StorageUtil.GetIntValue(target, nodeKey + ".to")
+        if from != goal
+            int color = _blendColor(from, goal, eased)
+            StorageUtil.SetIntValue(target, nodeKey + ".cur", color)
+            NiOverride.AddNodeOverrideInt(target, isFemale, node, 7, -1, color, false)
+        endif
+        i += 1
+    endwhile
+    return true
+EndFunction
+
+; Saves each node's final color. A node no instance covers gets its own color back and is forgotten; the
+; override comes off after ApplyNodeOverrides, which leaves that color showing until the head next loads.
+Function _finishHair(Actor target)
+    bool isFemale = _isFemale(target)
+    string movingKey = KEY_PREFIX + "hair.moving"
+    string applied = ""
+    int n = StorageUtil.StringListCount(target, movingKey)
+    int i = 0
+    while i < n
+        string node = StorageUtil.StringListGet(target, movingKey, i)
+        string nodeKey = _hairNodeKey(node)
+        int goal = StorageUtil.GetIntValue(target, nodeKey + ".to")
+        StorageUtil.SetIntValue(target, nodeKey + ".cur", goal)
+        NiOverride.AddNodeOverrideInt(target, isFemale, node, 7, -1, goal, true)
+        if _hairCovers(target, nodeKey)
+            applied += " " + node + "=#" + _hex(goal)
+        endif
+        i += 1
+    endwhile
+    NiOverride.ApplyNodeOverrides(target)
+    i = n
+    while i > 0
+        i -= 1
+        string node = StorageUtil.StringListGet(target, movingKey, i)
+        if !_hairCovers(target, _hairNodeKey(node))
+            _forgetHairNode(target, node, isFemale)
+        endif
+    endwhile
+    _clearHairRamp(target)
+    if applied == ""
+        applied = " none"
+    endif
+    Debug.Trace("[MTF_Plugin_RaceMenu] hair color on " + target.GetName() + ":" + applied)
+EndFunction
+
+Function _clearHairRamp(Actor target)
+    string movingKey = KEY_PREFIX + "hair.moving"
+    int i = StorageUtil.StringListCount(target, movingKey)
+    while i > 0
+        i -= 1
+        string nodeKey = _hairNodeKey(StorageUtil.StringListGet(target, movingKey, i))
+        StorageUtil.UnsetIntValue(target, nodeKey + ".from")
+        StorageUtil.UnsetIntValue(target, nodeKey + ".to")
+    endwhile
+    StorageUtil.StringListClear(target, movingKey)
+    _endRamp(target, "hair")
+EndFunction
+
+; Head part types: 3 hair, 4 facial hair, 6 brows. Each part's extra parts, such as a hairline, come along.
+; Returns whether any node is new.
+bool Function _findHairNodes(Actor target, bool includeBeard)
+    ActorBase base = target.GetLeveledActorBase()
+    if base == None
+        return false
+    endif
+    bool added = false
+    int i = base.GetNumHeadParts()
+    while i > 0
+        i -= 1
+        HeadPart part = base.GetNthHeadPart(i)
+        if part != None
+            int type = part.GetType()
+            bool beard = type == 4 || type == 6
+            if type == 3 || (beard && includeBeard)
+                if _addHairNode(target, part.GetPartName(), beard)
+                    added = true
+                endif
+                int e = part.GetNumExtraParts()
+                while e > 0
+                    e -= 1
+                    HeadPart extra = part.GetNthExtraPart(e)
+                    if extra != None && _addHairNode(target, extra.GetPartName(), beard)
+                        added = true
+                    endif
+                endwhile
+            endif
+        endif
+    endwhile
+    return added
+EndFunction
+
+; A head part's node in the actor's 3D is named after its editor ID. The color it shows now is remembered:
+; another mod's override if there is one (kept afterwards), else the live shader's, else the NPC's hair color.
+bool Function _addHairNode(Actor target, string node, bool beard)
+    string listKey = KEY_PREFIX + "hair.nodes"
+    if node == "" || StorageUtil.StringListFind(target, listKey, node) >= 0
+        return false
+    endif
+    string nodeKey = _hairNodeKey(node)
+    bool isFemale = _isFemale(target)
+    int orig = 0
+    if NiOverride.HasNodeOverride(target, isFemale, node, 7, -1)
+        orig = _rgb(NiOverride.GetNodeOverrideInt(target, isFemale, node, 7, -1))
+        StorageUtil.SetIntValue(target, nodeKey + ".kept", 1)
+    elseif target.Is3DLoaded()
+        orig = _rgb(NiOverride.GetNodePropertyInt(target, false, node, 7, -1))
+    endif
+    if orig == 0
+        orig = _baseHairColor(target)
+    endif
+    StorageUtil.SetIntValue(target, nodeKey, orig)
+    StorageUtil.SetIntValue(target, nodeKey + ".cur", orig)
+    StorageUtil.SetIntValue(target, nodeKey + ".beard", beard as int)
+    StorageUtil.StringListAdd(target, listKey, node, false)
+    return true
+EndFunction
+
+; Expects the node's own color to be showing already. Another mod's override stays; this plugin's comes off.
+Function _forgetHairNode(Actor target, string node, bool isFemale)
+    string nodeKey = _hairNodeKey(node)
+    if StorageUtil.GetIntValue(target, nodeKey + ".kept") == 0
+        NiOverride.RemoveNodeOverride(target, isFemale, node, 7, -1)
+    endif
+    StorageUtil.UnsetIntValue(target, nodeKey)
+    StorageUtil.UnsetIntValue(target, nodeKey + ".cur")
+    StorageUtil.UnsetIntValue(target, nodeKey + ".beard")
+    StorageUtil.UnsetIntValue(target, nodeKey + ".kept")
+    StorageUtil.UnsetIntValue(target, nodeKey + ".from")
+    StorageUtil.UnsetIntValue(target, nodeKey + ".to")
+    StorageUtil.StringListRemove(target, KEY_PREFIX + "hair.nodes", node, true)
+EndFunction
+
+bool Function _hairCovers(Actor target, string nodeKey)
+    string listKey = KEY_PREFIX + "hair.instances"
+    int n = StorageUtil.StringListCount(target, listKey)
+    if n <= 0
+        return false
+    endif
+    if StorageUtil.GetIntValue(target, nodeKey + ".beard") == 0
+        return true
+    endif
+    return StorageUtil.GetIntValue(target, StorageUtil.StringListGet(target, listKey, n - 1) + ".parts") == 0
+EndFunction
+
+bool Function _hairIncludesBeard(Actor target)
+    string listKey = KEY_PREFIX + "hair.instances"
+    int n = StorageUtil.StringListCount(target, listKey)
+    return n > 0 && StorageUtil.GetIntValue(target, StorageUtil.StringListGet(target, listKey, n - 1) + ".parts") == 0
+EndFunction
+
+int Function _hairGoal(Actor target, string nodeKey)
+    if !_hairCovers(target, nodeKey)
+        return StorageUtil.GetIntValue(target, nodeKey)
+    endif
+    string listKey = KEY_PREFIX + "hair.instances"
+    int n = StorageUtil.StringListCount(target, listKey)
+    return StorageUtil.GetIntValue(target, StorageUtil.StringListGet(target, listKey, n - 1))
+EndFunction
+
+; White leaves the hair texture as it is.
+int Function _baseHairColor(Actor target)
+    ActorBase base = target.GetLeveledActorBase()
+    if base != None
+        ColorForm color = base.GetHairColor()
+        if color != None
+            return _rgb(color.GetColor())
+        endif
+    endif
+    return 0xFFFFFF
+EndFunction
+
+string Function _hairNodeKey(string node)
+    return KEY_PREFIX + "hair.node." + node
+EndFunction
+
+; Drops any alpha byte, leaving 0xRRGGBB.
+int Function _rgb(int color) global
+    color = color % 0x1000000
+    if color < 0
+        color += 0x1000000
+    endif
+    return color
+EndFunction
+
+int Function _blendColor(int from, int goal, float t) global
+    int r = _blendChannel(from / 0x10000, goal / 0x10000, t)
+    int g = _blendChannel((from / 0x100) % 0x100, (goal / 0x100) % 0x100, t)
+    int b = _blendChannel(from % 0x100, goal % 0x100, t)
+    return r * 0x10000 + g * 0x100 + b
+EndFunction
+
+int Function _blendChannel(int from, int goal, float t) global
+    return (from as float + (goal - from) as float * t + 0.5) as int
+EndFunction
+
+string Function _hex(int color) global
+    string digits = "0123456789ABCDEF"
+    string s = ""
+    int i = 0
+    while i < 6
+        s = StringUtil.GetNthChar(digits, color % 16) + s
+        color /= 16
+        i += 1
+    endwhile
+    return s
 EndFunction
 
 ; ── Body shapes ─────────────────────────────────────────────────────────────

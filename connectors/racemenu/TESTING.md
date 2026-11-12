@@ -39,16 +39,29 @@ Then go through the rest of the menu at 100%, one tier at a time, and check that
 
 On a male actor or a BHUNP body, nothing should change, and the Papyrus log should stay free of errors.
 
+## Hair color
+
+Use an actor with pale or neutral hair, such as most KS Hairdos styles, so the tint is easy to see. Every change logs `[MTF_Plugin_RaceMenu] hair color on <name>: <node>=#RRGGBB ...` (or `none` when the hair goes back to its own color) once it finishes.
+
+1. Put Hair color on a tier with a strong color such as pure green, Transition 0, Covers **Hair, brows and beard**. When it shows, the hair, brows and any beard turn green, and the log lists the hair node (and usually a hairline node) by its head part's editor ID. **This is the first thing to check:** if the log lists nodes but nothing changes, the tint isn't reaching the hair shader, and the effect needs a different approach.
+2. Stop the tier. The hair, brows and beard go back to exactly their own color.
+3. Set Covers to **Hair only**. Only the hair changes; brows and beard keep their color.
+4. Set Transition to 10 seconds. The color should fade smoothly from the hair's own color to green and back. If it jumps at the end instead of fading, RaceMenu doesn't show unsaved overrides live, and steps need `ApplyNodeOverrides`; note it.
+5. Show two Hair color tiers, red then blue. The hair is blue (the newer one); stop blue and it eases to red; stop red and it eases back to its own color.
+6. While a tier shows, change the hairstyle at a barber or in RaceMenu (`showracemenu`). Within a couple of seconds the new hair takes the color too. Stop the tier: the new hair goes back to its own color.
+7. Save and reload while the tier shows. The color stays. Reload mid-transition: it lands on the final color within a moment.
+8. Try an NPC follower too. NPC hair comes from their FaceGen head, so the log's node names should still match and the hair should change the same way.
+
 ## Reset
 
-1. Show a Bigger bust tier and an Actor scale tier at 150% on the player, and a Body shape tier on an NPC.
-2. Enter `setpqv MTF_Plugin_RaceMenu ResetOnLoad 1`, save, and load that save. Both actors go back to their own shape and size, and the log shows `[MTF_Plugin_RaceMenu] reset 2 actor(s)`.
+1. Show a Bigger bust tier and an Actor scale tier at 150% on the player, and a Body shape tier and a Hair color tier on an NPC.
+2. Enter `setpqv MTF_Plugin_RaceMenu ResetOnLoad 1`, save, and load that save. Both actors go back to their own shape, size and hair color, and the log shows `[MTF_Plugin_RaceMenu] reset 2 actor(s)`.
 3. `sqv MTF_Plugin_RaceMenu` shows `::ResetOnLoad_var = 0`. Load again: nothing resets.
 4. Stop the tiers and start them again. The changes come back, and stopping them clears them as usual.
 
 ## Registration
 
-The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.racemenu'` and `[MTF_Plugin_RaceMenu] 0.1.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
+The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.racemenu'` and `[MTF_Plugin_RaceMenu] 0.2.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
 
 ```
 sqv MTF_Plugin_RaceMenu

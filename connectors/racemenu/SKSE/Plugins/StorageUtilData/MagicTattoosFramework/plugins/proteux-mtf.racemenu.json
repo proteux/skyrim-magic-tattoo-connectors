@@ -46,6 +46,21 @@
       },
       "param2": { "label": "Strength", "min": 5, "max": 100, "step": 5, "default": 75, "format": "{0}%" },
       "param3": { "label": "Transition", "min": 0, "max": 30, "default": 5, "format": "{0} s" }
+    },
+    {
+      "id": "hair",
+      "label": "Hair color",
+      "description": "While shown, the actor's hair is tinted the chosen color ({param3}), changing over {param2}. The tint multiplies the hair's own color, so it can darken or shift it but not lighten it.",
+      "param1": { "label": "Color", "color": 1, "default": 12597547 },
+      "param2": { "label": "Transition", "min": 0, "max": 30, "default": 5, "format": "{0} s" },
+      "param3": {
+        "label": "Covers",
+        "default": "all",
+        "menu": [
+          { "id": "all", "label": "Hair, brows and beard" },
+          { "id": "hair", "label": "Hair only" }
+        ]
+      }
     }
   ]
 }

@@ -16,3 +16,15 @@ Function ClearBodyMorph(ObjectReference ref, string morphName, string keyName) n
 Function ClearBodyMorphKeys(ObjectReference ref, string keyName) native global
 
 Function UpdateModelWeight(ObjectReference ref) native global
+
+Function AddNodeOverrideInt(ObjectReference ref, bool isFemale, string node, int key, int index, int value, bool persist) native global
+
+bool Function HasNodeOverride(ObjectReference ref, bool isFemale, string node, int key, int index) native global
+
+int Function GetNodeOverrideInt(ObjectReference ref, bool isFemale, string node, int key, int index) native global
+
+Function ApplyNodeOverrides(ObjectReference ref) native global
+
+Function RemoveNodeOverride(ObjectReference ref, bool isFemale, string node, int key, int index) native global
+
+int Function GetNodePropertyInt(ObjectReference ref, bool firstPerson, string node, int key, int index) native global
