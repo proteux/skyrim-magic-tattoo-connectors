@@ -104,6 +104,7 @@ Function _onGameLoaded()
         return
     endif
     _sweep()
+    _reapplyHairTintAll()
     int i = StorageUtil.FormListCount(self, RAMP_LIST)
     if i <= 0
         return
@@ -121,6 +122,30 @@ Function _onGameLoaded()
     GetAlias(0).RegisterForSingleUpdate(STEP_SECONDS)
 EndFunction
 
+; The game doesn't save Hair color (any wig)'s tint, so it goes back on at once for every loaded actor that has it,
+; rather than waiting for their next onTick.
+Function _reapplyHairTintAll()
+    _reapplyHairTintIfLoaded(PlayerRef)
+    MTF_MainQuest host = _host()
+    if host == None
+        return
+    endif
+    int t = host.GetTrackedCount()
+    while t > 0
+        t -= 1
+        Actor tracked = host.GetTrackedAt(t)
+        if tracked != None && tracked != PlayerRef
+            _reapplyHairTintIfLoaded(tracked)
+        endif
+    endwhile
+EndFunction
+
+Function _reapplyHairTintIfLoaded(Actor target)
+    if target.Is3DLoaded() && StorageUtil.HasIntValue(target, KEY_PREFIX + "hairtint.cur")
+        _reapplyHairTint(target)
+    endif
+EndFunction
+
 ; ── Effects ─────────────────────────────────────────────────────────────────
 
 Function onActivate(Actor target, int param, int param2, string eid, int slot, int effectIdx, bool useScratch, int baseSlot, int area, string presetName)
@@ -128,6 +153,7 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         return
     endif
     _checkInstall(target)
+    StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
     string instKey = _instanceKey(eid, slot, effectIdx)
     StorageUtil.StringListRemove(target, HEAL_LIST, instKey, true)
     if eid == "scale"
@@ -158,7 +184,6 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         StorageUtil.SetFloatValue(target, instKey + ".fade", fade)
         StorageUtil.StringListAdd(target, KEY_PREFIX + "hair.instances", instKey, false)
         _startHair(target, fade)
-        _logHairDebug(target)
     elseif eid == "hairtint"
         if StorageUtil.HasIntValue(target, instKey)
             return
@@ -247,7 +272,6 @@ Function onTick(Actor target, int param, int param2, string eid, int slot, int e
     endif
     if _findHairNodes(target, false)
         _startHair(target, 0.0)
-        _logHairDebug(target)
     else
         _repairHair(target)
     endif
@@ -313,15 +337,17 @@ EndFunction
 
 ; MTF can't deactivate tiers while this plugin is missing, so their instances outlive them and would block those
 ; tiers from applying again. An actor stamped by another install is undone first, as by the reset, and the
-; instances it had are kept so onTick can apply any tier MTF still shows.
+; instances it had are kept so onTick can apply any tier MTF still shows. An actor never stamped, from a save
+; made before stamps existed, is only stamped: its changes are still live.
 Function _checkInstall(Actor target)
     int id = _installId()
-    if StorageUtil.GetIntValue(target, INSTALL_KEY) == id
+    int stamp = StorageUtil.GetIntValue(target, INSTALL_KEY)
+    if stamp == id
         return
     endif
     StorageUtil.SetIntValue(target, INSTALL_KEY, id)
     StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
-    if !_hasInstances(target)
+    if stamp == 0 || !_hasInstances(target)
         return
     endif
     Debug.Trace("[MTF_Plugin_RaceMenu] " + _actorName(target) + " had changes left from a load without this plugin, so they're undone first")
@@ -359,8 +385,9 @@ Function _sweep()
     endwhile
 EndFunction
 
+; Includes hair nodes and a hair tint with no instance left, which would otherwise stay tinted.
 bool Function _hasInstances(Actor target)
-    return StorageUtil.StringListCount(target, KEY_PREFIX + "scale.instances") > 0 || StorageUtil.StringListCount(target, KEY_PREFIX + "shape.instances") > 0 || StorageUtil.StringListCount(target, KEY_PREFIX + "hair.instances") > 0 || StorageUtil.StringListCount(target, KEY_PREFIX + "hairtint.instances") > 0
+    return StorageUtil.StringListCount(target, KEY_PREFIX + "scale.instances") > 0 || StorageUtil.StringListCount(target, KEY_PREFIX + "shape.instances") > 0 || StorageUtil.StringListCount(target, KEY_PREFIX + "hair.instances") > 0 || StorageUtil.StringListCount(target, KEY_PREFIX + "hairtint.instances") > 0 || StorageUtil.StringListCount(target, KEY_PREFIX + "hair.nodes") > 0 || StorageUtil.HasIntValue(target, KEY_PREFIX + "hairtint.cur")
 EndFunction
 
 Function _forgetInstances(Actor target, string kind)
@@ -660,7 +687,10 @@ bool Function _findWornHair(Actor target, Armor worn, string slot, bool rescan)
             while k < 4
                 string node = _wigNodeName(name, k)
                 if node != "" && NetImmerse.HasNode(target, node, false)
-                    found = true
+                    ; The actor's own hair often has a Hairline too, so only names from the wig's mesh show it was found.
+                    if k < 3
+                        found = true
+                    endif
                     if _addHairNode(target, node)
                         added = true
                     endif
@@ -677,7 +707,7 @@ bool Function _findWornHair(Actor target, Armor worn, string slot, bool rescan)
 EndFunction
 
 bool Function _inHairSlot(int slotMask) global
-    return (slotMask / 0x2) % 2 != 0 || (slotMask / 0x800) % 2 != 0
+    return Math.LogicalAnd(slotMask, 0x802) != 0
 EndFunction
 
 string Function _wigNodeName(string name, int k) global
@@ -825,100 +855,6 @@ int Function _doubleChannel(int c) global
     return c * 2
 EndFunction
 
-; Lists what the hair effect can see on the actor: head parts, the items worn in the hair slots (31 and 41)
-; with the node names a wig's mesh suggests, and the nodes being tinted. Each node shows whether it exists in
-; the actor's 3D and its live tint.
-Function _logHairDebug(Actor target)
-    string tag = "[MTF_Plugin_RaceMenu] hair debug: "
-    bool isFemale = _isFemale(target)
-    Debug.Trace(tag + _actorName(target) + ", 3D loaded " + target.Is3DLoaded() + ", female " + isFemale)
-    ActorBase base = target.GetLeveledActorBase()
-    if base != None
-        string recordColor = "none"
-        ColorForm color = base.GetHairColor()
-        if color != None
-            recordColor = "#" + _hex(_rgb(color.GetColor()))
-        endif
-        Debug.Trace(tag + "hair color record " + recordColor)
-        int n = base.GetNumHeadParts()
-        int i = 0
-        while i < n
-            HeadPart part = base.GetNthHeadPart(i)
-            if part != None
-                Debug.Trace(tag + "head part type " + part.GetType() + " " + part.GetPartName() + _hairNodeState(target, part.GetPartName()))
-                int e = 0
-                int extras = part.GetNumExtraParts()
-                while e < extras
-                    HeadPart extra = part.GetNthExtraPart(e)
-                    if extra != None
-                        Debug.Trace(tag + "  extra type " + extra.GetType() + " " + extra.GetPartName() + _hairNodeState(target, extra.GetPartName()))
-                    endif
-                    e += 1
-                endwhile
-            endif
-            i += 1
-        endwhile
-    endif
-    Form slot31 = target.GetWornForm(0x2)
-    _logWornHair(target, slot31, "31", isFemale)
-    Form slot41 = target.GetWornForm(0x800)
-    if slot41 != None && slot41 == slot31
-        Debug.Trace(tag + "slot 41: the same item")
-    else
-        _logWornHair(target, slot41, "41", isFemale)
-    endif
-    string listKey = KEY_PREFIX + "hair.nodes"
-    int count = StorageUtil.StringListCount(target, listKey)
-    int t = 0
-    while t < count
-        string node = StorageUtil.StringListGet(target, listKey, t)
-        string nodeKey = _hairNodeKey(node)
-        Debug.Trace(tag + "tracking " + node + ": own #" + _hex(StorageUtil.GetIntValue(target, nodeKey)) + ", set #" + _hex(StorageUtil.GetIntValue(target, nodeKey + ".cur")) + _hairNodeState(target, node))
-        t += 1
-    endwhile
-EndFunction
-
-Function _logWornHair(Actor target, Form worn, string slot, bool isFemale)
-    string tag = "[MTF_Plugin_RaceMenu] hair debug: "
-    if worn == None
-        Debug.Trace(tag + "slot " + slot + ": empty")
-        return
-    endif
-    Debug.Trace(tag + "slot " + slot + ": " + worn.GetName() + " (form id " + worn.GetFormID() + ")")
-    Armor item = worn as Armor
-    if item == None
-        return
-    endif
-    int n = item.GetNumArmorAddons()
-    int i = 0
-    while i < n
-        ArmorAddon addon = item.GetNthArmorAddon(i)
-        if addon != None
-            string path = addon.GetModelPath(false, isFemale)
-            Debug.Trace(tag + "  addon " + i + ": slot mask " + addon.GetSlotMask() + ", model " + path)
-            string name = _modelBaseName(path)
-            if name != ""
-                Debug.Trace(tag + "    KSSMP_" + name + _hairNodeState(target, "KSSMP_" + name))
-                Debug.Trace(tag + "    KSSMP_" + name + "_HL" + _hairNodeState(target, "KSSMP_" + name + "_HL"))
-                Debug.Trace(tag + "    " + name + _hairNodeState(target, name))
-            endif
-        endif
-        i += 1
-    endwhile
-    Debug.Trace(tag + "  Hairline" + _hairNodeState(target, "Hairline"))
-EndFunction
-
-string Function _hairNodeState(Actor target, string node)
-    if node == ""
-        return ""
-    elseif !target.Is3DLoaded()
-        return " (3D not loaded)"
-    elseif !NetImmerse.HasNode(target, node, false)
-        return " (no node)"
-    endif
-    return " (node, tint #" + _hex(_rgb(NiOverride.GetNodePropertyInt(target, false, node, 7, -1))) + ")"
-EndFunction
-
 ; "Armor\KSWigsHDT\f\Anchor_0.nif" gives "Anchor": the file name without its extension or weight suffix.
 string Function _modelBaseName(string path) global
     string name = _afterLast(_afterLast(path, "\\"), "/")
@@ -1006,11 +942,7 @@ EndFunction
 ; onTick puts the tint back.
 
 bool Function _hasPapyrusExtender()
-    if SKSE.GetPluginVersion("powerofthree's Papyrus Extender") > 0 || SKSE.GetPluginVersion("po3_PapyrusExtender") > 0
-        return true
-    endif
-    int[] version = PO3_SKSEFunctions.GetPapyrusExtenderVersion()
-    return version.Length > 0
+    return SKSE.GetPluginVersion("powerofthree's Papyrus Extender") > 0 || SKSE.GetPluginVersion("po3_PapyrusExtender") > 0
 EndFunction
 
 ; Starts from the color shown right now, so a change mid-transition carries on smoothly. An actor that
@@ -1161,17 +1093,23 @@ ColorForm Function _hairTintForm(Actor target)
     return record
 EndFunction
 
-; A record is free when no actor holds it, or its holder has let go of it, such as after a reset.
+; A record is free when no actor holds it, or its holder has let go of it, such as after a reset. A record let
+; go of may still be read by its last SetHairColor, so the search starts after the last record claimed and a
+; freed one isn't handed out again until the others have been tried.
 int Function _claimHairTintForm(Actor target)
-    int i = 0
-    while i < HAIR_TINT_FORMS
+    string nextKey = KEY_PREFIX + "hairtint.next"
+    int start = StorageUtil.GetIntValue(self, nextKey)
+    int tried = 0
+    while tried < HAIR_TINT_FORMS
+        int i = (start + tried) % HAIR_TINT_FORMS
         string ownerKey = KEY_PREFIX + "hairtint.owner." + i
         Form owner = StorageUtil.GetFormValue(self, ownerKey)
         if owner == None || StorageUtil.GetIntValue(owner, KEY_PREFIX + "hairtint.form") != i + 1
             StorageUtil.SetFormValue(self, ownerKey, target)
+            StorageUtil.SetIntValue(self, nextKey, (i + 1) % HAIR_TINT_FORMS)
             return i
         endif
-        i += 1
+        tried += 1
     endwhile
     Debug.Trace("[MTF_Plugin_RaceMenu] hair tint: all " + HAIR_TINT_FORMS + " colors are in use, so " + _actorName(target) + " keeps their hair color")
     return -1

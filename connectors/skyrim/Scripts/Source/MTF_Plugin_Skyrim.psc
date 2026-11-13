@@ -1180,14 +1180,16 @@ EndFunction
 
 ; MTF can't deactivate tiers while this plugin is missing, so their instances outlive them and would block those
 ; tiers from applying again. An actor stamped by another install is undone first, as by the reset, and the
-; instances it had are kept so onTick can apply any tier MTF still shows.
+; instances it had are kept so onTick can apply any tier MTF still shows. An actor never stamped, from a save
+; made before stamps existed, is only stamped: its changes are still live.
 Function _checkInstall(Actor target)
     int id = _installId()
-    if StorageUtil.GetIntValue(target, INSTALL_KEY) == id
+    int stamp = StorageUtil.GetIntValue(target, INSTALL_KEY)
+    if stamp == id
         return
     endif
     StorageUtil.SetIntValue(target, INSTALL_KEY, id)
-    if !_hasInstances(target)
+    if stamp == 0 || !_hasInstances(target)
         return
     endif
     Debug.Trace("[MTF_Plugin_Skyrim] " + target.GetDisplayName() + " had changes left from a load without this plugin, so they're undone first")

@@ -117,6 +117,12 @@ sms 0005d608
 3. Enable the plugin and load that save. The log shows `had changes left from a load without this plugin, so they're undone first` for both actors. The NPC's face relaxes and stays. Within a few seconds the player's tiers apply again: `getav ShoutRecoveryMult` matches the noted value, not double it.
 4. Stop the player's tiers. Shout recovery goes back to where it was before step 1, and falling hurts again.
 
+## Upgrading
+
+1. With 0.2.0 installed, show Shout recovery at 50% and a Magic aura on the player, and save. Note `getav ShoutRecoveryMult`.
+2. Install this version and load that save. The aura plays as usual, `getav ShoutRecoveryMult` is unchanged, and the log has no `had changes left` line.
+3. Stop the tiers. Both changes go back as usual.
+
 ## Registration
 
 The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.2.1 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:

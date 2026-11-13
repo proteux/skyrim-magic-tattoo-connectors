@@ -45,11 +45,11 @@ Use an actor with pale or neutral hair, such as most KS Hairdos styles, so the t
 
 1. Put Hair color on a tier with a strong color such as pure green, Transition 0. When it shows, the hair turns green, and the log lists the hair node (and usually a hairline node) by its head part's editor ID. **This is the first thing to check:** if the log lists nodes but nothing changes, the tint isn't reaching the hair shader, and the effect needs a different approach.
 2. Stop the tier. The hair goes back to exactly its own color.
-3. Set Transition to 10 seconds. The color should fade smoothly from the hair's own color to green and back. If it jumps at the end instead of fading, RaceMenu doesn't show unsaved overrides live, and steps need `ApplyNodeOverrides`; note it.
+3. Set Transition to 10 seconds. The color should fade smoothly from the hair's own color to green and back, not jump at the end.
 4. Show two Hair color tiers, red then blue. The hair is blue (the newer one); stop blue and it eases to red; stop red and it eases back to its own color.
 5. While a tier shows, change the hairstyle at a barber or in RaceMenu (`showracemenu`). Within a couple of seconds the new hair takes the color too. Stop the tier: the new hair goes back to its own color.
 6. Save and reload while the tier shows. The color stays. Reload mid-transition: it lands on the final color within a moment.
-7. Equip a KS Wigs SMP wig and start the tier. The wig takes the color, and the `hair color on` line lists its `KSSMP_<name>`, `KSSMP_<name>_HL` and `Hairline` nodes along with the hair under it. Take the wig off and put it back on: within a couple of seconds the log shows `put back` lines and the wig is colored again. Stop the tier: the wig goes back to the actor's own hair color. If it doesn't change, the `hair debug` lines show which node names were tried and whether each exists.
+7. Equip a KS Wigs SMP wig and start the tier. The wig takes the color, and the `hair color on` line lists its `KSSMP_<name>`, `KSSMP_<name>_HL` and `Hairline` nodes along with the hair under it. Take the wig off and put it back on: within a couple of seconds the log shows `put back` lines and the wig is colored again. Stop the tier: the wig goes back to the actor's own hair color.
 8. Try an NPC follower too. NPC hair comes from their FaceGen head, so the log's node names should still match and the hair should change the same way.
 
 ## Hair color (any wig)
@@ -61,7 +61,7 @@ Needs powerofthree's Papyrus Extender. Every change logs `[MTF_Plugin_RaceMenu] 
 3. Set Transition to 10 seconds. The color fades smoothly to green and back.
 4. Show two tiers, red then blue. The hair is blue; stop blue and it eases to red; stop red and it eases back.
 5. Equip a wig that Hair color misses (any wig that isn't KS, or a KS elf wig) and start the tier. The wig takes the color. Take it off and put it back on: within a couple of seconds it's green again.
-6. Save and reload while the tier shows. The hair shows its own color briefly, then green again within a couple of seconds.
+6. Save and reload while the tier shows. The hair is green as soon as the game shows the player, or within a couple of seconds at most.
 7. Show the tier on the player and two NPCs at once with different colors, Transition 5. Each actor keeps its own color, with no flicker of another's.
 8. Uninstall test: disable powerofthree's Papyrus Extender and start the tier. The log shows `needs powerofthree's Papyrus Extender, which isn't installed` and nothing else happens.
 
@@ -79,6 +79,12 @@ Needs powerofthree's Papyrus Extender. Every change logs `[MTF_Plugin_RaceMenu] 
 3. Enable the plugin and load that save. The log shows `had changes left from a load without this plugin, so they're undone first` for both actors. The NPC's hair goes back to their own color and stays. The player's shape goes back, then fades in again within a few seconds.
 4. Stop the player's tier. The shape goes back as usual, and doesn't come back.
 5. `sqv MTF_Plugin_RaceMenu` shows a nonzero `::InstallId_var`. Load again: nothing is undone.
+
+## Upgrading
+
+1. With 0.1.0 installed, show a Body shape tier on the player and save.
+2. Install this version and load that save. The shape stays as it was, with no snap back or fade, and the log has no `had changes left` line.
+3. Stop the tier. The shape goes back as usual.
 
 ## Registration
 
