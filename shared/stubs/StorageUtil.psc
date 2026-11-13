@@ -41,3 +41,12 @@ int function StringListRemove(Form ObjKey, string KeyName, string value, bool al
 int function StringListCount(Form ObjKey, string KeyName) global native
 int function StringListClear(Form ObjKey, string KeyName) global native
 int function StringListFind(Form ObjKey, string KeyName, string value) global native
+
+int function CountObjIntValuePrefix(Form ObjKey, string PrefixKey) global native
+int function CountObjFloatValuePrefix(Form ObjKey, string PrefixKey) global native
+int function CountObjStringValuePrefix(Form ObjKey, string PrefixKey) global native
+int function ClearObjIntValuePrefix(Form ObjKey, string PrefixKey) global native
+
+string[] function debug_AllObjIntKeys(Form ObjKey) global native
+string[] function debug_AllObjFloatKeys(Form ObjKey) global native
+string[] function debug_AllObjStringKeys(Form ObjKey) global native

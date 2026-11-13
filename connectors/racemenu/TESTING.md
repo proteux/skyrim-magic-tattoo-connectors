@@ -43,21 +43,20 @@ On a male actor or a BHUNP body, nothing should change, and the Papyrus log shou
 
 Use an actor with pale or neutral hair, such as most KS Hairdos styles, so the tint is easy to see. Every change logs `[MTF_Plugin_RaceMenu] hair color on <name>: <node>=#RRGGBB ...` (or `none` when the hair goes back to its own color) once it finishes.
 
-1. Put Hair color on a tier with a strong color such as pure green, Transition 0, Covers **Hair, brows and beard**. When it shows, the hair, brows and any beard turn green, and the log lists the hair node (and usually a hairline node) by its head part's editor ID. **This is the first thing to check:** if the log lists nodes but nothing changes, the tint isn't reaching the hair shader, and the effect needs a different approach.
-2. Stop the tier. The hair, brows and beard go back to exactly their own color.
-3. Set Covers to **Hair only**. Only the hair changes; brows and beard keep their color.
-4. Set Transition to 10 seconds. The color should fade smoothly from the hair's own color to green and back. If it jumps at the end instead of fading, RaceMenu doesn't show unsaved overrides live, and steps need `ApplyNodeOverrides`; note it.
-5. Show two Hair color tiers, red then blue. The hair is blue (the newer one); stop blue and it eases to red; stop red and it eases back to its own color.
-6. While a tier shows, change the hairstyle at a barber or in RaceMenu (`showracemenu`). Within a couple of seconds the new hair takes the color too. Stop the tier: the new hair goes back to its own color.
-7. Save and reload while the tier shows. The color stays. Reload mid-transition: it lands on the final color within a moment.
-8. Equip a KS Wigs SMP wig and start the tier. The wig takes the color, and the `hair color on` line lists its `KSSMP_<name>`, `KSSMP_<name>_HL` and `Hairline` nodes along with the hair under it. Take the wig off and put it back on: within a couple of seconds the log shows `put back` lines and the wig is colored again. Stop the tier: the wig goes back to the actor's own hair color. If it doesn't change, the `hair debug` lines show which node names were tried and whether each exists.
-9. Try an NPC follower too. NPC hair comes from their FaceGen head, so the log's node names should still match and the hair should change the same way.
+1. Put Hair color on a tier with a strong color such as pure green, Transition 0. When it shows, the hair turns green, and the log lists the hair node (and usually a hairline node) by its head part's editor ID. **This is the first thing to check:** if the log lists nodes but nothing changes, the tint isn't reaching the hair shader, and the effect needs a different approach.
+2. Stop the tier. The hair goes back to exactly its own color.
+3. Set Transition to 10 seconds. The color should fade smoothly from the hair's own color to green and back. If it jumps at the end instead of fading, RaceMenu doesn't show unsaved overrides live, and steps need `ApplyNodeOverrides`; note it.
+4. Show two Hair color tiers, red then blue. The hair is blue (the newer one); stop blue and it eases to red; stop red and it eases back to its own color.
+5. While a tier shows, change the hairstyle at a barber or in RaceMenu (`showracemenu`). Within a couple of seconds the new hair takes the color too. Stop the tier: the new hair goes back to its own color.
+6. Save and reload while the tier shows. The color stays. Reload mid-transition: it lands on the final color within a moment.
+7. Equip a KS Wigs SMP wig and start the tier. The wig takes the color, and the `hair color on` line lists its `KSSMP_<name>`, `KSSMP_<name>_HL` and `Hairline` nodes along with the hair under it. Take the wig off and put it back on: within a couple of seconds the log shows `put back` lines and the wig is colored again. Stop the tier: the wig goes back to the actor's own hair color. If it doesn't change, the `hair debug` lines show which node names were tried and whether each exists.
+8. Try an NPC follower too. NPC hair comes from their FaceGen head, so the log's node names should still match and the hair should change the same way.
 
 ## Hair color (any wig)
 
 Needs powerofthree's Papyrus Extender. Every change logs `[MTF_Plugin_RaceMenu] hair tint on <name>: #RRGGBB` (or `none`) once it finishes. Don't run Hair color on the same actor at the same time.
 
-1. Put Hair color (any wig) on a tier with pure green, Transition 0. When it shows, the hair, brows and beard turn green. **This is the first thing to check:** if the log line appears but nothing changes, `SetHairColor` isn't taking the pool's color record.
+1. Put Hair color (any wig) on a tier with pure green, Transition 0. When it shows, the hair turns green. **This is the first thing to check:** if the log line appears but nothing changes, `SetHairColor` isn't taking the pool's color record.
 2. Stop the tier. The hair goes back to its own color. On the player, compare with RaceMenu's hair color: it should match.
 3. Set Transition to 10 seconds. The color fades smoothly to green and back.
 4. Show two tiers, red then blue. The hair is blue; stop blue and it eases to red; stop red and it eases back.
@@ -72,6 +71,14 @@ Needs powerofthree's Papyrus Extender. Every change logs `[MTF_Plugin_RaceMenu] 
 2. Enter `setpqv MTF_Plugin_RaceMenu ResetOnLoad 1`, save, and load that save. Both actors go back to their own shape, size and hair color, and the log shows `[MTF_Plugin_RaceMenu] reset 2 actor(s)`.
 3. `sqv MTF_Plugin_RaceMenu` shows `::ResetOnLoad_var = 0`. Load again: nothing resets.
 4. Stop the tiers and start them again. The changes come back, and stopping them clears them as usual.
+
+## Reinstalling
+
+1. Show a Body shape tier on the player and a Hair color tier on an NPC.
+2. Disable `MTF_Plugin_RaceMenu.esp`, load the save, stop the NPC's tier but leave the player's showing, and save again.
+3. Enable the plugin and load that save. The log shows `had changes left from a load without this plugin, so they're undone first` for both actors. The NPC's hair goes back to their own color and stays. The player's shape goes back, then fades in again within a few seconds.
+4. Stop the player's tier. The shape goes back as usual, and doesn't come back.
+5. `sqv MTF_Plugin_RaceMenu` shows a nonzero `::InstallId_var`. Load again: nothing is undone.
 
 ## Registration
 

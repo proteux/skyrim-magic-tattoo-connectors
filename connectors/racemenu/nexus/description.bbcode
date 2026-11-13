@@ -26,8 +26,8 @@ Install with your mod manager and enable [font=Courier New]MTF_Plugin_RaceMenu.e
 [list]
 [*][b]Actor scale[/b] ([i]while shown[/i]): the actor is 50 to 200% of their usual size
 [*][b]Body shape[/b] ([i]while shown[/i]): the body takes one of 23 shapes at 5 to 100% strength
-[*][b]Hair color[/b] ([i]while shown[/i]): the hair, and optionally the brows and beard, are tinted any color
-[*][b]Hair color (any wig)[/b] ([i]while shown[/i]): everything drawn as hair, any wig included, is tinted any color
+[*][b]Hair color[/b] ([i]while shown[/i]): the hair is tinted any color; works on the actor's own hair and KS Hairdos wigs
+[*][b]Hair color (any wig)[/b] ([i]while shown[/i]): the hair and any wig are tinted any color; needs powerofthree's Papyrus Extender
 [/list]
 
 Every effect has a [b]Transition[/b] setting, 0 to 30 seconds (5 by default). The body or hair eases from how it looks now to the new look over that time instead of changing at once, starting and stopping gently, and eases back the same way when the tier stops. 0 changes it instantly. A change that arrives mid-transition carries on from wherever it is. Loading a save finishes any transition that was under way.
@@ -79,7 +79,7 @@ The schlong, glans and balls shapes move the genital meshes from [url=https://ww
 
 Either kind needs to be built in BodySlide with [b]Build Morphs[/b] checked. You'll see [font=Courier New].tri[/font] files next to the meshes, for example [font=Courier New]actors/character/character assets/TNG/m_genitals.tri[/font].
 
-[b]Hair color[/b] sets the tint that Skyrim's hair shader multiplies the hair texture by, the same tint RaceMenu's hair color slider changes. [b]Covers[/b] picks the hair alone, or the hair, brows and beard together. When several Hair color tiers show at once, the one that started last wins, and when it stops the next one takes over. When none are left, the hair goes back to its own color.
+[b]Hair color[/b] sets the tint that Skyrim's hair shader multiplies the hair texture by, the same tint RaceMenu's hair color slider changes. When several Hair color tiers show at once, the one that started last wins, and when it stops the next one takes over. When none are left, the hair goes back to its own color.
 
 Because the tint multiplies the texture, it can darken a color or shift it, but not lighten it. Hair with pale, neutral textures, which is most hair made to be recolored in RaceMenu, takes any color well. Dark or already-colored hair textures only get darker or tinted, so a platinum color on black hair stays dark.
 
@@ -87,7 +87,13 @@ Wigs from [url=https://www.nexusmods.com/skyrimspecialedition/mods/31300]KS Hair
 
 A new hairstyle or wig picks up the color within a couple of seconds, and so does a wig taken off and put back on, or hair whose physics reset.
 
-[b]Hair color (any wig)[/b] is the same tint applied a different way, through [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url], for when Hair color misses a wig. It tints every part of the actor drawn with the hair shader, whatever mod it comes from, so it works on any wig, but it always includes the brows and beard. Its Color and Transition settings work like Hair color's, and so does the newest tier winning. The tint isn't saved with the game, so after loading a save, or putting a wig on, the hair shows its own color for a couple of seconds before the tint comes back. Use one hair effect or the other on an actor, not both at once.
+[b]Hair color (any wig)[/b] is the same tint applied a different way, through [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url], for when Hair color misses a wig. It tints every part of the actor drawn with the hair shader, whatever mod it comes from, so it works on any wig. Its Color and Transition settings work like Hair color's, and so does the newest tier winning. The tint isn't saved with the game, so after loading a save, or putting a wig on, the hair shows its own color for a couple of seconds before the tint comes back. Use one hair effect or the other on an actor, not both at once.
+
+Which hair effect to use:
+[list]
+[*][b]Hair color[/b] for the actor's own hairstyle, or a KS Hairdos wig. Its color holds steady through loads.
+[*][b]Hair color (any wig)[/b] when the actor wears a wig that Hair color leaves unchanged, such as one from another wig mod or a KS elf wig. Its color drops for a moment after loads.
+[/list]
 
 All the effects work on the player and NPCs. They stay after a load until the tier stops: RaceMenu saves all but Hair color (any wig), which the plugin puts back itself.
 
@@ -105,13 +111,15 @@ The reset only touches this plugin's own changes. RaceMenu sliders, OBody preset
 
 Take off any tattoo whose tiers use these effects, so the body and hair go back to normal, or use the reset above. Then save, quit, and disable the plugin.
 
+If you play on without the plugin and later add it back, its leftover changes are undone on the first load, and any tier still showing applies again a few seconds later.
+
 [size=5][b]Troubleshooting[/b][/size]
 
 The Papyrus log ([font=Courier New]Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.0.log[/font]) should show [font=Courier New][MTF_Main] Registered 'proteux-mtf.racemenu'[/font] a few seconds after loading a save. If it doesn't, check that RaceMenu and MTF are enabled and that [font=Courier New]MTF_Plugin_RaceMenu.esp[/font] loads after [font=Courier New]MagicTattoosFramework.esp[/font].
 
 Each Body shape change logs a line such as [font=Courier New][MTF_Plugin_RaceMenu] body morphs on Lydia: Breasts=1.000000[/font] once it finishes (after the transition), so you can tell whether the effect ran. If the line appears but the body doesn't change, the body has no morphs. Rebuild it in BodySlide with [b]Build Morphs[/b] checked; a [font=Courier New]femalebody.tri[/font] file should appear next to [font=Courier New]femalebody_0.nif[/font] and [font=Courier New]femalebody_1.nif[/font].
 
-Each Hair color change logs a line such as [font=Courier New][MTF_Plugin_RaceMenu] hair color on Lydia: HairFemaleNord06=#C0392B[/font] once it finishes, listing each hair, brow and beard part it tinted ([font=Courier New]none[/font] when the hair goes back to its own color). If the line lists parts but the hair doesn't change, that hair's texture is too dark to show the tint, or it's a wig the plugin can't find parts for.
+Each Hair color change logs a line such as [font=Courier New][MTF_Plugin_RaceMenu] hair color on Lydia: HairFemaleNord06=#C0392B[/font] once it finishes, listing each hair part it tinted ([font=Courier New]none[/font] when the hair goes back to its own color). If the line lists parts but the hair doesn't change, that hair's texture is too dark to show the tint, or it's a wig the plugin can't find parts for.
 
 Each time a Hair color tier starts, the log also lists what the effect can see, in lines starting [font=Courier New][MTF_Plugin_RaceMenu] hair debug:[/font]: the actor's head parts, anything worn in the hair slots (31 and 41) with the part names its mesh suggests, and the parts being tinted. Each part shows [font=Courier New](no node)[/font] if the actor doesn't have it, or its color right now.
 

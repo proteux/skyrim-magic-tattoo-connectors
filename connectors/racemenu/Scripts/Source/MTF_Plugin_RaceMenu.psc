@@ -21,6 +21,8 @@ string Property KEY_PREFIX = "proteux-mtf.racemenu." AutoReadOnly Hidden
 string Property NI_KEY = "proteux-mtf.racemenu" AutoReadOnly Hidden
 string Property RAMP_LIST = "proteux-mtf.racemenu.moving" AutoReadOnly Hidden
 string Property ACTOR_LIST = "proteux-mtf.racemenu.actors" AutoReadOnly Hidden
+string Property INSTALL_KEY = "proteux-mtf.racemenu.install" AutoReadOnly Hidden
+string Property HEAL_LIST = "proteux-mtf.racemenu.heal" AutoReadOnly Hidden
 float Property STEP_SECONDS = 0.25 AutoReadOnly Hidden
 int Property MAX_TRANSITION = 30 AutoReadOnly Hidden
 string Property ESP_NAME = "MTF_Plugin_RaceMenu.esp" AutoReadOnly Hidden
@@ -31,6 +33,9 @@ Actor Property PlayerRef Auto Hidden
 ; Set to 1 from the console (setpqv MTF_Plugin_RaceMenu ResetOnLoad 1); the next save load undoes every
 ; change this plugin made and sets it back to 0. Skyrim's console can't call a script function directly.
 int Property ResetOnLoad = 0 Auto Hidden
+; Picked on first use and stamped on every actor this plugin touches. A save loaded without the plugin loses
+; it, so a new one is picked when the plugin comes back, and actors stamped with the old one are found stale.
+int Property InstallId = 0 Auto Hidden
 
 string Function GetPluginId()
     return "proteux-mtf.racemenu"
@@ -50,16 +55,55 @@ EndFunction
 
 Function _onRegistered()
     Debug.Trace("[MTF_Plugin_RaceMenu] " + MOD_VERSION + " registered as " + GetPluginId())
+    _replaceStale(_host())
+    _sweep()
+EndFunction
+
+; _tryRegister does nothing once _registered is set, so a plugin missing from MTF's list would never be called
+; again. Registers anew when MTF no longer lists this plugin.
+Function _checkRegistered()
+    MTF_MainQuest host = _host()
+    if host == None || _replaceStale(host)
+        return
+    endif
+    if !_registered || host.FindPlugin(GetPluginId()) == self
+        return
+    endif
+    Debug.Trace("[MTF_Plugin_RaceMenu] MTF had lost this plugin, so it registers again")
+    _registered = false
+    _tryRegister()
+EndFunction
+
+; A save can keep a copy of this script whose quest is gone, from an earlier install. MTF lists it under this
+; plugin's id, so it calls that copy, which does nothing, and won't register this one. Puts this one in its place.
+bool Function _replaceStale(MTF_MainQuest host)
+    if host == None
+        return false
+    endif
+    int idx = host.FindPluginIndex(GetPluginId())
+    if idx < 0 || host.FindPlugin(GetPluginId()) == self
+        return false
+    endif
+    Form[] plugins = host.registeredPlugins
+    plugins[idx] = self
+    _registered = true
+    Debug.Trace("[MTF_Plugin_RaceMenu] MTF listed a copy of this plugin left from an earlier install, so it lists this one instead")
+    return true
 EndFunction
 
 ; Real time restarts on load, which would stall or jump a transition saved mid-way, so they all finish
 ; on the next step instead.
 Function _onGameLoaded()
+    if PlayerRef == None
+        return
+    endif
+    _checkRegistered()
     if ResetOnLoad != 0
         ResetOnLoad = 0
         _resetAll()
         return
     endif
+    _sweep()
     int i = StorageUtil.FormListCount(self, RAMP_LIST)
     if i <= 0
         return
@@ -83,7 +127,9 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
     if target == None || PlayerRef == None
         return
     endif
+    _checkInstall(target)
     string instKey = _instanceKey(eid, slot, effectIdx)
+    StorageUtil.StringListRemove(target, HEAL_LIST, instKey, true)
     if eid == "scale"
         if param <= 0 || StorageUtil.HasFloatValue(target, instKey)
             return
@@ -92,7 +138,6 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         StorageUtil.SetFloatValue(target, instKey, param as float / 100.0)
         StorageUtil.SetFloatValue(target, instKey + ".fade", fade)
         StorageUtil.StringListAdd(target, KEY_PREFIX + "scale.instances", instKey, false)
-        StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
         _startScale(target, fade)
     elseif eid == "shape"
         int shape = _shapeIndex(_paramNStrEx(slot, effectIdx, useScratch, presetName, 1))
@@ -103,19 +148,15 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         StorageUtil.SetIntValue(target, instKey, shape * 1000 + _clampInt(param2, 0, 100))
         StorageUtil.SetFloatValue(target, instKey + ".fade", fade)
         StorageUtil.StringListAdd(target, KEY_PREFIX + "shape.instances", instKey, false)
-        StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
         _startShapes(target, fade)
     elseif eid == "hair"
         if StorageUtil.HasIntValue(target, instKey)
             return
         endif
         float fade = _clampInt(param2, 0, MAX_TRANSITION) as float
-        bool hairOnly = _paramNStrEx(slot, effectIdx, useScratch, presetName, 3) == "hair"
         StorageUtil.SetIntValue(target, instKey, _rgb(param))
-        StorageUtil.SetIntValue(target, instKey + ".parts", hairOnly as int)
         StorageUtil.SetFloatValue(target, instKey + ".fade", fade)
         StorageUtil.StringListAdd(target, KEY_PREFIX + "hair.instances", instKey, false)
-        StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
         _startHair(target, fade)
         _logHairDebug(target)
     elseif eid == "hairtint"
@@ -130,7 +171,6 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         StorageUtil.SetIntValue(target, instKey, _rgb(param))
         StorageUtil.SetFloatValue(target, instKey + ".fade", fade)
         StorageUtil.StringListAdd(target, KEY_PREFIX + "hairtint.instances", instKey, false)
-        StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
         _startHairTint(target, fade)
     endif
 EndFunction
@@ -139,7 +179,9 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
     if target == None || PlayerRef == None
         return
     endif
+    _checkInstall(target)
     string instKey = _instanceKey(eid, slot, effectIdx)
+    StorageUtil.StringListRemove(target, HEAL_LIST, instKey, true)
     float fade = StorageUtil.GetFloatValue(target, instKey + ".fade")
     if eid == "scale"
         if !StorageUtil.HasFloatValue(target, instKey)
@@ -162,7 +204,6 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
             return
         endif
         StorageUtil.UnsetIntValue(target, instKey)
-        StorageUtil.UnsetIntValue(target, instKey + ".parts")
         StorageUtil.UnsetFloatValue(target, instKey + ".fade")
         StorageUtil.StringListRemove(target, KEY_PREFIX + "hair.instances", instKey, true)
         _startHair(target, fade)
@@ -179,8 +220,18 @@ EndFunction
 
 ; A new hairstyle or wig has nodes the tint isn't on yet, and a wig put back on, or hair physics rebuilding the
 ; mesh, loses the tint. Between transitions, picks up new nodes or puts the color back.
+; A tier undone as stale while MTF still shows it gets no new onActivate, so it applies again here.
 Function onTick(Actor target, int param, int param2, string eid, int slot, int effectIdx, bool useScratch, int baseSlot, int area, string presetName)
-    if target == None || PlayerRef == None || !target.Is3DLoaded()
+    if target == None || PlayerRef == None
+        return
+    endif
+    _checkInstall(target)
+    if !target.Is3DLoaded()
+        return
+    endif
+    if StorageUtil.StringListFind(target, HEAL_LIST, _instanceKey(eid, slot, effectIdx)) >= 0
+        Debug.Trace("[MTF_Plugin_RaceMenu] " + eid + " on " + _actorName(target) + " applies again")
+        onActivate(target, param, param2, eid, slot, effectIdx, useScratch, baseSlot, area, presetName)
         return
     endif
     if eid == "hairtint"
@@ -194,7 +245,7 @@ Function onTick(Actor target, int param, int param2, string eid, int slot, int e
     if StorageUtil.HasFloatValue(target, KEY_PREFIX + "hair.ramp.start")
         return
     endif
-    if _findHairNodes(target, _hairIncludesBeard(target), false)
+    if _findHairNodes(target, false)
         _startHair(target, 0.0)
         _logHairDebug(target)
     else
@@ -206,9 +257,21 @@ EndFunction
 
 ; Undoes every change on every actor this plugin has touched, and forgets the tiers it applied. MTF still
 ; counts those tiers as showing, so their onDeactivate finds nothing to undo, and they apply again the next
-; time they start. The player is always included, in case they were touched before the actor list existed.
+; time they start. The player is always included, in case they were touched before the actor list existed, and
+; so is every actor MTF tracks that still has this plugin's records, in case the list was lost.
 Function _resetAll()
     StorageUtil.FormListAdd(self, ACTOR_LIST, PlayerRef, false)
+    MTF_MainQuest host = _host()
+    if host != None
+        int t = host.GetTrackedCount()
+        while t > 0
+            t -= 1
+            Actor tracked = host.GetTrackedAt(t)
+            if tracked != None && _hasInstances(tracked)
+                StorageUtil.FormListAdd(self, ACTOR_LIST, tracked, false)
+            endif
+        endwhile
+    endif
     int i = StorageUtil.FormListCount(self, ACTOR_LIST)
     int count = 0
     while i > 0
@@ -216,6 +279,7 @@ Function _resetAll()
         Actor target = StorageUtil.FormListGet(self, ACTOR_LIST, i) as Actor
         if target != None
             _resetActor(target)
+            StorageUtil.StringListClear(target, HEAL_LIST)
             count += 1
         endif
     endwhile
@@ -240,6 +304,65 @@ Function _resetActor(Actor target)
     _startHairTint(target, 0.0)
 EndFunction
 
+int Function _installId()
+    if InstallId == 0
+        InstallId = Utility.RandomInt(1, 2147483647)
+    endif
+    return InstallId
+EndFunction
+
+; MTF can't deactivate tiers while this plugin is missing, so their instances outlive them and would block those
+; tiers from applying again. An actor stamped by another install is undone first, as by the reset, and the
+; instances it had are kept so onTick can apply any tier MTF still shows.
+Function _checkInstall(Actor target)
+    int id = _installId()
+    if StorageUtil.GetIntValue(target, INSTALL_KEY) == id
+        return
+    endif
+    StorageUtil.SetIntValue(target, INSTALL_KEY, id)
+    StorageUtil.FormListAdd(self, ACTOR_LIST, target, false)
+    if !_hasInstances(target)
+        return
+    endif
+    Debug.Trace("[MTF_Plugin_RaceMenu] " + _actorName(target) + " had changes left from a load without this plugin, so they're undone first")
+    _keepForHeal(target, "scale")
+    _keepForHeal(target, "shape")
+    _keepForHeal(target, "hair")
+    _keepForHeal(target, "hairtint")
+    _resetActor(target)
+EndFunction
+
+Function _keepForHeal(Actor target, string kind)
+    string listKey = KEY_PREFIX + kind + ".instances"
+    int i = StorageUtil.StringListCount(target, listKey)
+    while i > 0
+        i -= 1
+        StorageUtil.StringListAdd(target, HEAL_LIST, StorageUtil.StringListGet(target, listKey, i), false)
+    endwhile
+EndFunction
+
+; Finds stale actors without waiting for one of their tiers, so changes from a tier that stopped while the plugin
+; was missing are undone too.
+Function _sweep()
+    _checkInstall(PlayerRef)
+    MTF_MainQuest host = _host()
+    if host == None
+        return
+    endif
+    int t = host.GetTrackedCount()
+    while t > 0
+        t -= 1
+        Actor tracked = host.GetTrackedAt(t)
+        if tracked != None
+            _checkInstall(tracked)
+        endif
+    endwhile
+EndFunction
+
+bool Function _hasInstances(Actor target)
+    return StorageUtil.StringListCount(target, KEY_PREFIX + "scale.instances") > 0 || StorageUtil.StringListCount(target, KEY_PREFIX + "shape.instances") > 0 || StorageUtil.StringListCount(target, KEY_PREFIX + "hair.instances") > 0 || StorageUtil.StringListCount(target, KEY_PREFIX + "hairtint.instances") > 0
+EndFunction
+
 Function _forgetInstances(Actor target, string kind)
     string listKey = KEY_PREFIX + kind + ".instances"
     int i = StorageUtil.StringListCount(target, listKey)
@@ -247,7 +370,6 @@ Function _forgetInstances(Actor target, string kind)
         i -= 1
         string instKey = StorageUtil.StringListGet(target, listKey, i)
         StorageUtil.UnsetIntValue(target, instKey)
-        StorageUtil.UnsetIntValue(target, instKey + ".parts")
         StorageUtil.UnsetFloatValue(target, instKey)
         StorageUtil.UnsetFloatValue(target, instKey + ".fade")
     endwhile
@@ -384,14 +506,14 @@ EndFunction
 
 ; ── Hair color ──────────────────────────────────────────────────────────────
 
-; The hair shader multiplies its texture by one tint color, NiOverride key 7. The newest instance wins; on
-; the hair alone, or the brows and beard too. Every node starts from the color it showed before the plugin
-; touched it, and gets that color back when no instance covers it any more.
+; The hair shader multiplies its texture by one tint color, NiOverride key 7. The newest instance wins. Every
+; node starts from the color it showed before the plugin touched it, and gets that color back when no
+; instance shows any more.
 
 ; Starts each node from the color it shows right now, so a change mid-transition carries on smoothly.
 Function _startHair(Actor target, float fade)
-    if StorageUtil.StringListCount(target, KEY_PREFIX + "hair.instances") > 0
-        _findHairNodes(target, _hairIncludesBeard(target), true)
+    if _hairShown(target)
+        _findHairNodes(target, true)
     endif
     _clearHairRamp(target)
     string listKey = KEY_PREFIX + "hair.nodes"
@@ -448,7 +570,7 @@ bool Function _stepHair(Actor target, float now)
     return true
 EndFunction
 
-; Saves each node's final color. A node no instance covers gets its own color back and is forgotten; the
+; Saves each node's final color. Once no instance shows, each node has its own color back and is forgotten; the
 ; override comes off after ApplyNodeOverrides, which leaves that color showing until the head next loads.
 Function _finishHair(Actor target)
     bool isFemale = _isFemale(target)
@@ -462,20 +584,19 @@ Function _finishHair(Actor target)
         int goal = StorageUtil.GetIntValue(target, nodeKey + ".to")
         StorageUtil.SetIntValue(target, nodeKey + ".cur", goal)
         NiOverride.AddNodeOverrideInt(target, isFemale, node, 7, -1, goal, true)
-        if _hairCovers(target, nodeKey)
+        if _hairShown(target)
             applied += " " + node + "=#" + _hex(goal)
         endif
         i += 1
     endwhile
     NiOverride.ApplyNodeOverrides(target)
-    i = n
-    while i > 0
-        i -= 1
-        string node = StorageUtil.StringListGet(target, movingKey, i)
-        if !_hairCovers(target, _hairNodeKey(node))
-            _forgetHairNode(target, node, isFemale)
-        endif
-    endwhile
+    if !_hairShown(target)
+        i = n
+        while i > 0
+            i -= 1
+            _forgetHairNode(target, StorageUtil.StringListGet(target, movingKey, i), isFemale)
+        endwhile
+    endif
     _clearHairRamp(target)
     if applied == ""
         applied = " none"
@@ -496,16 +617,16 @@ Function _clearHairRamp(Actor target)
     _endRamp(target, "hair")
 EndFunction
 
-; Head part types: 3 hair, 4 facial hair, 6 brows. Each part's extra parts, such as a hairline, come along,
-; and so does a wig worn in the hair slots. Returns whether any node is new.
-bool Function _findHairNodes(Actor target, bool includeBeard, bool rescanWorn)
+; The hair head part (type 3) and its extra parts, such as a hairline, and any wig worn in the hair slots.
+; Returns whether any node is new.
+bool Function _findHairNodes(Actor target, bool rescanWorn)
     Form worn31 = target.GetWornForm(0x2)
     Form worn41 = target.GetWornForm(0x800)
     bool added = _findWornHair(target, worn31 as Armor, "31", rescanWorn)
     if worn41 != worn31 && _findWornHair(target, worn41 as Armor, "41", rescanWorn)
         added = true
     endif
-    if _findHeadPartHair(target, includeBeard)
+    if _findHeadPartHair(target)
         added = true
     endif
     return added
@@ -540,7 +661,7 @@ bool Function _findWornHair(Actor target, Armor worn, string slot, bool rescan)
                 string node = _wigNodeName(name, k)
                 if node != "" && NetImmerse.HasNode(target, node, false)
                     found = true
-                    if _addHairNode(target, node, false)
+                    if _addHairNode(target, node)
                         added = true
                     endif
                 endif
@@ -582,7 +703,7 @@ Function _repairHair(Actor target)
         i -= 1
         string node = StorageUtil.StringListGet(target, listKey, i)
         string nodeKey = _hairNodeKey(node)
-        if _hairCovers(target, nodeKey) && NetImmerse.HasNode(target, node, false)
+        if _hairShown(target) && NetImmerse.HasNode(target, node, false)
             int want = StorageUtil.GetIntValue(target, nodeKey + ".cur")
             int live = _rgb(NiOverride.GetNodePropertyInt(target, false, node, 7, -1))
             if !_closeColor(want, live)
@@ -604,7 +725,7 @@ int Function _channelGap(int a, int b) global
     return b - a
 EndFunction
 
-bool Function _findHeadPartHair(Actor target, bool includeBeard)
+bool Function _findHeadPartHair(Actor target)
     ActorBase base = target.GetLeveledActorBase()
     if base == None
         return false
@@ -614,22 +735,18 @@ bool Function _findHeadPartHair(Actor target, bool includeBeard)
     while i > 0
         i -= 1
         HeadPart part = base.GetNthHeadPart(i)
-        if part != None
-            int type = part.GetType()
-            bool beard = type == 4 || type == 6
-            if type == 3 || (beard && includeBeard)
-                if _addHairNode(target, part.GetPartName(), beard)
+        if part != None && part.GetType() == 3
+            if _addHairNode(target, part.GetPartName())
+                added = true
+            endif
+            int e = part.GetNumExtraParts()
+            while e > 0
+                e -= 1
+                HeadPart extra = part.GetNthExtraPart(e)
+                if extra != None && _addHairNode(target, extra.GetPartName())
                     added = true
                 endif
-                int e = part.GetNumExtraParts()
-                while e > 0
-                    e -= 1
-                    HeadPart extra = part.GetNthExtraPart(e)
-                    if extra != None && _addHairNode(target, extra.GetPartName(), beard)
-                        added = true
-                    endif
-                endwhile
-            endif
+            endwhile
         endif
     endwhile
     return added
@@ -637,7 +754,7 @@ EndFunction
 
 ; A head part's node in the actor's 3D is named after its editor ID. The color it shows now is remembered:
 ; another mod's override if there is one (kept afterwards), else the live shader's, else the NPC's hair color.
-bool Function _addHairNode(Actor target, string node, bool beard)
+bool Function _addHairNode(Actor target, string node)
     string listKey = KEY_PREFIX + "hair.nodes"
     if node == "" || StorageUtil.StringListFind(target, listKey, node) >= 0
         return false
@@ -656,7 +773,6 @@ bool Function _addHairNode(Actor target, string node, bool beard)
     endif
     StorageUtil.SetIntValue(target, nodeKey, orig)
     StorageUtil.SetIntValue(target, nodeKey + ".cur", orig)
-    StorageUtil.SetIntValue(target, nodeKey + ".beard", beard as int)
     StorageUtil.StringListAdd(target, listKey, node, false)
     return true
 EndFunction
@@ -669,33 +785,18 @@ Function _forgetHairNode(Actor target, string node, bool isFemale)
     endif
     StorageUtil.UnsetIntValue(target, nodeKey)
     StorageUtil.UnsetIntValue(target, nodeKey + ".cur")
-    StorageUtil.UnsetIntValue(target, nodeKey + ".beard")
     StorageUtil.UnsetIntValue(target, nodeKey + ".kept")
     StorageUtil.UnsetIntValue(target, nodeKey + ".from")
     StorageUtil.UnsetIntValue(target, nodeKey + ".to")
     StorageUtil.StringListRemove(target, KEY_PREFIX + "hair.nodes", node, true)
 EndFunction
 
-bool Function _hairCovers(Actor target, string nodeKey)
-    string listKey = KEY_PREFIX + "hair.instances"
-    int n = StorageUtil.StringListCount(target, listKey)
-    if n <= 0
-        return false
-    endif
-    if StorageUtil.GetIntValue(target, nodeKey + ".beard") == 0
-        return true
-    endif
-    return StorageUtil.GetIntValue(target, StorageUtil.StringListGet(target, listKey, n - 1) + ".parts") == 0
-EndFunction
-
-bool Function _hairIncludesBeard(Actor target)
-    string listKey = KEY_PREFIX + "hair.instances"
-    int n = StorageUtil.StringListCount(target, listKey)
-    return n > 0 && StorageUtil.GetIntValue(target, StorageUtil.StringListGet(target, listKey, n - 1) + ".parts") == 0
+bool Function _hairShown(Actor target)
+    return StorageUtil.StringListCount(target, KEY_PREFIX + "hair.instances") > 0
 EndFunction
 
 int Function _hairGoal(Actor target, string nodeKey)
-    if !_hairCovers(target, nodeKey)
+    if !_hairShown(target)
         return StorageUtil.GetIntValue(target, nodeKey)
     endif
     string listKey = KEY_PREFIX + "hair.instances"

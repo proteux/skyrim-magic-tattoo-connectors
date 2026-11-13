@@ -50,22 +50,14 @@
     {
       "id": "hair",
       "label": "Hair color",
-      "description": "While shown, the actor's hair is tinted the chosen color ({param3}), changing over {param2}. The best choice for the actor's own hairstyle and KS Hairdos wigs: it can leave the brows and beard alone, and it stays put through loads. If a wig doesn't change color, use Hair color (any wig) instead. The tint multiplies the hair's own color, so it can darken or shift it but not lighten it.",
+      "description": "While shown, the actor's hair is tinted the chosen color, changing over {param2}. The best choice for the actor's own hairstyle and KS Hairdos wigs: it stays put through loads. If a wig doesn't change color, use Hair color (any wig) instead. The tint multiplies the hair's own color, so it can darken or shift it but not lighten it.",
       "param1": { "label": "Color", "color": 1, "default": 12597547 },
-      "param2": { "label": "Transition", "min": 0, "max": 30, "default": 5, "format": "{0} s" },
-      "param3": {
-        "label": "Covers",
-        "default": "all",
-        "menu": [
-          { "id": "all", "label": "Hair, brows and beard" },
-          { "id": "hair", "label": "Hair only" }
-        ]
-      }
+      "param2": { "label": "Transition", "min": 0, "max": 30, "default": 5, "format": "{0} s" }
     },
     {
       "id": "hairtint",
       "label": "Hair color (any wig)",
-      "description": "Needs powerofthree's Papyrus Extender. While shown, everything on the actor drawn as hair is tinted the chosen color, changing over {param2}: hair, brows, beard and any wig, whatever mod it comes from. Pick it when Hair color leaves a wig unchanged. It can't leave the brows and beard out, and after a load or a wig change the hair shows its own color for a couple of seconds before the tint returns. Don't use both hair effects on the same actor. The tint multiplies the hair's own color, so it can darken or shift it but not lighten it.",
+      "description": "Needs powerofthree's Papyrus Extender. While shown, everything on the actor drawn as hair is tinted the chosen color, changing over {param2}: the hair and any wig, whatever mod it comes from. Pick it when Hair color leaves a wig unchanged. After a load or a wig change the hair shows its own color for a couple of seconds before the tint returns. Don't use both hair effects on the same actor. The tint multiplies the hair's own color, so it can darken or shift it but not lighten it.",
       "param1": { "label": "Color", "color": 1, "default": 12597547 },
       "param2": { "label": "Transition", "min": 0, "max": 30, "default": 5, "format": "{0} s" }
     }

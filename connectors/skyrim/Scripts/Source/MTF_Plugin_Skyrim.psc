@@ -12,7 +12,7 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.2.0" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.2.1" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -24,8 +24,16 @@ int Property KILL_LOG_MAX = 20 AutoReadOnly Hidden
 float Property CAST_WINDOW_MAX = 120.0 AutoReadOnly Hidden
 int Property CAST_LOG_MAX = 10 AutoReadOnly Hidden
 int Property CAST_WATCH_MAX = 32 AutoReadOnly Hidden
+string Property INSTALL_KEY = "proteux-mtf.skyrim.install" AutoReadOnly Hidden
+string Property HEAL_LIST = "proteux-mtf.skyrim.heal" AutoReadOnly Hidden
 
 Actor Property PlayerRef Auto Hidden
+; Set to 1 from the console (setpqv MTF_Plugin_Skyrim ResetOnLoad 1); the next save load undoes every
+; change this plugin's effects made and sets it back to 0. Skyrim's console can't call a script function directly.
+int Property ResetOnLoad = 0 Auto Hidden
+; Picked on first use and stamped on every actor this plugin's effects touch. A save loaded without the plugin
+; loses it, so a new one is picked when the plugin comes back, and actors stamped with the old one are found stale.
+int Property InstallId = 0 Auto Hidden
 string Property ResolvedVersion Auto Hidden
 GlobalVariable Property GameMonth Auto Hidden
 GlobalVariable Property GameDay Auto Hidden
@@ -106,11 +114,52 @@ EndFunction
 
 Function _onRegistered()
     Debug.Trace("[MTF_Plugin_Skyrim] " + MOD_VERSION + " registered as " + GetPluginId())
+    _replaceStale(_host())
+    _sweep()
+EndFunction
+
+; _tryRegister does nothing once _registered is set, so a plugin missing from MTF's list would never be called
+; again. Registers anew when MTF no longer lists this plugin.
+Function _checkRegistered()
+    MTF_MainQuest host = _host()
+    if host == None || _replaceStale(host)
+        return
+    endif
+    if !_registered || host.FindPlugin(GetPluginId()) == self
+        return
+    endif
+    Debug.Trace("[MTF_Plugin_Skyrim] MTF had lost this plugin, so it registers again")
+    _registered = false
+    _tryRegister()
+EndFunction
+
+; A save can keep a copy of this script whose quest is gone, from an earlier install. MTF lists it under this
+; plugin's id, so it calls that copy, which does nothing, and won't register this one. Puts this one in its place.
+bool Function _replaceStale(MTF_MainQuest host)
+    if host == None
+        return false
+    endif
+    int idx = host.FindPluginIndex(GetPluginId())
+    if idx < 0 || host.FindPlugin(GetPluginId()) == self
+        return false
+    endif
+    Form[] plugins = host.registeredPlugins
+    plugins[idx] = self
+    _registered = true
+    Debug.Trace("[MTF_Plugin_Skyrim] MTF listed a copy of this plugin left from an earlier install, so it lists this one instead")
+    return true
 EndFunction
 
 Function _onGameLoaded()
     _resolveDeps()
+    _checkRegistered()
     StorageUtil.AdjustIntValue(PlayerRef, KEY_PREFIX + "session", 1)
+    if ResetOnLoad != 0
+        ResetOnLoad = 0
+        _resetAll()
+    else
+        _sweep()
+    endif
     if NightEyeFX != None && StorageUtil.GetIntValue(PlayerRef, KEY_PREFIX + "nighteye.count") > 0
         NightEyeFX.ApplyCrossFade(1.0)
     endif
@@ -855,7 +904,9 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
     if target == None || PlayerRef == None
         return
     endif
+    _checkInstall(target)
     string instKey = _instanceKey(eid, slot, effectIdx)
+    StorageUtil.StringListRemove(target, HEAL_LIST, instKey, true)
     if eid == "disease.cure"
         _countDiseases(target, true)
     elseif eid == "calm"
@@ -935,7 +986,9 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
     if target == None || PlayerRef == None
         return
     endif
+    _checkInstall(target)
     string instKey = _instanceKey(eid, slot, effectIdx)
+    StorageUtil.StringListRemove(target, HEAL_LIST, instKey, true)
     if eid == "vision.night"
         if _release(target, instKey) < 0
             return
@@ -999,12 +1052,18 @@ EndFunction
 
 ; Sleeping replaces the rested bonuses and they expire on their own, and dialogue or combat resets the
 ; face, so both are put back while their effect is shown. The game doesn't save shaders, so an aura last
-; played before the latest load is played again.
+; played before the latest load is played again. A tier undone as stale while MTF still shows it gets no new
+; onActivate, so it applies again here.
 Function onTick(Actor target, int param, int param2, string eid, int slot, int effectIdx, bool useScratch, int baseSlot, int area, string presetName)
     if target == None || PlayerRef == None
         return
     endif
+    _checkInstall(target)
     string instKey = _instanceKey(eid, slot, effectIdx)
+    if StorageUtil.StringListFind(target, HEAL_LIST, instKey) >= 0
+        onActivate(target, param, param2, eid, slot, effectIdx, useScratch, baseSlot, area, presetName)
+        return
+    endif
     if eid == "rested"
         if StorageUtil.HasIntValue(target, instKey)
             _ensureRested(target, StorageUtil.GetIntValue(target, instKey))
@@ -1024,6 +1083,148 @@ Function onTick(Actor target, int param, int param2, string eid, int slot, int e
             endif
         endif
     endif
+EndFunction
+
+; ── Reset ───────────────────────────────────────────────────────────────────
+
+; Undoes every effect's change on the player and every actor MTF tracks, and forgets the tiers it applied. MTF
+; still counts those tiers as showing, so their onDeactivate finds nothing to undo, and they apply again the
+; next time they start.
+Function _resetAll()
+    int count = 0
+    if _resetIfChanged(PlayerRef)
+        count += 1
+    endif
+    MTF_MainQuest host = _host()
+    if host != None
+        int t = host.GetTrackedCount()
+        while t > 0
+            t -= 1
+            Actor tracked = host.GetTrackedAt(t)
+            if tracked != None && tracked != PlayerRef && _resetIfChanged(tracked)
+                count += 1
+            endif
+        endwhile
+    endif
+    Debug.Trace("[MTF_Plugin_Skyrim] reset " + count + " actor(s)")
+EndFunction
+
+bool Function _resetIfChanged(Actor target)
+    StorageUtil.StringListClear(target, HEAL_LIST)
+    if !_hasInstances(target)
+        return false
+    endif
+    _resetActor(target)
+    return true
+EndFunction
+
+; Instances are found by key prefix rather than a list, so ones recorded before this existed are found too.
+Function _resetActor(Actor target)
+    string[] keys = StorageUtil.debug_AllObjFloatKeys(target)
+    int i = keys.Length
+    while i > 0
+        i -= 1
+        if StringUtil.Find(keys[i], KEY_PREFIX + "shout.recovery.") == 0
+            float delta = StorageUtil.GetFloatValue(target, keys[i])
+            StorageUtil.UnsetFloatValue(target, keys[i])
+            target.ModActorValue("ShoutRecoveryMult", -delta)
+        endif
+    endwhile
+    keys = StorageUtil.debug_AllObjStringKeys(target)
+    i = keys.Length
+    while i > 0
+        i -= 1
+        if StringUtil.Find(keys[i], KEY_PREFIX + "aura.") == 0
+            EffectShader shader = _auraShader(StorageUtil.GetStringValue(target, keys[i]))
+            StorageUtil.UnsetStringValue(target, keys[i])
+            if shader != None
+                shader.Stop(target)
+            endif
+        endif
+    endwhile
+    i = RestedSpells.Length
+    while i > 0
+        i -= 1
+        if StorageUtil.GetIntValue(target, _restedKey(i, "added")) == 1 && RestedSpells[i] != None
+            target.RemoveSpell(RestedSpells[i])
+        endif
+    endwhile
+    if StorageUtil.GetIntValue(target, KEY_PREFIX + "fall.added") == 1 && NoFallDamagePerk != None
+        target.RemovePerk(NoFallDamagePerk)
+    endif
+    if StorageUtil.StringListCount(target, KEY_PREFIX + "mood.instances") > 0
+        StorageUtil.StringListClear(target, KEY_PREFIX + "mood.instances")
+        target.ClearExpressionOverride()
+    endif
+    if target == PlayerRef && StorageUtil.GetIntValue(PlayerRef, KEY_PREFIX + "nighteye.count") > 0
+        ImageSpaceModifier.RemoveCrossFade(1.0)
+    endif
+    StorageUtil.ClearObjIntValuePrefix(target, KEY_PREFIX + "vision.night.")
+    StorageUtil.ClearObjIntValuePrefix(target, KEY_PREFIX + "nighteye.")
+    StorageUtil.ClearObjIntValuePrefix(target, KEY_PREFIX + "rested.")
+    StorageUtil.ClearObjIntValuePrefix(target, KEY_PREFIX + "mood.")
+    StorageUtil.ClearObjIntValuePrefix(target, KEY_PREFIX + "fall.")
+    StorageUtil.ClearObjIntValuePrefix(target, KEY_PREFIX + "aura.")
+EndFunction
+
+bool Function _hasInstances(Actor target)
+    return StorageUtil.CountObjFloatValuePrefix(target, KEY_PREFIX + "shout.recovery.") > 0 || StorageUtil.CountObjStringValuePrefix(target, KEY_PREFIX + "aura.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "vision.night.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "rested.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "mood.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "fall.") > 0
+EndFunction
+
+int Function _installId()
+    if InstallId == 0
+        InstallId = Utility.RandomInt(1, 2147483647)
+    endif
+    return InstallId
+EndFunction
+
+; MTF can't deactivate tiers while this plugin is missing, so their instances outlive them and would block those
+; tiers from applying again. An actor stamped by another install is undone first, as by the reset, and the
+; instances it had are kept so onTick can apply any tier MTF still shows.
+Function _checkInstall(Actor target)
+    int id = _installId()
+    if StorageUtil.GetIntValue(target, INSTALL_KEY) == id
+        return
+    endif
+    StorageUtil.SetIntValue(target, INSTALL_KEY, id)
+    if !_hasInstances(target)
+        return
+    endif
+    Debug.Trace("[MTF_Plugin_Skyrim] " + target.GetDisplayName() + " had changes left from a load without this plugin, so they're undone first")
+    _keepForHeal(target, StorageUtil.debug_AllObjIntKeys(target))
+    _keepForHeal(target, StorageUtil.debug_AllObjFloatKeys(target))
+    _keepForHeal(target, StorageUtil.debug_AllObjStringKeys(target))
+    _resetActor(target)
+EndFunction
+
+; Counters share the instances' prefixes but never match an instance key, so keeping them is harmless.
+Function _keepForHeal(Actor target, string[] keys)
+    int i = keys.Length
+    while i > 0
+        i -= 1
+        string k = keys[i]
+        if StringUtil.Find(k, KEY_PREFIX + "vision.night.") == 0 || StringUtil.Find(k, KEY_PREFIX + "shout.recovery.") == 0 || StringUtil.Find(k, KEY_PREFIX + "rested.") == 0 || StringUtil.Find(k, KEY_PREFIX + "mood.") == 0 || StringUtil.Find(k, KEY_PREFIX + "fall.nodamage.") == 0 || StringUtil.Find(k, KEY_PREFIX + "aura.") == 0
+            StorageUtil.StringListAdd(target, HEAL_LIST, k, false)
+        endif
+    endwhile
+EndFunction
+
+; Finds stale actors without waiting for one of their tiers, so changes from a tier that stopped while the plugin
+; was missing are undone too.
+Function _sweep()
+    _checkInstall(PlayerRef)
+    MTF_MainQuest host = _host()
+    if host == None
+        return
+    endif
+    int t = host.GetTrackedCount()
+    while t > 0
+        t -= 1
+        Actor tracked = host.GetTrackedAt(t)
+        if tracked != None
+            _checkInstall(tracked)
+        endif
+    endwhile
 EndFunction
 
 ; ── Effect helpers ──────────────────────────────────────────────────────────

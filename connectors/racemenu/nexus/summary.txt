@@ -1,1 +1,1 @@
-Tattoos that change the body and hair wearing them. This patch connects Magic Tattoos Framework (MTF) to RaceMenu.
+Tattoos that change the body and hair. This patch connects Magic Tattoos Framework (MTF) to RaceMenu: tattoos can resize the actor, reshape CBBE 3BA bodies and TNG with BodySlide morphs, or recolor hair and wigs.

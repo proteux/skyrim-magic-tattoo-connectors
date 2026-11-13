@@ -103,12 +103,26 @@ pms 0005d608
 sms 0005d608
 ```
 
+## Reset
+
+1. Show Shout recovery at 50%, Night vision, and a Magic aura on the player, and Facial mood on an NPC. Note `getav ShoutRecoveryMult` on the player.
+2. Enter `setpqv MTF_Plugin_Skyrim ResetOnLoad 1`, save, and load that save. `getav ShoutRecoveryMult` is back to its value before the tier, Night vision and the aura are gone, the NPC's face relaxes, and the log shows `[MTF_Plugin_Skyrim] reset 2 actor(s)`.
+3. `sqv MTF_Plugin_Skyrim` shows `::ResetOnLoad_var = 0`. Load again: nothing resets.
+4. Stop the tiers and start them again. The changes come back, and stopping them clears them as usual.
+
+## Reinstalling
+
+1. Show Shout recovery at 50% and No fall damage on the player, and Facial mood on an NPC. Note `getav ShoutRecoveryMult`.
+2. Disable `MTF_Plugin_Skyrim.esp`, load the save, stop the NPC's tier but leave the player's showing, and save again.
+3. Enable the plugin and load that save. The log shows `had changes left from a load without this plugin, so they're undone first` for both actors. The NPC's face relaxes and stays. Within a few seconds the player's tiers apply again: `getav ShoutRecoveryMult` matches the noted value, not double it.
+4. Stop the player's tiers. Shout recovery goes back to where it was before step 1, and falling hurts again.
+
 ## Registration
 
-The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.2.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
+The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.2.1 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
 
 ```
 sqv MTF_Plugin_Skyrim
 ```
 
-It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.2.0`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.
+It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.2.1`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.

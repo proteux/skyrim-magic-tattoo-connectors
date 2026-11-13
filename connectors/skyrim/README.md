@@ -98,9 +98,21 @@ The auras, by group:
 
 Some were made for one creature or scene and may look different on a person; [TESTING.md](TESTING.md) has a quick way to preview them.
 
+## Resetting
+
+If a change from Shout recovery, Rested bonus, Facial mood, Night vision, No fall damage, or Magic aura ever stays after its tattoo is gone, you can undo everything those effects have changed. Open the console and enter:
+
+```
+setpqv MTF_Plugin_Skyrim ResetOnLoad 1
+```
+
+Then save and load that save. The player and every actor MTF tracks lose those changes, and the Papyrus log shows `[MTF_Plugin_Skyrim] reset N actor(s)`. The setting turns itself off again, so later loads don't reset. A tier that is still showing comes back the next time it starts.
+
 ## Uninstalling
 
-Take off any tattoo whose tiers use Shout recovery, Rested bonus, Facial mood, Night vision, No fall damage, or Magic aura, so their changes are undone. Then save, quit, and disable the plugin.
+Take off any tattoo whose tiers use Shout recovery, Rested bonus, Facial mood, Night vision, No fall damage, or Magic aura, so their changes are undone, or use the reset above. Then save, quit, and disable the plugin.
+
+If you play on without the plugin and later add it back, its leftover changes are undone on the first load, and any tier still showing applies again a few seconds later.
 
 ## Troubleshooting
 
