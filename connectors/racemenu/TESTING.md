@@ -47,9 +47,9 @@ Use an actor with pale or neutral hair, such as most KS Hairdos styles, so the t
 2. Stop the tier. The hair goes back to exactly its own color.
 3. Set Transition to 10 seconds. The color should fade smoothly from the hair's own color to green and back, not jump at the end.
 4. Show two Hair color tiers, red then blue. The hair is blue (the newer one); stop blue and it eases to red; stop red and it eases back to its own color.
-5. While a tier shows, change the hairstyle at a barber or in RaceMenu (`showracemenu`). Within a couple of seconds the new hair takes the color too. Stop the tier: the new hair goes back to its own color.
+5. While a tier shows, change the hairstyle at a barber or in RaceMenu (`showracemenu`). Within a few seconds the new hair takes the color too. Stop the tier: the new hair goes back to its own color.
 6. Save and reload while the tier shows. The color stays. Reload mid-transition: it lands on the final color within a moment.
-7. Equip a KS Wigs SMP wig and start the tier. The wig takes the color, and the `hair color on` line lists its `KSSMP_<name>`, `KSSMP_<name>_HL` and `Hairline` nodes along with the hair under it. Take the wig off and put it back on: within a couple of seconds the log shows `put back` lines and the wig is colored again. Stop the tier: the wig goes back to the actor's own hair color.
+7. Equip a KS Wigs SMP wig and start the tier. The wig takes the color, and the `hair color on` line lists its `KSSMP_<name>`, `KSSMP_<name>_HL` and `Hairline` nodes along with the hair under it. Take the wig off and put it back on: within a few seconds the log shows `put back` lines and the wig is colored again. Stop the tier: the wig goes back to the actor's own hair color.
 8. Try an NPC follower too. NPC hair comes from their FaceGen head, so the log's node names should still match and the hair should change the same way.
 
 ## Hair color (any wig)
@@ -60,7 +60,7 @@ Needs powerofthree's Papyrus Extender. Every change logs `[MTF_Plugin_RaceMenu] 
 2. Stop the tier. The hair goes back to its own color. On the player, compare with RaceMenu's hair color: it should match.
 3. Set Transition to 10 seconds. The color fades smoothly to green and back.
 4. Show two tiers, red then blue. The hair is blue; stop blue and it eases to red; stop red and it eases back.
-5. Equip a wig that Hair color misses (any wig that isn't KS, or a KS elf wig) and start the tier. The wig takes the color. Take it off and put it back on: within a couple of seconds it's green again.
+5. Equip a wig that Hair color misses (any wig that isn't KS, or a KS elf wig) and start the tier. The wig takes the color. Take it off and put it back on: within about 6 seconds it's green again. Swap to a different wig instead: it's green within a few seconds.
 6. Save and reload while the tier shows. The hair is green as soon as the game shows the player, or within a couple of seconds at most.
 7. Show the tier on the player and two NPCs at once with different colors, Transition 5. Each actor keeps its own color, with no flicker of another's.
 8. Uninstall test: disable powerofthree's Papyrus Extender and start the tier. The log shows `needs powerofthree's Papyrus Extender, which isn't installed` and nothing else happens.

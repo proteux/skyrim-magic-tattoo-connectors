@@ -82,9 +82,9 @@ Because the tint multiplies the texture, it can darken a color or shift it, but 
 
 Wigs from [KS Hairdos SMP](https://www.nexusmods.com/skyrimspecialedition/mods/31300) (KS Wigs SMP) change too, along with the hair under them. Other wigs worn as armor may not: a script can't list the parts of a wig, so the plugin looks for the part names KS uses, based on the wig's mesh file.
 
-A new hairstyle or wig picks up the color within a couple of seconds, and so does a wig taken off and put back on, or hair whose physics reset.
+A new hairstyle or wig picks up the color within a few seconds, and so does a wig taken off and put back on, or hair whose physics reset.
 
-**Hair color (any wig)** is the same tint applied a different way, through [powerofthree's Papyrus Extender](https://www.nexusmods.com/skyrimspecialedition/mods/22854), for when Hair color misses a wig. It tints every part of the actor drawn with the hair shader, whatever mod it comes from, so it works on any wig. Its Color and Transition settings work like Hair color's, and so does the newest tier winning. The tint isn't saved with the game, so the plugin puts it back when a save loads. An actor who comes into view later, or a wig put on, shows the hair's own color for a couple of seconds before the tint comes back. Use one hair effect or the other on an actor, not both at once.
+**Hair color (any wig)** is the same tint applied a different way, through [powerofthree's Papyrus Extender](https://www.nexusmods.com/skyrimspecialedition/mods/22854), for when Hair color misses a wig. It tints every part of the actor drawn with the hair shader, whatever mod it comes from, so it works on any wig. Its Color and Transition settings work like Hair color's, and so does the newest tier winning. The tint isn't saved with the game, so the plugin puts it back when a save loads. An actor who comes into view later, or a wig put on, shows the hair's own color for a few seconds before the tint comes back. Use one hair effect or the other on an actor, not both at once.
 
 Which hair effect to use:
 - **Hair color** for the actor's own hairstyle, or a KS Hairdos wig. Its color holds steady through loads.
@@ -132,10 +132,10 @@ How each effect is applied:
 - **Hair color** sets the tint override (key 7) with `AddNodeOverrideInt` on each hair node, which is named after its head part's editor ID (SKSE's `ActorBase.GetNthHeadPart` and `HeadPart.GetPartName`). Transition steps aren't saved (`persist` false); only the final color is.
   - A wig is armor, so its node names are guessed from the mesh of each armor addon in slot 31 or 41 (KS's `Angels_1.nif` holds `KSSMP_Angels`, `KSSMP_Angels_HL` and `Hairline`) and kept if SKSE's `NetImmerse.HasNode` finds them.
   - Node overrides have no key of their own, so the plugin records each node's color before touching it, from another mod's override, the live shader or the NPC's hair color record, and puts it back when it's done.
-  - Each tick while the effect shows, a node whose live tint has drifted (a wig re-equipped, SMP physics rebuilding the mesh) gets its color put back.
+  - Every 2.5 seconds while the effect shows (`HAIR_CHECK_SECONDS`), a node whose live tint has drifted (a wig re-equipped, SMP physics rebuilding the mesh) gets its color put back.
 - **Hair color (any wig)** calls powerofthree's `SetHairColor(Actor, ColorForm)`, which tints every hair-shaded geometry in the actor's 3D from a color record's color, unscaled.
   - That call reads the record when its queued task runs, so each actor borrows its own record from a pool of 32 in the ESP (`COLOR_FORMS` in `build.sh`, FormIDs `0x801` up, matching `HAIR_TINT_FORMS` in the script), set with `ColorForm.SetColor` before each call. Records are handed out in turn, so one just freed isn't reused while its last call may still read it.
-  - The tint lives only on the loaded 3D, so the plugin puts it back on load and each tick.
+  - The tint lives only on the loaded 3D, so the plugin puts it back on load. After that it checks every 2.5 seconds and only puts it back when the items in the hair slots change, the hair head part's live tint differs, or 6 seconds have passed (`HAIR_TINT_REFRESH_SECONDS`), for changes it can't see.
   - The color it goes back to is read from the hair head part's live tint before the first change, or the hair color record doubled.
 - **Transitions** step four times a second from a second script, `MTF_Plugin_RaceMenu_Loop`, on the player alias (`ALIAS_SCRIPTS` in `build.sh`), which only runs while some actor is changing.
 

@@ -24,6 +24,13 @@ string Property ACTOR_LIST = "proteux-mtf.racemenu.actors" AutoReadOnly Hidden
 string Property INSTALL_KEY = "proteux-mtf.racemenu.install" AutoReadOnly Hidden
 string Property HEAL_LIST = "proteux-mtf.racemenu.heal" AutoReadOnly Hidden
 float Property STEP_SECONDS = 0.25 AutoReadOnly Hidden
+; How often onTick looks for hair changes while a hair effect shows. MTF ticks far more often than hair changes.
+float Property HAIR_CHECK_SECONDS = 2.5 AutoReadOnly Hidden
+; Hair color (any wig) puts its tint back at least this often, for changes it can't see, such as a wig taken off and
+; put back on in one visit to the inventory, or SMP physics rebuilding a wig.
+float Property HAIR_TINT_REFRESH_SECONDS = 6.0 AutoReadOnly Hidden
+; Searches of a worn item that finds no wig parts before it's left alone, in case its 3D wasn't attached yet.
+int Property WIG_SEARCH_TRIES = 3 AutoReadOnly Hidden
 int Property MAX_TRANSITION = 30 AutoReadOnly Hidden
 string Property ESP_NAME = "MTF_Plugin_RaceMenu.esp" AutoReadOnly Hidden
 ; Must match COLOR_FORMS in build.sh: the ESP's color records, FormIDs 0x801 up.
@@ -244,7 +251,7 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
 EndFunction
 
 ; A new hairstyle or wig has nodes the tint isn't on yet, and a wig put back on, or hair physics rebuilding the
-; mesh, loses the tint. Between transitions, picks up new nodes or puts the color back.
+; mesh, loses the tint. Between transitions, picks up new nodes or puts the color back, every HAIR_CHECK_SECONDS.
 ; A tier undone as stale while MTF still shows it gets no new onActivate, so it applies again here.
 Function onTick(Actor target, int param, int param2, string eid, int slot, int effectIdx, bool useScratch, int baseSlot, int area, string presetName)
     if target == None || PlayerRef == None
@@ -260,14 +267,14 @@ Function onTick(Actor target, int param, int param2, string eid, int slot, int e
         return
     endif
     if eid == "hairtint"
-        if !StorageUtil.HasFloatValue(target, KEY_PREFIX + "hairtint.ramp.start")
-            _reapplyHairTint(target)
+        if !StorageUtil.HasFloatValue(target, KEY_PREFIX + "hairtint.ramp.start") && _checkDue(target, KEY_PREFIX + "hairtint.check", HAIR_CHECK_SECONDS)
+            _refreshHairTint(target)
         endif
         return
     elseif eid != "hair"
         return
     endif
-    if StorageUtil.HasFloatValue(target, KEY_PREFIX + "hair.ramp.start")
+    if StorageUtil.HasFloatValue(target, KEY_PREFIX + "hair.ramp.start") || !_checkDue(target, KEY_PREFIX + "hair.check", HAIR_CHECK_SECONDS)
         return
     endif
     if _findHairNodes(target, false)
@@ -275,6 +282,18 @@ Function onTick(Actor target, int param, int param2, string eid, int slot, int e
     else
         _repairHair(target)
     endif
+EndFunction
+
+; Whether interval seconds have passed since this returned true for stampKey, and if so starts the next wait. Real
+; time restarts each session, so a stamp from before a load can be far ahead; that counts as due.
+bool Function _checkDue(Actor target, string stampKey, float interval)
+    float now = Utility.GetCurrentRealTime()
+    float next = StorageUtil.GetFloatValue(target, stampKey)
+    if now < next && next - now <= interval
+        return false
+    endif
+    StorageUtil.SetFloatValue(target, stampKey, now + interval)
+    return true
 EndFunction
 
 ; ── Reset ───────────────────────────────────────────────────────────────────
@@ -623,6 +642,7 @@ Function _finishHair(Actor target)
             i -= 1
             _forgetHairNode(target, StorageUtil.StringListGet(target, movingKey, i), isFemale)
         endwhile
+        StorageUtil.UnsetFloatValue(target, KEY_PREFIX + "hair.check")
     endif
     _clearHairRamp(target)
     if applied == ""
@@ -661,11 +681,15 @@ EndFunction
 
 ; A wig is armor, not a head part, so its node names are guessed from its mesh and kept if they exist. KS
 ; Hairdos SMP wigs name their shapes after the mesh: Angels_1.nif holds KSSMP_Angels, KSSMP_Angels_HL and
-; Hairline. Each item is only searched again once it's taken off, or when an instance starts.
+; Hairline. Each item is only searched again once it's taken off, or when an instance starts. An item with no
+; wig parts, such as a helmet or a wig from another mod, is left alone after WIG_SEARCH_TRIES searches.
 bool Function _findWornHair(Actor target, Armor worn, string slot, bool rescan)
     string memKey = KEY_PREFIX + "hair.worn." + slot
+    string missKey = memKey + ".miss"
     if worn == None
         StorageUtil.UnsetIntValue(target, memKey)
+        StorageUtil.UnsetIntValue(target, missKey)
+        StorageUtil.UnsetIntValue(target, missKey + ".tries")
         return false
     endif
     if !rescan && StorageUtil.GetIntValue(target, memKey) == worn.GetFormID()
@@ -701,6 +725,16 @@ bool Function _findWornHair(Actor target, Armor worn, string slot, bool rescan)
         i += 1
     endwhile
     if found
+        StorageUtil.SetIntValue(target, memKey, worn.GetFormID())
+        StorageUtil.UnsetIntValue(target, missKey)
+        StorageUtil.UnsetIntValue(target, missKey + ".tries")
+        return added
+    endif
+    if StorageUtil.GetIntValue(target, missKey) != worn.GetFormID()
+        StorageUtil.SetIntValue(target, missKey, worn.GetFormID())
+        StorageUtil.SetIntValue(target, missKey + ".tries", 0)
+    endif
+    if StorageUtil.AdjustIntValue(target, missKey + ".tries", 1) >= WIG_SEARCH_TRIES
         StorageUtil.SetIntValue(target, memKey, worn.GetFormID())
     endif
     return added
@@ -1017,6 +1051,11 @@ EndFunction
 Function _forgetHairTint(Actor target)
     StorageUtil.UnsetIntValue(target, KEY_PREFIX + "hairtint.own")
     StorageUtil.UnsetIntValue(target, KEY_PREFIX + "hairtint.cur")
+    StorageUtil.UnsetFloatValue(target, KEY_PREFIX + "hairtint.check")
+    StorageUtil.UnsetFloatValue(target, KEY_PREFIX + "hairtint.refresh")
+    StorageUtil.UnsetStringValue(target, KEY_PREFIX + "hairtint.part")
+    StorageUtil.UnsetIntValue(target, KEY_PREFIX + "hairtint.worn31")
+    StorageUtil.UnsetIntValue(target, KEY_PREFIX + "hairtint.worn41")
     _releaseHairTintForm(target)
 EndFunction
 
@@ -1025,6 +1064,71 @@ Function _reapplyHairTint(Actor target)
     if StorageUtil.HasIntValue(target, curKey)
         _applyHairTint(target, StorageUtil.GetIntValue(target, curKey))
     endif
+EndFunction
+
+; Puts the tint back only when it's likely gone: a different item in the hair slots, the hair showing another
+; color (the actor's 3D was rebuilt, or the hairstyle changed), or HAIR_TINT_REFRESH_SECONDS passing since it was
+; last put on. Each SetHairColor walks the actor's whole 3D, and calling it needlessly risks a flicker.
+Function _refreshHairTint(Actor target)
+    string curKey = KEY_PREFIX + "hairtint.cur"
+    if !StorageUtil.HasIntValue(target, curKey)
+        return
+    endif
+    int cur = StorageUtil.GetIntValue(target, curKey)
+    string refreshKey = KEY_PREFIX + "hairtint.refresh"
+    bool due = _wornHairChanged(target)
+    if !due
+        string part = _hairPartName(target)
+        due = part != "" && !_closeColor(cur, _rgb(NiOverride.GetNodePropertyInt(target, false, part, 7, -1)))
+    endif
+    if !due && !_checkDue(target, refreshKey, HAIR_TINT_REFRESH_SECONDS)
+        return
+    endif
+    StorageUtil.SetFloatValue(target, refreshKey, Utility.GetCurrentRealTime() + HAIR_TINT_REFRESH_SECONDS)
+    _applyHairTint(target, cur)
+EndFunction
+
+; Whether the items in the hair slots differ from the last check, as when a wig is put on, taken off or swapped.
+bool Function _wornHairChanged(Actor target)
+    int id31 = _formId(target.GetWornForm(0x2))
+    int id41 = _formId(target.GetWornForm(0x800))
+    string key31 = KEY_PREFIX + "hairtint.worn31"
+    string key41 = KEY_PREFIX + "hairtint.worn41"
+    bool changed = StorageUtil.GetIntValue(target, key31) != id31 || StorageUtil.GetIntValue(target, key41) != id41
+    StorageUtil.SetIntValue(target, key31, id31)
+    StorageUtil.SetIntValue(target, key41, id41)
+    return changed
+EndFunction
+
+int Function _formId(Form f) global
+    if f == None
+        return 0
+    endif
+    return f.GetFormID()
+EndFunction
+
+; The node of the actor's hair head part, if it's in their 3D right now; empty when it isn't, such as under a wig
+; that hides it. Remembered, and looked up again once that node is gone, as after a new hairstyle.
+string Function _hairPartName(Actor target)
+    string partKey = KEY_PREFIX + "hairtint.part"
+    string part = StorageUtil.GetStringValue(target, partKey)
+    if part != "" && NetImmerse.HasNode(target, part, false)
+        return part
+    endif
+    part = ""
+    ActorBase base = target.GetLeveledActorBase()
+    if base != None
+        int i = base.GetNumHeadParts()
+        while i > 0 && part == ""
+            i -= 1
+            HeadPart hp = base.GetNthHeadPart(i)
+            if hp != None && hp.GetType() == 3 && NetImmerse.HasNode(target, hp.GetPartName(), false)
+                part = hp.GetPartName()
+            endif
+        endwhile
+    endif
+    StorageUtil.SetStringValue(target, partKey, part)
+    return part
 EndFunction
 
 ; Only call with the actor's 3D loaded, so the hair's own color is read before the first tint covers it.
@@ -1055,16 +1159,9 @@ int Function _hairTintOwn(Actor target)
     endif
     int own = 0
     if target.Is3DLoaded()
-        ActorBase base = target.GetLeveledActorBase()
-        if base != None
-            int i = base.GetNumHeadParts()
-            while i > 0 && own == 0
-                i -= 1
-                HeadPart part = base.GetNthHeadPart(i)
-                if part != None && part.GetType() == 3 && NetImmerse.HasNode(target, part.GetPartName(), false)
-                    own = _rgb(NiOverride.GetNodePropertyInt(target, false, part.GetPartName(), 7, -1))
-                endif
-            endwhile
+        string part = _hairPartName(target)
+        if part != ""
+            own = _rgb(NiOverride.GetNodePropertyInt(target, false, part, 7, -1))
         endif
     endif
     if own == 0
