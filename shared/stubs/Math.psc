@@ -5,3 +5,4 @@ int Function Floor(float afValue) global native
 
 ; SKSE
 int Function LogicalAnd(int arg1, int arg2) global native
+int Function RightShift(int value, int shiftBy) global native

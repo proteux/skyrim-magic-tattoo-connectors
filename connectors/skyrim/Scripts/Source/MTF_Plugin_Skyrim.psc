@@ -30,6 +30,8 @@ int Property CAST_WATCH_MAX = 32 AutoReadOnly Hidden
 string Property INSTALL_KEY = "proteux-mtf.skyrim.install" AutoReadOnly Hidden
 string Property HEAL_LIST = "proteux-mtf.skyrim.heal" AutoReadOnly Hidden
 string Property APPLIER_PREFIX = "mtf.applier." AutoReadOnly Hidden
+; Its spells put presets on, so a tier casting one could keep putting its own preset back on.
+string Property TACTICAL_PLUGIN = "MagicTattoosTactical.esp" AutoReadOnly Hidden
 ; On each wearer, the instance keys of its shown spell auras. On the player, every wearer with one.
 string Property SPELL_AURA_KEYS = "proteux-mtf.skyrim.spellaura.keys" AutoReadOnly Hidden
 string Property SPELL_AURA_WEARERS = "proteux-mtf.skyrim.spellaura.wearers" AutoReadOnly Hidden
@@ -1649,8 +1651,21 @@ Spell Function _resolveSpell(string spellText)
     endif
     if found == None
         Debug.Trace("[MTF_Plugin_Skyrim] no spell found for '" + text + "'")
+    elseif _isTacticalSpell(found)
+        Debug.Trace("[MTF_Plugin_Skyrim] '" + text + "' is a Magic Tattoos Tactical spell, which tattoos can't cast")
+        found = None
     endif
     return found
+EndFunction
+
+; Tactical is ESL-flagged, so its forms are 0xFE, then its light index, then the local ID.
+bool Function _isTacticalSpell(Spell candidate)
+    int light = Game.GetLightModByName(TACTICAL_PLUGIN)
+    if light < 0 || light > 0xFFF
+        return false
+    endif
+    int id = candidate.GetFormID()
+    return Math.RightShift(id, 24) == 0xFE && Math.LogicalAnd(Math.RightShift(id, 12), 0xFFF) == light
 EndFunction
 
 ; Hex digits with or without 0x. -1 when anything else is in the string.
