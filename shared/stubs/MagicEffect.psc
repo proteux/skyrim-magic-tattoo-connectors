@@ -3,3 +3,5 @@ Scriptname MagicEffect extends Form Hidden
 
 ; SKSE
 string Function GetAssociatedSkill() native
+
+bool Function IsEffectFlagSet(int flag) native

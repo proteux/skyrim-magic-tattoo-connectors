@@ -103,10 +103,22 @@ pms 0005d608
 sms 0005d608
 ```
 
+## Cast a spell and Spell aura
+
+Pick the spells from the list in Magic Tattoos UI 1.8.0 or later. In MTF's own menu, type `Skyrim.esm|0x012FCC` for Healing, `Skyrim.esm|0x012FCD` for Flames, and `Skyrim.esm|0x02F3B8` for Fast Healing, or the spell's name if the player knows it.
+
+1. **Self heal:** on the player, a tier with **Cast a spell: Fast Healing** and a Health below 50% condition. Take damage (`player.damageav health 200`); the tier shows and health jumps once. With Wearer pays, magicka drops by the spell's cost; empty it first (`player.damageav magicka 500`) and the heal is skipped.
+2. **Spell aura, helpful:** on the player, **Spell aura: Healing**, 8 m. Damage the player and a follower standing close: both heal each second. A follower 20 m away doesn't. Stop the tier and the healing stops within a second.
+3. **Spell aura, harmful:** on the player, **Spell aura: Flames**, 8 m. Start a fight with bandits: those within 8 m burn every second, and the follower next to you doesn't. A chicken or a guard near you doesn't burn, since neither is hostile to you.
+4. **A hex with Magic Tattoos Tactical:** make a Hex whose preset has a tier with **Cast a spell: Flames** (or a harmful **Spell aura**) and cast it on a bandit. The bandit burns and turns on you. Their friends near them burn with an aura, you and your follower don't. Kill one with it and the kill counts as yours (People Killed rises on the General Stats page).
+5. **A blessing:** a Blessing whose preset has **Spell aura: Healing**, cast on your follower. The follower and you heal while near them; the bandits fighting you don't.
+6. **After a load:** save and reload while an aura shows. It keeps pulsing within a couple of seconds.
+7. **Without Papyrus Extender:** the helpful aura still heals the actor and the player, and nobody else.
+
 ## Reset
 
-1. Show Shout recovery at 50%, Night vision, and a Magic aura on the player, and Facial mood on an NPC. Note `getav ShoutRecoveryMult` on the player.
-2. Enter `setpqv MTF_Plugin_Skyrim ResetOnLoad 1`, save, and load that save. `getav ShoutRecoveryMult` is back to its value before the tier, Night vision and the aura are gone, the NPC's face relaxes, and the log shows `[MTF_Plugin_Skyrim] reset 2 actor(s)`.
+1. Show Shout recovery at 50%, Night vision, a Magic aura and a Spell aura on the player, and Facial mood on an NPC. Note `getav ShoutRecoveryMult` on the player.
+2. Enter `setpqv MTF_Plugin_Skyrim ResetOnLoad 1`, save, and load that save. `getav ShoutRecoveryMult` is back to its value before the tier, Night vision, the Magic aura and the Spell aura are gone, the NPC's face relaxes, and the log shows `[MTF_Plugin_Skyrim] reset 2 actor(s)`.
 3. `sqv MTF_Plugin_Skyrim` shows `::ResetOnLoad_var = 0`. Load again: nothing resets.
 4. Stop the tiers and start them again. The changes come back, and stopping them clears them as usual.
 
@@ -119,16 +131,16 @@ sms 0005d608
 
 ## Upgrading
 
-1. With 0.2.0 installed, show Shout recovery at 50% and a Magic aura on the player, and save. Note `getav ShoutRecoveryMult`.
+1. With 0.2.1 installed, show Shout recovery at 50% and a Magic aura on the player, and save. Note `getav ShoutRecoveryMult`.
 2. Install this version and load that save. The aura plays as usual, `getav ShoutRecoveryMult` is unchanged, and the log has no `had changes left` line.
 3. Stop the tiers. Both changes go back as usual.
 
 ## Registration
 
-The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.2.1 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
+The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.3.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
 
 ```
 sqv MTF_Plugin_Skyrim
 ```
 
-It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.2.1`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.
+It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.3.0`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.

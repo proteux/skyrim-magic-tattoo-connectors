@@ -11,6 +11,10 @@ bool Function AddSpell(Spell akSpell, bool abVerbose=true) native
 
 Function ClearExpressionOverride() native
 
+Function DamageActorValue(string asValueName, float afDamage) native
+
+Function DoCombatSpellApply(Spell akSpell, ObjectReference akTarget) native
+
 float Function GetActorValue(string asValueName) native
 
 Actor Function GetCombatTarget() native

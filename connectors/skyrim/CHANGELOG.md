@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- New effect, Cast a spell: when the tier shows, any spell from the game or another mod lands on the actor once, free or paid for with their magicka.
+- New effect, Spell aura: while shown, a spell lands every second on actors within 1 to 50 metres. A harmful spell such as Flames hits the actor's enemies; a helpful one such as Healing reaches the actor and their side. It needs Papyrus Extender for anyone but the actor and the player.
+- Both credit whoever applied the tattoo, read from the shared `mtf.applier.<preset>` key that Magic Tattoos Tactical sets, so a hex's damage and kill credit go to the caster. Without it, the wearer counts as the applier.
+- Magic Tattoos UI 1.8.0 picks the spell from a searchable list. In MTF's own menu, type `Plugin.esp|0xFormID` or the name of a spell the player knows.
+
 ## 0.2.1
 
 - Fixed effects never applying again after the plugin was disabled for a session and then re-enabled. Changes left from then are undone on the next load, and tiers still showing apply again.
