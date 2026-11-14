@@ -4,3 +4,5 @@ Scriptname PO3_SKSEFunctions Hidden
 Actor[] Function GetActorsByProcessingLevel(int aiLevel) global native
 
 int Function GetSpellType(Spell akSpell) global native
+
+Function SetHairColor(Actor akActor, ColorForm akColor) global native

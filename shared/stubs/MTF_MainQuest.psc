@@ -5,8 +5,23 @@ Scriptname MTF_MainQuest extends Quest Hidden
  than connectors need to compile against.}
 
 Form[] Property registeredPlugins Auto
-
 Function RegisterPlugin(MTF_Plugin p)
+EndFunction
+
+int Function FindPluginIndex(string pid)
+    return -1
+EndFunction
+
+MTF_Plugin Function FindPlugin(string pid)
+    return None
+EndFunction
+
+int Function GetTrackedCount()
+    return 0
+EndFunction
+
+Actor Function GetTrackedAt(int idx)
+    return None
 EndFunction
 
 int Function _condIdxFor(MTF_Plugin p, string itemId)

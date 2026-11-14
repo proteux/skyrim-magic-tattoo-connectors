@@ -8,3 +8,5 @@ Form Function GetBaseObject() native
 Location Function GetCurrentLocation() native
 
 float Function GetDistance(ObjectReference akOther) native
+
+string Function GetDisplayName() native

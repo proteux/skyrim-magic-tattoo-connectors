@@ -4,6 +4,9 @@ Scriptname StorageUtil Hidden
 int Function SetIntValue(Form ObjKey, string KeyName, int value) global native
 float Function SetFloatValue(Form ObjKey, string KeyName, float value) global native
 string Function SetStringValue(Form ObjKey, string KeyName, string value) global native
+Form Function SetFormValue(Form ObjKey, string KeyName, Form value) global native
+Form Function GetFormValue(Form ObjKey, string KeyName, Form missing = None) global native
+bool Function UnsetFormValue(Form ObjKey, string KeyName) global native
 
 int Function GetIntValue(Form ObjKey, string KeyName, int missing = 0) global native
 float Function GetFloatValue(Form ObjKey, string KeyName, float missing = 0.0) global native
@@ -38,3 +41,12 @@ int function StringListRemove(Form ObjKey, string KeyName, string value, bool al
 int function StringListCount(Form ObjKey, string KeyName) global native
 int function StringListClear(Form ObjKey, string KeyName) global native
 int function StringListFind(Form ObjKey, string KeyName, string value) global native
+
+int function CountObjIntValuePrefix(Form ObjKey, string PrefixKey) global native
+int function CountObjFloatValuePrefix(Form ObjKey, string PrefixKey) global native
+int function CountObjStringValuePrefix(Form ObjKey, string PrefixKey) global native
+int function ClearObjIntValuePrefix(Form ObjKey, string PrefixKey) global native
+
+string[] function debug_AllObjIntKeys(Form ObjKey) global native
+string[] function debug_AllObjFloatKeys(Form ObjKey) global native
+string[] function debug_AllObjStringKeys(Form ObjKey) global native

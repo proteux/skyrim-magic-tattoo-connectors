@@ -59,3 +59,5 @@ Int Function GetSpellCount() native
 Spell Function GetNthSpell(int n) native
 
 ObjectReference Function GetFurnitureReference() native
+
+Form Function GetWornForm(int slotMask) native

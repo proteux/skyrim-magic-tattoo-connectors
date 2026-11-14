@@ -13,6 +13,8 @@
 #   ALIAS_SCRIPTS        space-separated extra scripts attached to the player alias (for player events such
 #                        as OnPlayerLoadGame, which quest scripts never receive). Each name must start with
 #                        ${ESP_BASE}_ and have a matching Scripts/Source/<name>.psc.
+#   COLOR_FORMS          how many color records (CLFM) the ESP carries, FormIDs 0x801 up, for scripts that set
+#                        colors at runtime. Default 0.
 #
 # Environment overrides: SKYRIM_DIR, VORTEX_MODS, PAPYRUS_COMPILER, PLUGINS_TXT.
 set -euo pipefail
@@ -188,7 +190,8 @@ echo "=== generating $ESP_BASE.esp ==="
   export MSYS_NO_PATHCONV=1
   dotnet run --project "$(cygpath -w "$REPO_ROOT/shared/tools/PluginGen/PluginGen.csproj")" -- \
     --out "$(cygpath -w "$DIST/$ESP_BASE.esp")" --script "$ESP_BASE" --name "$MOD_NAME" \
-    --author "$AUTHOR" --description "$DESCRIPTION" --alias-scripts "$(IFS=,; echo "${ALIAS_LIST[*]}")"
+    --author "$AUTHOR" --description "$DESCRIPTION" --alias-scripts "$(IFS=,; echo "${ALIAS_LIST[*]}")" \
+    --color-forms "${COLOR_FORMS:-0}"
 )
 
 # The mod exactly as it ships, laid out as it sits in Data. Staging, live, and the zip all use this folder.

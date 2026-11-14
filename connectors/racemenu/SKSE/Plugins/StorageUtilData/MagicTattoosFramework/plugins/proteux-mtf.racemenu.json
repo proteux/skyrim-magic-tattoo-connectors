@@ -46,6 +46,20 @@
       },
       "param2": { "label": "Strength", "min": 5, "max": 100, "step": 5, "default": 75, "format": "{0}%" },
       "param3": { "label": "Transition", "min": 0, "max": 30, "default": 5, "format": "{0} s" }
+    },
+    {
+      "id": "hair",
+      "label": "Hair color",
+      "description": "While shown, the actor's hair is tinted the chosen color, changing over {param2}. The best choice for the actor's own hairstyle and KS Hairdos wigs: it stays put through loads. If a wig doesn't change color, use Hair color (any wig) instead. The tint multiplies the hair's own color, so it can darken or shift it but not lighten it.",
+      "param1": { "label": "Color", "color": 1, "default": 12597547 },
+      "param2": { "label": "Transition", "min": 0, "max": 30, "default": 5, "format": "{0} s" }
+    },
+    {
+      "id": "hairtint",
+      "label": "Hair color (any wig)",
+      "description": "Needs powerofthree's Papyrus Extender. While shown, everything on the actor drawn as hair is tinted the chosen color, changing over {param2}: the hair and any wig, whatever mod it comes from. Pick it when Hair color leaves a wig unchanged. After a wig change, or when the actor comes into view, the hair can show its own color for a few seconds before the tint returns. Don't use both hair effects on the same actor. The tint multiplies the hair's own color, so it can darken or shift it but not lighten it.",
+      "param1": { "label": "Color", "color": 1, "default": 12597547 },
+      "param2": { "label": "Transition", "min": 0, "max": 30, "default": 5, "format": "{0} s" }
     }
   ]
 }

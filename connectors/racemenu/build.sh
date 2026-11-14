@@ -8,7 +8,9 @@ ESP_BASE="MTF_Plugin_RaceMenu"
 PLUGIN_ID="proteux-mtf.racemenu"
 MOD_NAME="MTF Plugin - RaceMenu"
 AUTHOR="Proteux"
-DESCRIPTION="Magic Tattoos Framework effects backed by RaceMenu: actor scale and BodySlide body shapes."
+DESCRIPTION="Magic Tattoos Framework effects backed by RaceMenu: actor scale, BodySlide body shapes, and hair color."
 ALIAS_SCRIPTS="MTF_Plugin_RaceMenu_Loop"
+# One per actor tinted at once by the Hair color (any wig) effect; see _hairTintForm.
+COLOR_FORMS=32
 
 source "$CONNECTOR_DIR/../../shared/build-common.sh" "$@"
