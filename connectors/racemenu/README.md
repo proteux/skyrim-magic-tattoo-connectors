@@ -76,7 +76,7 @@ The schlong, glans and balls shapes move the genital meshes from [TNG](https://w
 
 Either kind needs to be built in BodySlide with **Build Morphs** checked. You'll see `.tri` files next to the meshes, for example `actors/character/character assets/TNG/m_genitals.tri`.
 
-**Hair color** sets the tint that Skyrim's hair shader multiplies the hair texture by, the same tint RaceMenu's hair color slider changes. When several Hair color tiers show at once, the one that started last wins, and when it stops the next one takes over. When none are left, the hair goes back to its own color.
+**Hair color** sets the tint that Skyrim's hair shader multiplies the hair texture by, the same tint RaceMenu's hair color slider changes. When several Hair color tiers show at once, the one that started last wins, and when it stops the next one takes over. When none are left, the hair holds its color for about 1.5 seconds, then goes back to its own color. MTF stops one tier's effects just before it starts the next tier's, so a tier with Hair color handing over to another one, as in gradient tiers, goes straight from one color to the next without showing the hair's own color in between.
 
 Because the tint multiplies the texture, it can darken a color or shift it, but not lighten it. Hair with pale, neutral textures, which is most hair made to be recolored in RaceMenu, takes any color well. Dark or already-colored hair textures only get darker or tinted, so a platinum color on black hair stays dark. For the same reason, brows and beards aren't tinted: their textures are too dark for a tint to show.
 
@@ -84,7 +84,7 @@ Wigs from [KS Hairdos SMP](https://www.nexusmods.com/skyrimspecialedition/mods/3
 
 A new hairstyle or wig picks up the color within a few seconds, and so does a wig taken off and put back on, or hair whose physics reset.
 
-**Hair color (any wig)** is the same tint applied a different way, through [powerofthree's Papyrus Extender](https://www.nexusmods.com/skyrimspecialedition/mods/22854), for when Hair color misses a wig. It tints every part of the actor drawn with the hair shader, whatever mod it comes from, so it works on any wig. Its Color and Transition settings work like Hair color's, and so does the newest tier winning. The tint isn't saved with the game, so the plugin puts it back when a save loads. An actor who comes into view later, or a wig put on, shows the hair's own color for a few seconds before the tint comes back. Use one hair effect or the other on an actor, not both at once.
+**Hair color (any wig)** is the same tint applied a different way, through [powerofthree's Papyrus Extender](https://www.nexusmods.com/skyrimspecialedition/mods/22854), for when Hair color misses a wig. It tints every part of the actor drawn with the hair shader, whatever mod it comes from, so it works on any wig. Its Color and Transition settings work like Hair color's, and so do the newest tier winning and the short hold between tiers. The tint isn't saved with the game, so the plugin puts it back when a save loads. An actor who comes into view later, or a wig put on, shows the hair's own color for a few seconds before the tint comes back. Use one hair effect or the other on an actor, not both at once.
 
 Which hair effect to use:
 - **Hair color** for the actor's own hairstyle, or a KS Hairdos wig. Its color holds steady through loads.

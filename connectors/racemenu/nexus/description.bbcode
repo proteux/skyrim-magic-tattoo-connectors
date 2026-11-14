@@ -1,20 +1,20 @@
-[size=4][i]Tattoos that change the body and hair wearing them.[/i][/size]
+[size=4][i]Tattoos that change the body and hair.[/i][/size]
 
 [size=5][b]Description[/b][/size]
 
-This patch connects [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF) to [url=https://www.nexusmods.com/skyrimspecialedition/mods/19080]RaceMenu[/url]. A tattoo tier can make the actor bigger or smaller, reshape their body with BodySlide sliders, or recolor their hair while it shows, for example a muscular build on a warrior's mark, or frost-white hair on a frost mage's sigil.
+This patch connects [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF) to [url=https://www.nexusmods.com/skyrimspecialedition/mods/19080]RaceMenu[/url]. A tattoo tier can make the actor bigger or smaller, reshape their body with BodySlide sliders, or recolor their hair while, for example a muscular build on a warrior's mark, or frost-white hair on a frost mage's sigil.
 
 It adds a [b]RaceMenu[/b] plugin to MTF's menu and to [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos UI[/url]. RaceMenu itself is not changed.
 
 [size=5][b]Requirements[/b][/size]
 
 [list]
-[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] 0.7.0 or later, and its requirements
-[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/19080]RaceMenu[/url]
-[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/13048]PapyrusUtil SE[/url]
-[*]For Body shape: a body with BodySlide morphs, such as [url=https://www.nexusmods.com/skyrimspecialedition/mods/30174]CBBE 3BA[/url], built in BodySlide with [b]Build Morphs[/b] checked. Outfits need morphs built too, or the body grows through them.
-[*]For Hair color (any wig): [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url].
-[*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos Framework - SKSE UI[/url], an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these effects far easier.
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] 0.7.0 or later, and its requirements[/*]
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/19080]RaceMenu[/url][/*]
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/13048]PapyrusUtil SE[/url][/*]
+[*]For Body shape: a body with BodySlide morphs, such as [url=https://www.nexusmods.com/skyrimspecialedition/mods/30174]CBBE 3BA[/url], built in BodySlide with [b]Build Morphs[/b] checked. Outfits need morphs built too, or the body grows through them.[/*]
+[*]For Hair color (any wig): [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url].[/*]
+[*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos Framework - SKSE UI[/url], an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these effects far easier.[/*]
 [/list]
 
 [size=5][b]Installation[/b][/size]
@@ -24,75 +24,25 @@ Install with your mod manager and enable [font=Courier New]MTF_Plugin_RaceMenu.e
 [size=5][b]Effects[/b][/size]
 
 [list]
-[*][b]Actor scale[/b] ([i]while shown[/i]): the actor is 50 to 200% of their usual size
-[*][b]Body shape[/b] ([i]while shown[/i]): the body takes one of 23 shapes at 5 to 100% strength
-[*][b]Hair color[/b] ([i]while shown[/i]): the hair is tinted any color; works on the actor's own hair and KS Hairdos wigs
-[*][b]Hair color (any wig)[/b] ([i]while shown[/i]): the hair and any wig are tinted any color; needs powerofthree's Papyrus Extender
+[*][b]Actor scale[/b]: the actor is 50 to 200% of their usual size[/*]
+[*][b]Body shape[/b]: body parts morph at 5 to 100% strength[/*]
+[*][b]Hair color[/b]: the hair is tinted any color[/*]
 [/list]
 
 Every effect has a [b]Transition[/b] setting, 0 to 30 seconds (5 by default). The body or hair eases from how it looks now to the new look over that time instead of changing at once, starting and stopping gently, and eases back the same way when the tier stops. 0 changes it instantly. A change that arrives mid-transition carries on from wherever it is. Loading a save finishes any transition that was under way.
 
 [b]Actor scale[/b] scales RaceMenu's root [font=Courier New]NPC[/font] node, so it multiplies with RaceMenu's own height slider. Several tiers multiply together.
 
-[b]Body shape[/b] moves CBBE 3BA BodySlide sliders through RaceMenu's body morphs. It adds to the body's own preset, including one from OBody, rather than replacing it, so the same strength changes any body by the same amount. At 100% strength, each shape adds this much to its sliders; lower strengths scale them down:
-
-[list]
-[*][b]Muscular[/b]: [font=Courier New]MuscleAbs[/font], [font=Courier New]MuscleArms[/font], [font=Courier New]MuscleBack_v2[/font], [font=Courier New]MuscleButt[/font], [font=Courier New]MuscleLegs[/font], [font=Courier New]MusclePecs[/font] +100; [font=Courier New]MuscleMoreAbs_v2[/font], [font=Courier New]MuscleMoreArms_v2[/font], [font=Courier New]MuscleMoreLegs_v2[/font] +50
-[*][b]Bigger bust[/b]: [font=Courier New]Breasts[/font] +100
-[*][b]Smaller bust[/b]: [font=Courier New]BreastsSmall[/font] +100
-[*][b]Perkier bust[/b]: [font=Courier New]BreastPerkiness[/font] +100, [font=Courier New]PushUp[/font] +50
-[*][b]Saggier bust[/b]: [font=Courier New]BreastGravity2[/font] +100
-[*][b]Perkier nipples[/b]: [font=Courier New]NipplePerkiness[/font] +100, [font=Courier New]NippleLength[/font] +50
-[*][b]Bigger butt[/b]: [font=Courier New]Butt[/font] +100, [font=Courier New]BigButt[/font] +50
-[*][b]Smaller butt[/b]: [font=Courier New]ButtSmall[/font] +100
-[*][b]Rounder butt[/b]: [font=Courier New]RoundAss[/font] +100, [font=Courier New]AppleCheeks[/font] +50
-[*][b]Wider hips[/b]: [font=Courier New]Hips[/font] +100, [font=Courier New]HipUpperWidth[/font] +50
-[*][b]Narrower hips[/b]: [font=Courier New]HipNarrow_v2[/font] +100
-[*][b]Thicker thighs[/b]: [font=Courier New]Thighs[/font] +100, [font=Courier New]ThighFBThicc_v2[/font] and [font=Courier New]ThighOutsideThicc_v2[/font] +50
-[*][b]Thinner thighs[/b]: [font=Courier New]SlimThighs[/font] +100, [font=Courier New]LegsThin[/font] +50
-[*][b]Slender[/b]: [font=Courier New]SlimThighs[/font] +100, [font=Courier New]LegsThin[/font] and [font=Courier New]ButtNarrow_v2[/font] +50
-[*][b]Chubby[/b]: [font=Courier New]ChubbyArms[/font], [font=Courier New]ChubbyButt[/font], [font=Courier New]ChubbyLegs[/font], [font=Courier New]ChubbyWaist[/font] +100; [font=Courier New]BigBelly[/font] +50
-[*][b]Pregnant[/b]: [font=Courier New]PregnancyBelly[/font] +100
-[*][b]Older[/b]: [font=Courier New]BreastGravity2[/font], [font=Courier New]ButtSaggy_v2[/font] +100; [font=Courier New]ButtUnderFold[/font] +50
-[*][b]Younger[/b]: [font=Courier New]BreastPerkiness[/font] +100, [font=Courier New]NipplePerkiness[/font] +50
-[*][b]Longer schlong[/b]: [font=Courier New]Length[/font], [font=Courier New]SOS - SchlongLength[/font] +100
-[*][b]Thicker schlong[/b]: [font=Courier New]Thickness[/font], [font=Courier New]SOS - SchlongGirth[/font] +100
-[*][b]Larger glans[/b]: [font=Courier New]Head[/font], [font=Courier New]SOS - GlansSize[/font] +100
-[*][b]Larger balls[/b]: [font=Courier New]SOS - BallsSize[/font] +100 (futanari addon only)
-[*][b]Smaller balls[/b]: [font=Courier New]SOS - BallsSmall[/font] +100 (futanari addon only)
-[/list]
-
-Older and Younger only change the body. RaceMenu can't reshape a face from a script, so for an aged face, pair Older with an MTF face tattoo carrying a wrinkle texture.
-
-Shrinking uses the bodies' own shrink sliders ([font=Courier New]BreastsSmall[/font], [font=Courier New]ButtSmall[/font], [font=Courier New]HipNarrow_v2[/font], [font=Courier New]SlimThighs[/font], [font=Courier New]SOS - BallsSmall[/font]) rather than taking away from the size sliders, which would push past the flat shape on a small preset. TNG and the futanari addon have no shrink sliders for length, girth or the glans, so those shapes only grow.
-
-Several Body shape tiers combine: different shapes stack, so Muscular and Pregnant together give both. Two tiers that move the same slider don't add up; that slider takes the strongest value either asks for. Opposites such as Bigger and Smaller bust move different sliders, so they partly cancel.
+[b]Body shape[/b] moves CBBE 3BA BodySlide sliders through RaceMenu's body morphs. It adds to the body's own preset, including one from OBody, rather than replacing it, so the same strength changes any body by the same amount. 
 
 Bodies without these sliders don't change. That includes the vanilla male body and BHUNP, which uses different slider names.
-
-The schlong, glans and balls shapes move the genital meshes from [url=https://www.nexusmods.com/skyrimspecialedition/mods/104215]TNG[/url], which RaceMenu morphs alongside the body. Each mesh only responds to its own slider names:
-
-[list]
-[*]TNG's male meshes (the [font=Courier New][TNG][/font] slider sets) use [font=Courier New]Length[/font], [font=Courier New]Thickness[/font] and [font=Courier New]Head[/font]. They have no balls slider.
-[*]The ERF Futanari addon uses the old SOS names, such as [font=Courier New]SOS - SchlongLength[/font].
-[/list]
-
-Either kind needs to be built in BodySlide with [b]Build Morphs[/b] checked. You'll see [font=Courier New].tri[/font] files next to the meshes, for example [font=Courier New]actors/character/character assets/TNG/m_genitals.tri[/font].
-
-[b]Hair color[/b] sets the tint that Skyrim's hair shader multiplies the hair texture by, the same tint RaceMenu's hair color slider changes. When several Hair color tiers show at once, the one that started last wins, and when it stops the next one takes over. When none are left, the hair goes back to its own color.
-
-Because the tint multiplies the texture, it can darken a color or shift it, but not lighten it. Hair with pale, neutral textures, which is most hair made to be recolored in RaceMenu, takes any color well. Dark or already-colored hair textures only get darker or tinted, so a platinum color on black hair stays dark. For the same reason, brows and beards aren't tinted: their textures are too dark for a tint to show.
-
-Wigs from [url=https://www.nexusmods.com/skyrimspecialedition/mods/31300]KS Hairdos SMP[/url] (KS Wigs SMP) change too, along with the hair under them. Other wigs worn as armor may not: a script can't list the parts of a wig, so the plugin looks for the part names KS uses, based on the wig's mesh file.
-
-A new hairstyle or wig picks up the color within a few seconds, and so does a wig taken off and put back on, or hair whose physics reset.
-
-[b]Hair color (any wig)[/b] is the same tint applied a different way, through [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url], for when Hair color misses a wig. It tints every part of the actor drawn with the hair shader, whatever mod it comes from, so it works on any wig. Its Color and Transition settings work like Hair color's, and so does the newest tier winning. The tint isn't saved with the game, so the plugin puts it back when a save loads. An actor who comes into view later, or a wig put on, shows the hair's own color for a few seconds before the tint comes back. Use one hair effect or the other on an actor, not both at once.
+[b]
+Hair color[/b] sets the tint that Skyrim's hair shader multiplies the hair texture by, the same tint RaceMenu's hair color slider changes. When several Hair color tiers show at once, the one that started last wins, and when it stops the next one takes over. When none are left, the hair goes back to its own color.
 
 Which hair effect to use:
 [list]
-[*][b]Hair color[/b] for the actor's own hairstyle, or a KS Hairdos wig. Its color holds steady through loads.
-[*][b]Hair color (any wig)[/b] when the actor wears a wig that Hair color leaves unchanged, such as one from another wig mod or a KS elf wig. Its color can drop for a moment after a wig change or when an actor comes into view.
+[*][b]Hair color[/b] for the actor's own hairstyle, or a KS Hairdos wig. Its color holds steady through loads.[/*]
+[*][b]Hair color (any wig)[/b] when the actor wears a wig that Hair color leaves unchanged, such as one from another wig mod or a KS elf wig. Its color can drop for a moment after a wig change or when an actor comes into view.[/*]
 [/list]
 
 All the effects work on the player and NPCs. They stay after a load until the tier stops: RaceMenu saves all but Hair color (any wig), which the plugin puts back itself.
@@ -111,31 +61,20 @@ The reset only touches this plugin's own changes. RaceMenu sliders, OBody preset
 
 Take off any tattoo whose tiers use these effects, so the body and hair go back to normal, or use the reset above. Then save, quit, and disable the plugin.
 
-If you play on without the plugin and later add it back, its leftover changes are undone on the first load, and any tier still showing applies again a few seconds later.
-
-[size=5][b]Troubleshooting[/b][/size]
-
-The Papyrus log ([font=Courier New]Documents/My Games/Skyrim Special Edition/Logs/Script/Papyrus.0.log[/font]) should show [font=Courier New][MTF_Main] Registered 'proteux-mtf.racemenu'[/font] a few seconds after loading a save. If it doesn't, check that RaceMenu and MTF are enabled and that [font=Courier New]MTF_Plugin_RaceMenu.esp[/font] loads after [font=Courier New]MagicTattoosFramework.esp[/font].
-
-Each Body shape change logs a line such as [font=Courier New][MTF_Plugin_RaceMenu] body morphs on Lydia: Breasts=1.000000[/font] once it finishes (after the transition), so you can tell whether the effect ran. If the line appears but the body doesn't change, the body has no morphs. Rebuild it in BodySlide with [b]Build Morphs[/b] checked; a [font=Courier New]femalebody.tri[/font] file should appear next to [font=Courier New]femalebody_0.nif[/font] and [font=Courier New]femalebody_1.nif[/font].
-
-Each Hair color change logs a line such as [font=Courier New][MTF_Plugin_RaceMenu] hair color on Lydia: HairFemaleNord06=#C0392B[/font] once it finishes, listing each hair part it tinted ([font=Courier New]none[/font] when the hair goes back to its own color). If the line lists parts but the hair doesn't change, that hair's texture is too dark to show the tint, or it's a wig the plugin can't find parts for.
-
-Hair color (any wig) logs [font=Courier New][MTF_Plugin_RaceMenu] hair tint on Lydia: #C0392B[/font] once each change finishes ([font=Courier New]none[/font] when the hair goes back to its own color). If a tier logs [font=Courier New]needs powerofthree's Papyrus Extender, which isn't installed[/font] instead, the Papyrus Extender isn't loaded.
-
-[url=https://github.com/proteux/skyrim-magic-tattoo-connectors/blob/main/connectors/racemenu/TESTING.md]TESTING.md[/url] walks through checking each effect in game.
-
 [size=5][b]Credits[/b][/size]
 
 [list]
-[*]Proteux, author
-[*]expired6978, for RaceMenu
-[*]Ousnius and Caliente, for BodySlide and CBBE 3BA
-[*]levchimik, for Magic Tattoos Framework
+[*]Proteux, author[/*]
+[*][url=https://www.nexusmods.com/profile/expired6978?gameId=1704]expired6978[/url], for RaceMenu[/*]
+[*][url=https://www.nexusmods.com/profile/ousnius]Ousnius[/url] and [url=https://www.nexusmods.com/profile/Caliente]Caliente[/url], for BodySlide and CBBE 3BA[/*]
+[*][url=https://www.nexusmods.com/profile/levchimik/mods]levchimik[/url], for Magic Tattoos Framework[/*]
+[*][url=https://www.nexusmods.com/skyrim/users/38957115]DomainWolf[/url], for Community Overlays (used in screenshots)[/*]
+[*][url=https://www.nexusmods.com/profile/ItsLyru/mods?gameId=1704]Lyru[/url], for the tattoo packs (used in screenshots)
+[/*]
 [/list]
 
 [size=5][b]License and source code[/b][/size]
 
-Copyright (C) 2026 Jack Whitehouse (proteux). MTF Plugin - RaceMenu is released under the [url=https://www.gnu.org/licenses/gpl-3.0.html]GNU General Public License v3.0[/url] or later. It comes with ABSOLUTELY NO WARRANTY. You may modify and redistribute it under the terms of that license.
+MTF Plugin - RaceMenu is released under the [url=https://www.gnu.org/licenses/gpl-3.0.html]GNU General Public License v3.0[/url] or later. It comes with ABSOLUTELY NO WARRANTY. You may modify and redistribute it under the terms of that license.
 
 The full source code, with the build and the other MTF connectors, is on GitHub: [url=https://github.com/proteux/skyrim-magic-tattoo-connectors]github.com/proteux/skyrim-magic-tattoo-connectors[/url]. The download includes the Papyrus source in [font=Courier New]Data/Scripts/Source[/font], and the license text and this notice in [font=Courier New]Data/SKSE/Plugins/MTF_Plugin_RaceMenu[/font].

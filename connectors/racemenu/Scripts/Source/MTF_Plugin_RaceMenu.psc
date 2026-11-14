@@ -29,6 +29,9 @@ float Property HAIR_CHECK_SECONDS = 2.5 AutoReadOnly Hidden
 ; Hair color (any wig) puts its tint back at least this often, for changes it can't see, such as a wig taken off and
 ; put back on in one visit to the inventory, or SMP physics rebuilding a wig.
 float Property HAIR_TINT_REFRESH_SECONDS = 6.0 AutoReadOnly Hidden
+; How long the hair holds its color after the last hair instance stops, before going back to its own. MTF stops one
+; tier's effects before it starts the next tier's, so this lets the next tier's color carry on from the old one.
+float Property HAIR_RELEASE_DELAY = 1.5 AutoReadOnly Hidden
 ; Searches of a worn item that finds no wig parts before it's left alone, in case its 3D wasn't attached yet.
 int Property WIG_SEARCH_TRIES = 3 AutoReadOnly Hidden
 int Property MAX_TRANSITION = 30 AutoReadOnly Hidden
@@ -124,6 +127,10 @@ Function _onGameLoaded()
             StorageUtil.SetFloatValue(moving, KEY_PREFIX + "scale.ramp.duration", 0.0)
             StorageUtil.SetFloatValue(moving, KEY_PREFIX + "hair.ramp.duration", 0.0)
             StorageUtil.SetFloatValue(moving, KEY_PREFIX + "hairtint.ramp.duration", 0.0)
+            _restartRampClock(moving, "shape")
+            _restartRampClock(moving, "scale")
+            _restartRampClock(moving, "hair")
+            _restartRampClock(moving, "hairtint")
         endif
     endwhile
     GetAlias(0).RegisterForSingleUpdate(STEP_SECONDS)
@@ -238,7 +245,7 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
         StorageUtil.UnsetIntValue(target, instKey)
         StorageUtil.UnsetFloatValue(target, instKey + ".fade")
         StorageUtil.StringListRemove(target, KEY_PREFIX + "hair.instances", instKey, true)
-        _startHair(target, fade)
+        _startHair(target, fade, HAIR_RELEASE_DELAY)
     elseif eid == "hairtint"
         if !StorageUtil.HasIntValue(target, instKey)
             return
@@ -246,7 +253,7 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
         StorageUtil.UnsetIntValue(target, instKey)
         StorageUtil.UnsetFloatValue(target, instKey + ".fade")
         StorageUtil.StringListRemove(target, KEY_PREFIX + "hairtint.instances", instKey, true)
-        _startHairTint(target, fade)
+        _startHairTint(target, fade, HAIR_RELEASE_DELAY)
     endif
 EndFunction
 
@@ -446,9 +453,10 @@ bool Function _step()
     return StorageUtil.FormListCount(self, RAMP_LIST) > 0
 EndFunction
 
-Function _beginRamp(Actor target, string kind, float fade)
+; With a delay, the transition holds at its start until the delay has passed.
+Function _beginRamp(Actor target, string kind, float fade, float delay = 0.0)
     StorageUtil.SetFloatValue(target, KEY_PREFIX + kind + ".ramp.duration", fade)
-    StorageUtil.SetFloatValue(target, KEY_PREFIX + kind + ".ramp.start", Utility.GetCurrentRealTime())
+    StorageUtil.SetFloatValue(target, KEY_PREFIX + kind + ".ramp.start", Utility.GetCurrentRealTime() + delay)
     StorageUtil.FormListAdd(self, RAMP_LIST, target, false)
     GetAlias(0).RegisterForSingleUpdate(0.01)
 EndFunction
@@ -458,19 +466,31 @@ Function _endRamp(Actor target, string kind)
     StorageUtil.UnsetFloatValue(target, KEY_PREFIX + kind + ".ramp.duration")
 EndFunction
 
+; Real time restarts on load, so a start saved in the last session is moved to the beginning of this one.
+Function _restartRampClock(Form target, string kind)
+    string startKey = KEY_PREFIX + kind + ".ramp.start"
+    if StorageUtil.HasFloatValue(target, startKey)
+        StorageUtil.SetFloatValue(target, startKey, 0.0)
+    endif
+EndFunction
+
 ; Eased progress from 0 to 1, or -1 when no transition of this kind is running. Smoothstep, so the change
-; starts and stops gently.
+; starts and stops gently. Stays at 0 while a delayed transition waits to start.
 float Function _rampProgress(Actor target, string kind, float now)
     string startKey = KEY_PREFIX + kind + ".ramp.start"
     if !StorageUtil.HasFloatValue(target, startKey)
         return -1.0
     endif
+    float start = StorageUtil.GetFloatValue(target, startKey)
+    if now < start
+        return 0.0
+    endif
     float duration = StorageUtil.GetFloatValue(target, KEY_PREFIX + kind + ".ramp.duration")
     float t = 1.0
     if duration > 0.0
-        t = (now - StorageUtil.GetFloatValue(target, startKey)) / duration
+        t = (now - start) / duration
     endif
-    if t >= 1.0 || t < 0.0
+    if t >= 1.0
         return 1.0
     endif
     return t * t * (3.0 - 2.0 * t)
@@ -556,9 +576,11 @@ EndFunction
 ; node starts from the color it showed before the plugin touched it, and gets that color back when no
 ; instance shows any more.
 
-; Starts each node from the color it shows right now, so a change mid-transition carries on smoothly.
-Function _startHair(Actor target, float fade)
-    if _hairShown(target)
+; Starts each node from the color it shows right now, so a change mid-transition carries on smoothly. With no
+; instance left, the hair holds its color for releaseDelay seconds before going back to its own.
+Function _startHair(Actor target, float fade, float releaseDelay = 0.0)
+    bool shown = _hairShown(target)
+    if shown
         _findHairNodes(target, true)
     endif
     _clearHairRamp(target)
@@ -577,6 +599,10 @@ Function _startHair(Actor target, float fade)
         StorageUtil.StringListAdd(target, movingKey, node, false)
         i += 1
     endwhile
+    if !shown && releaseDelay > 0.0
+        _beginRamp(target, "hair", fade, releaseDelay)
+        return
+    endif
     if fade <= 0.0
         _finishHair(target)
         return
@@ -594,7 +620,7 @@ bool Function _stepHair(Actor target, float now)
         _finishHair(target)
         return false
     endif
-    if !target.Is3DLoaded()
+    if eased <= 0.0 || !target.Is3DLoaded()
         return true
     endif
     bool isFemale = _isFemale(target)
@@ -980,8 +1006,9 @@ bool Function _hasPapyrusExtender()
 EndFunction
 
 ; Starts from the color shown right now, so a change mid-transition carries on smoothly. An actor that
-; isn't loaded jumps straight to the goal, which onTick applies once it is.
-Function _startHairTint(Actor target, float fade)
+; isn't loaded jumps straight to the goal, which onTick applies once it is. With no instance left, a loaded actor
+; holds the color for releaseDelay seconds before going back to their own.
+Function _startHairTint(Actor target, float fade, float releaseDelay = 0.0)
     _clearHairTintRamp(target)
     string curKey = KEY_PREFIX + "hairtint.cur"
     bool shown = StorageUtil.StringListCount(target, KEY_PREFIX + "hairtint.instances") > 0
@@ -989,7 +1016,8 @@ Function _startHairTint(Actor target, float fade)
         _forgetHairTint(target)
         return
     endif
-    if fade <= 0.0 || !target.Is3DLoaded()
+    bool hold = !shown && releaseDelay > 0.0 && target.Is3DLoaded()
+    if !hold && (fade <= 0.0 || !target.Is3DLoaded())
         _finishHairTint(target)
         return
     endif
@@ -999,7 +1027,11 @@ Function _startHairTint(Actor target, float fade)
     endif
     StorageUtil.SetIntValue(target, KEY_PREFIX + "hairtint.from", from)
     StorageUtil.SetIntValue(target, KEY_PREFIX + "hairtint.to", _hairTintGoal(target))
-    _beginRamp(target, "hairtint", fade)
+    if hold
+        _beginRamp(target, "hairtint", fade, releaseDelay)
+    else
+        _beginRamp(target, "hairtint", fade)
+    endif
 EndFunction
 
 bool Function _stepHairTint(Actor target, float now)
@@ -1011,7 +1043,7 @@ bool Function _stepHairTint(Actor target, float now)
         _finishHairTint(target)
         return false
     endif
-    if target.Is3DLoaded()
+    if eased > 0.0 && target.Is3DLoaded()
         int from = StorageUtil.GetIntValue(target, KEY_PREFIX + "hairtint.from")
         int goal = StorageUtil.GetIntValue(target, KEY_PREFIX + "hairtint.to")
         int color = _blendColor(from, goal, eased)
