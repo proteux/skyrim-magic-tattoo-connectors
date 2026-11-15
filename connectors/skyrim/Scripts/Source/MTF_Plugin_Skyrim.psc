@@ -17,7 +17,7 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.2" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.3" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -1962,7 +1962,17 @@ Function _castPulseDue(Actor wearer, string instKey, float now)
     StorageUtil.SetFloatValue(wearer, instKey, now + _castInterval(cast))
 EndFunction
 
-; A helpful spell lands on the wearer and everyone near them who isn't hostile to the applier. A harmful one lands
+; True when other is fighting applier, or their factions are enemies. IsHostileToActor alone misses
+; Unaggressive faction-enemies (training dummies, calmed bandits) who never drew weapons.
+bool Function _isEnemyOf(Actor other, Actor applier)
+    if other == None || applier == None
+        return false
+    endif
+    ; GetFactionReaction: 0 Neutral, 1 Enemy, 2 Ally, 3 Friend.
+    return other.IsHostileToActor(applier) || other.GetFactionReaction(applier) == 1
+EndFunction
+
+; A helpful spell lands on the wearer and everyone near them who isn't an enemy of the applier. A harmful one lands
 ; on everyone near them who is, never on the wearer or the player's teammates when the player applied it.
 ; Fire-and-forget spells use half magnitude when Magic Tattoos UI 1.8.6 or later is present.
 Function _auraPulse(Actor wearer, string instKey, Actor[] nearby, float now)
@@ -2006,10 +2016,10 @@ Function _auraHit(Actor applier, Actor wearer, Actor other, Spell cast, bool har
         return
     endif
     if harmful
-        if other == applier || !other.IsHostileToActor(applier) || (applier == PlayerRef && other.IsPlayerTeammate())
+        if other == applier || !_isEnemyOf(other, applier) || (applier == PlayerRef && other.IsPlayerTeammate())
             return
         endif
-    elseif other != applier && other.IsHostileToActor(applier)
+    elseif other != applier && _isEnemyOf(other, applier)
         return
     endif
     _castAs(applier, cast, other, scale)

@@ -41,6 +41,9 @@ bool Function IsDetectedBy(Actor akOther) native
 
 bool Function IsHostileToActor(Actor akActor) native
 
+; 0 Neutral, 1 Enemy, 2 Ally, 3 Friend.
+int Function GetFactionReaction(Actor akOther) native
+
 bool Function IsPlayerTeammate() native
 
 bool Function IsSneaking() native

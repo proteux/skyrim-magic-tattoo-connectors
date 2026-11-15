@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3
+
+- Spell aura now treats faction enemies as enemies even when they aren't in combat. `IsHostileToActor` alone skipped Unaggressive targets such as Enemy training dummies and calmed bandits; harmful auras also use `GetFactionReaction == Enemy`, and helpful auras skip those same targets.
+
 ## 0.3.2
 
 - Cast a spell repeats on the wearer while the tier is shown: fire-and-forget spells at their cast time (at least 0.5 s), concentration every second. Self buffs such as Oakflesh still land once.
