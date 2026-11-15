@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2
+
+- Cast a spell repeats on the wearer while the tier is shown: fire-and-forget spells at their cast time (at least 0.5 s), concentration every second. Self buffs such as Oakflesh still land once.
+- Spell aura fire-and-forget hits (Firebolt, Ice Spike) use half strength when Magic Tattoos UI 1.8.6 or later is present; concentration auras stay at full strength per second.
+
 ## 0.3.1
 
 - Cast a spell and Spell aura hit as hard as the applier casting the spell themselves, counting their perks (such as Augmented Flames) and Fortify (School) potions, so a Magic Tattoos Tactical hex with Firebolt does a real Firebolt's damage. This needs Magic Tattoos UI 1.8.3 or later; without it, spells land as before.

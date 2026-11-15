@@ -7,3 +7,5 @@ int Function GetCostliestEffectIndex() native
 int Function GetEffectiveMagickaCost(Actor caster) native
 
 MagicEffect Function GetNthEffectMagicEffect(int index) native
+
+float Function GetCastTime() native

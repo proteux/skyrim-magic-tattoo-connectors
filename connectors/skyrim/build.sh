@@ -8,7 +8,7 @@ ESP_BASE="MTF_Plugin_Skyrim"
 PLUGIN_ID="proteux-mtf.skyrim"
 MOD_NAME="MTF Plugin - Skyrim"
 AUTHOR="Proteux"
-DESCRIPTION="More Magic Tattoos Framework conditions and effects for the base game: stats, moon and calendar, crime and stealth, what the actor is doing, spells and spell schools in hand and just cast, plus night vision, shout recovery, rested bonuses, moods, calm, weather, experience, magic auras, and spells cast by tattoos (once or as an aura)."
+DESCRIPTION="More Magic Tattoos Framework conditions and effects for the base game: stats, moon and calendar, crime and stealth, what the actor is doing, spells and spell schools in hand and just cast, plus night vision, shout recovery, rested bonuses, moods, calm, weather, experience, magic auras, and spells cast by tattoos (repeating on the wearer or as an aura)."
 ALIAS_SCRIPTS="MTF_Plugin_Skyrim_Load"
 
 source "$CONNECTOR_DIR/../../shared/build-common.sh" "$@"
