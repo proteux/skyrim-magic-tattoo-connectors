@@ -124,7 +124,7 @@ A spell from these effects should hit as hard as the applier casting it. Use the
 3. Hit it once with Firebolt and read `getav health` again. Spawn a fresh one, cast the Hex on it, and read the health once the fire aura shows.
 4. Repeat with Augmented Flames (`help "augmented flames" 4` lists both ranks, add them with `player.addperk`), then again while a Fortify Destruction potion is active (`help "fortify destruction" 4`, `player.additem`).
 
-With Magic Tattoos UI 1.8.3 or later, the Hex's damage matches the Firebolt's in all three. Without it, the spell falls back to the old way of landing and may skip the perk and potion.
+With Magic Tattoos UI 1.8.4 or later and Magic Tattoos Tactical 0.1.2 or later, the Hex's damage matches the Firebolt's in all three. The hit lands on the target in place: no Firebolt flies from the player, and the target does not cast one. Without the UI, the spell falls back to the old way of landing and may skip the perk and potion. Without Tactical 0.1.2, the first hit credits the target and they may shoot a Firebolt instead. Without UI 1.8.4, a bolt may still fly from the player.
 
 ## Reset
 
