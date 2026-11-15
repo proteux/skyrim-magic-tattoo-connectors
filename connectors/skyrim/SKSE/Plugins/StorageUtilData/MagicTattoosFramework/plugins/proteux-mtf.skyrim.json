@@ -493,13 +493,13 @@
     {
       "id": "spell.cast",
       "label": "Cast a spell",
-      "description": "While shown, {param1} lands on the actor: fire-and-forget spells at their cast time, concentration every second. Self buffs land once. Magicka: {param2}.",
+      "description": "While shown, {param1} lands on the actor: fire-and-forget at their cast time, concentration every second at about ten seconds of strength. Self buffs land once. Magicka: {param2} (concentration always costs the wearer).",
       "param1": { "label": "Spell", "text": true, "lookup": "spell", "default": "Skyrim.esm|0x012FCD" },
       "param2": {
         "label": "Magicka",
         "default": "free",
         "menu": [
-          { "id": "free", "label": "Free" },
+          { "id": "free", "label": "Free (not concentration)" },
           { "id": "wearer", "label": "Wearer pays each cast" }
         ]
       }
@@ -507,14 +507,14 @@
     {
       "id": "spell.aura",
       "label": "Spell aura",
-      "description": "While shown, {param1} lands every second on actors within {param2} of the actor: enemies for a harmful spell, the actor and their side for a helpful one. Fire-and-forget spells hit at half strength. Magicka: {param3}.",
+      "description": "While shown, {param1} lands every second on actors within {param2} of the actor: enemies for a harmful spell, the actor and their side for a helpful one. Fire-and-forget hits at half strength; concentration at about ten seconds of strength. Magicka: {param3} (concentration always costs the wearer once per second for the ring).",
       "param1": { "label": "Spell", "text": true, "lookup": "spell", "default": "Skyrim.esm|0x012FCC" },
       "param2": { "label": "Radius", "min": 1, "max": 50, "default": 8, "format": "{0} m" },
       "param3": {
         "label": "Magicka",
         "default": "free",
         "menu": [
-          { "id": "free", "label": "Free" },
+          { "id": "free", "label": "Free (not concentration)" },
           { "id": "wearer", "label": "Wearer pays each second" }
         ]
       }

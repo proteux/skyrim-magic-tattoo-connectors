@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.5
+
+- Concentration Cast a spell and Spell aura pulses land about ten seconds of the spell each second (needs Magic Tattoos UI 1.8.6 or later for the scaled hit). The wearer always pays one second of magicka per pulse, even when Magicka is set to Free; when they can't afford it the pulse pauses and resumes when magicka recovers. Fire-and-forget and self buffs are unchanged.
+
 ## 0.3.4
 
 - Spell aura finds neighbours with a radius scan instead of `GetActorsByProcessingLevel(0)`. Pinned or restrained actors such as Enemy training dummies can stand next to the wearer and still be missing from high process, so the old scan returned nobody and the aura never hit them.

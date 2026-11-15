@@ -10,14 +10,15 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  spell.cast and spell.aura credit the actor stored in the shared key mtf.applier.<preset> on the wearer, which
  any mod that applies presets may set, and fall back to the wearer. With Magic Tattoos UI 1.8.3 or later, the
  spell lands through its MagicTattoosUI.CastAs, so it is as strong as the applier casting it. With 1.8.6 or later,
- Spell aura fire-and-forget hits use CastAsScaled at half strength.
+ Spell aura fire-and-forget hits use CastAsScaled at half strength, and concentration pulses use it at ten seconds
+ of strength. Concentration always costs the wearer's magicka once per second.
 
  MTF does not replay effects after a load, so MTF_Plugin_Skyrim_Load, on the player alias,
  calls _onGameLoaded to restore state the game does not save (the Night Eye image space, expressions)
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.4" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.5" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -52,6 +53,8 @@ float Property SPELL_TICK_INTERVAL = 0.25 AutoReadOnly Hidden
 float Property SPELL_AURA_INTERVAL = 1.0 AutoReadOnly Hidden
 float Property SPELL_CAST_MIN_INTERVAL = 0.5 AutoReadOnly Hidden
 float Property SPELL_AURA_FF_SCALE = 0.5 AutoReadOnly Hidden
+; Concentration Cast a spell / Spell aura: each pulse is this many seconds of the spell (CastAsScaled magnitude).
+float Property SPELL_CONC_SCALE = 10.0 AutoReadOnly Hidden
 int Property EFFECT_FLAG_HOSTILE = 0x00000001 AutoReadOnly Hidden
 ; MagicEffect.GetCastingType / GetDeliveryType.
 int Property CASTING_FIRE_AND_FORGET = 1 AutoReadOnly Hidden
@@ -1762,8 +1765,8 @@ Actor Function _applier(Actor wearer, string presetName)
 EndFunction
 
 ; Lands the spell on the target as if the applier cast it. afScale multiplies magnitude when Magic Tattoos UI
-; 1.8.6 or later is present (Spell aura fire-and-forget uses 0.5). DoCombatSpellApply, without the UI, may leave
-; out the applier's perks and potions and ignores afScale.
+; 1.8.6 or later is present (Spell aura fire-and-forget uses 0.5; concentration uses SPELL_CONC_SCALE).
+; DoCombatSpellApply, without the UI, may leave out the applier's perks and potions and ignores afScale.
 Function _castAs(Actor applier, Spell cast, Actor target, float afScale)
     if afScale <= 0.0
         return
@@ -1792,6 +1795,19 @@ EndFunction
 bool Function _isSelfBuff(Spell candidate)
     MagicEffect costliest = candidate.GetNthEffectMagicEffect(candidate.GetCostliestEffectIndex())
     return costliest != None && costliest.GetDeliveryType() == DELIVERY_SELF && costliest.GetCastingType() != CASTING_CONCENTRATION
+EndFunction
+
+; Concentration pulses land SPELL_CONC_SCALE seconds of the spell; fire-and-forget cast pulses use 1.0.
+float Function _concScale(Spell candidate)
+    if _isConcentration(candidate)
+        return SPELL_CONC_SCALE
+    endif
+    return 1.0
+EndFunction
+
+; Concentration always drains the wearer; fire-and-forget / self buffs only when the effect's Wearer pays is on.
+bool Function _spellPays(Actor wearer, string instKey, Spell cast)
+    return _isConcentration(cast) || StorageUtil.GetIntValue(wearer, instKey) == 1
 EndFunction
 
 ; Concentration pulses every second; fire-and-forget uses the spell's cast time, floored so a 0 charge can't spin.
@@ -1953,12 +1969,12 @@ Function _castPulseDue(Actor wearer, string instKey, float now)
     if cast == None
         return
     endif
-    if StorageUtil.GetIntValue(wearer, instKey) == 1 && !_pay(wearer, cast)
-        StorageUtil.SetFloatValue(wearer, instKey, now + _castInterval(cast))
+    ; Pay fail: leave due as-is so the next tick retries when magicka recovers (concentration always pays).
+    if _spellPays(wearer, instKey, cast) && !_pay(wearer, cast)
         return
     endif
     Actor applier = _applier(wearer, StorageUtil.GetStringValue(wearer, _spellCastPresetKey(instKey)))
-    _castAs(applier, cast, wearer, 1.0)
+    _castAs(applier, cast, wearer, _concScale(cast))
     StorageUtil.SetFloatValue(wearer, instKey, now + _castInterval(cast))
 EndFunction
 
@@ -1988,14 +2004,14 @@ Function _auraPulse(Actor wearer, string instKey, float now)
         return
     endif
     Spell cast = _resolveSpell(spellText)
-    if cast == None || (StorageUtil.GetIntValue(wearer, instKey) == 1 && !_pay(wearer, cast))
+    if cast == None || (_spellPays(wearer, instKey, cast) && !_pay(wearer, cast))
         return
     endif
     StorageUtil.SetFloatValue(wearer, _spellAuraPulseKey(instKey), now)
     Actor applier = _applier(wearer, StorageUtil.GetStringValue(wearer, _spellAuraPresetKey(instKey)))
     float radius = StorageUtil.GetFloatValue(wearer, instKey) * UNITS_PER_METRE
     bool harmful = _isHarmful(cast)
-    float scale = 1.0
+    float scale = SPELL_CONC_SCALE
     if !_isConcentration(cast)
         scale = SPELL_AURA_FF_SCALE
     endif
