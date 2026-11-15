@@ -126,7 +126,7 @@ A Cast a spell hit should match the applier casting it; a Spell aura fire-and-fo
 4. Repeat with Augmented Flames (`help "augmented flames" 4` lists both ranks, add them with `player.addperk`), then again while a Fortify Destruction potion is active (`help "fortify destruction" 4`, `player.additem`).
 5. For the aura: use Firebolt Aura Hex Test (8 m Spell aura: Firebolt). Spawn two bandits close together, hex one, and compare health. The hexed wearer should not take Firebolt damage from the aura; the neighbour should lose about half a Firebolt each second. You and a follower next to them should not.
 
-With Magic Tattoos UI 1.8.6 or later, Magic Tattoos Tactical 0.1.2 or later, and this connector 0.3.3 or later, Cast a spell matches a real Firebolt and the aura neighbour takes about half. Hits land in place: no Firebolt flies from the player. Without the UI, spells fall back to the old way and may skip perk, potion, and half-strength. Without Tactical 0.1.2, the first hit may credit the target. Without UI 1.8.4, a bolt may still fly from the player. Two Enemy training dummies also work for the aura neighbour check (0.3.3 treats faction enemies, not only actors already in combat).
+With Magic Tattoos UI 1.8.6 or later, Magic Tattoos Tactical 0.1.2 or later, and this connector 0.3.4 or later, Cast a spell matches a real Firebolt and the aura neighbour takes about half. Hits land in place: no Firebolt flies from the player. Without the UI, spells fall back to the old way and may skip perk, potion, and half-strength. Without Tactical 0.1.2, the first hit may credit the target. Without UI 1.8.4, a bolt may still fly from the player. Two Enemy training dummies also work for the aura neighbour check (0.3.3 treats faction enemies; 0.3.4 finds them with a radius scan so pinned dummies outside high process still count).
 
 ## Reset
 
@@ -150,10 +150,10 @@ With Magic Tattoos UI 1.8.6 or later, Magic Tattoos Tactical 0.1.2 or later, and
 
 ## Registration
 
-The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.3.3 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
+The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.3.4 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
 
 ```
 sqv MTF_Plugin_Skyrim
 ```
 
-It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.3.3`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.
+It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.3.4`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.

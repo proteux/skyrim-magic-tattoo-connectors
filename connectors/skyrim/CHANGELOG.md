@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.4
+
+- Spell aura finds neighbours with a radius scan instead of `GetActorsByProcessingLevel(0)`. Pinned or restrained actors such as Enemy training dummies can stand next to the wearer and still be missing from high process, so the old scan returned nobody and the aura never hit them.
+
 ## 0.3.3
 
 - Spell aura now treats faction enemies as enemies even when they aren't in combat. `IsHostileToActor` alone skipped Unaggressive targets such as Enemy training dummies and calmed bandits; harmful auras also use `GetFactionReaction == Enemy`, and helpful auras skip those same targets.

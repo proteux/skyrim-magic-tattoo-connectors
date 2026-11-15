@@ -5,7 +5,7 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  Catalog: SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/proteux-mtf.skyrim.json
 
  Optional: powerofthree's Papyrus Extender (hidden, diseased, disease.cure, calm, and the nearby actors of
- spell.aura). Without it those entries do nothing; everything else still works.
+ spell.aura via FindAllReferencesOfFormType). Without it those entries do nothing; everything else still works.
 
  spell.cast and spell.aura credit the actor stored in the shared key mtf.applier.<preset> on the wearer, which
  any mod that applies presets may set, and fall back to the wearer. With Magic Tattoos UI 1.8.3 or later, the
@@ -17,11 +17,13 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.3" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.4" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
 int Property DISEASE_SPELL_TYPE = 1 AutoReadOnly Hidden
+; RE::FormType::ActorCharacter — used by FindAllReferencesOfFormType for Spell aura scans.
+int Property FORM_TYPE_ACTOR = 62 AutoReadOnly Hidden
 ; The largest Seconds and At least the Just made a kill catalog entry allows.
 float Property KILL_WINDOW_MAX = 120.0 AutoReadOnly Hidden
 int Property KILL_LOG_MAX = 20 AutoReadOnly Hidden
@@ -1893,9 +1895,7 @@ bool Function _spellTick()
     endif
     float now = Utility.GetCurrentRealTime()
     StorageUtil.SetFloatValue(PlayerRef, SPELL_TICK, now)
-    Actor[] nearby = None
     if auras > 0
-        nearby = PO3_SKSEFunctions.GetActorsByProcessingLevel(0)
         int w = auras
         while w > 0
             w -= 1
@@ -1909,7 +1909,7 @@ bool Function _spellTick()
             elseif !wearer.IsDead() && wearer.Is3DLoaded()
                 while n > 0
                     n -= 1
-                    _auraPulse(wearer, StorageUtil.StringListGet(wearer, SPELL_AURA_KEYS, n), nearby, now)
+                    _auraPulse(wearer, StorageUtil.StringListGet(wearer, SPELL_AURA_KEYS, n), now)
                 endwhile
             endif
         endwhile
@@ -1975,7 +1975,9 @@ EndFunction
 ; A helpful spell lands on the wearer and everyone near them who isn't an enemy of the applier. A harmful one lands
 ; on everyone near them who is, never on the wearer or the player's teammates when the player applied it.
 ; Fire-and-forget spells use half magnitude when Magic Tattoos UI 1.8.6 or later is present.
-Function _auraPulse(Actor wearer, string instKey, Actor[] nearby, float now)
+; Neighbours come from a radius scan (FindAllReferencesOfFormType), not GetActorsByProcessingLevel(0): pinned or
+; restrained actors such as training dummies can be 3D-loaded next to the player and still missing from high process.
+Function _auraPulse(Actor wearer, string instKey, float now)
     string spellText = StorageUtil.GetStringValue(wearer, instKey)
     if spellText == ""
         StorageUtil.StringListRemove(wearer, SPELL_AURA_KEYS, instKey, true)
@@ -1997,18 +1999,26 @@ Function _auraPulse(Actor wearer, string instKey, Actor[] nearby, float now)
     if !_isConcentration(cast)
         scale = SPELL_AURA_FF_SCALE
     endif
+    ObjectReference[] nearby = PO3_SKSEFunctions.FindAllReferencesOfFormType(wearer, FORM_TYPE_ACTOR, radius)
     if !harmful
         _castAs(applier, cast, wearer, scale)
     endif
+    bool sawPlayer = false
     if nearby
         int i = 0
         while i < nearby.Length
-            _auraHit(applier, wearer, nearby[i], cast, harmful, radius, scale)
+            Actor other = nearby[i] as Actor
+            if other == PlayerRef
+                sawPlayer = true
+            endif
+            _auraHit(applier, wearer, other, cast, harmful, radius, scale)
             i += 1
         endwhile
     endif
-    ; The high process list never holds the player.
-    _auraHit(applier, wearer, PlayerRef, cast, harmful, radius, scale)
+    ; Without Papyrus Extender (or an empty scan), still try the player for helpful auras.
+    if !sawPlayer
+        _auraHit(applier, wearer, PlayerRef, cast, harmful, radius, scale)
+    endif
 EndFunction
 
 Function _auraHit(Actor applier, Actor wearer, Actor other, Spell cast, bool harmful, float radius, float scale)
