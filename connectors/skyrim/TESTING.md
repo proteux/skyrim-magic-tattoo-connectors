@@ -115,6 +115,17 @@ Pick the spells from the list in Magic Tattoos UI 1.8.0 or later. In MTF's own m
 6. **After a load:** save and reload while an aura shows. It keeps pulsing within a couple of seconds.
 7. **Without Papyrus Extender:** the helpful aura still heals the actor and the player, and nobody else.
 
+### Strength against a real cast
+
+A spell from these effects should hit as hard as the applier casting it. Use the ready-made preset **Firebolt Hex Test** (`presets/Firebolt_Hex_Test.json` next to this file, and already in your Data presets folder if you installed from source). It has one always-on tier: **Cast a spell: Firebolt** (free) and a fire Magic aura so you can see the hit. Compare a real Firebolt (`player.addspell 0001c789`) with a Hex that uses that preset, on the same kind of target:
+
+1. In Magic Tattoos UI, Spells tab: make a Hex, set its preset to Firebolt Hex Test (under Tests), learn it, and leave its decay short, about 5 seconds.
+2. Spawn a target with `player.placeatme 00023ab4` (a Bandit Marauder; any bandit works), click it in the console, and note `getav health`.
+3. Hit it once with Firebolt and read `getav health` again. Spawn a fresh one, cast the Hex on it, and read the health once the fire aura shows.
+4. Repeat with Augmented Flames (`help "augmented flames" 4` lists both ranks, add them with `player.addperk`), then again while a Fortify Destruction potion is active (`help "fortify destruction" 4`, `player.additem`).
+
+With Magic Tattoos UI 1.8.3 or later, the Hex's damage matches the Firebolt's in all three. Without it, the spell falls back to the old way of landing and may skip the perk and potion.
+
 ## Reset
 
 1. Show Shout recovery at 50%, Night vision, a Magic aura and a Spell aura on the player, and Facial mood on an NPC. Note `getav ShoutRecoveryMult` on the player.
@@ -137,10 +148,10 @@ Pick the spells from the list in Magic Tattoos UI 1.8.0 or later. In MTF's own m
 
 ## Registration
 
-The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.3.0 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
+The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.3.1 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
 
 ```
 sqv MTF_Plugin_Skyrim
 ```
 
-It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.3.0`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.
+It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.3.1`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.

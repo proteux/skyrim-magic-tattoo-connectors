@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- Cast a spell and Spell aura hit as hard as the applier casting the spell themselves, counting their perks (such as Augmented Flames) and Fortify (School) potions, so a Magic Tattoos Tactical hex with Firebolt does a real Firebolt's damage. This needs Magic Tattoos UI 1.8.3 or later; without it, spells land as before.
+
 ## 0.3.0
 
 - New effect, Cast a spell: when the tier shows, any spell from the game or another mod lands on the actor once, free or paid for with their magicka.

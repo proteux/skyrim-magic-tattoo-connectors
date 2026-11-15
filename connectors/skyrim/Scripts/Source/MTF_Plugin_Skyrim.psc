@@ -8,14 +8,15 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  spell.aura). Without it those entries do nothing; everything else still works.
 
  spell.cast and spell.aura credit the actor stored in the shared key mtf.applier.<preset> on the wearer, which
- any mod that applies presets may set, and fall back to the wearer.
+ any mod that applies presets may set, and fall back to the wearer. With Magic Tattoos UI 1.8.3 or later, the
+ spell lands through its MagicTattoosUI.CastAs, so it is as strong as the applier casting it.
 
  MTF does not replay effects after a load, so MTF_Plugin_Skyrim_Load, on the player alias,
  calls _onGameLoaded to restore state the game does not save (the Night Eye image space, expressions)
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.0" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.1" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -30,6 +31,8 @@ int Property CAST_WATCH_MAX = 32 AutoReadOnly Hidden
 string Property INSTALL_KEY = "proteux-mtf.skyrim.install" AutoReadOnly Hidden
 string Property HEAL_LIST = "proteux-mtf.skyrim.heal" AutoReadOnly Hidden
 string Property APPLIER_PREFIX = "mtf.applier." AutoReadOnly Hidden
+; SKSE's packed form of 1.8.3, the first Magic Tattoos UI with MagicTattoosUI.CastAs: major << 24 | minor << 16 | patch << 4.
+int Property CAST_AS_MIN_UI_VERSION = 0x01080030 AutoReadOnly Hidden
 ; Its spells put presets on, so a tier casting one could keep putting its own preset back on.
 string Property TACTICAL_PLUGIN = "MagicTattoosTactical.esp" AutoReadOnly Hidden
 ; On each wearer, the instance keys of its shown spell auras. On the player, every wearer with one.
@@ -1002,7 +1005,7 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         if cast == None || (pays && !_pay(target, cast))
             return
         endif
-        _applier(target, presetName).DoCombatSpellApply(cast, target)
+        _castAs(_applier(target, presetName), cast, target)
     elseif eid == "spell.aura"
         ; All read before the claim below, so a second dispatch of this instance can't claim it in between.
         string spellText = _paramNStrEx(slot, effectIdx, useScratch, presetName, 1)
@@ -1713,6 +1716,16 @@ Actor Function _applier(Actor wearer, string presetName)
     return wearer
 EndFunction
 
+; Lands the spell on the target as if the applier cast it. DoCombatSpellApply, without Magic Tattoos UI, may leave
+; out the applier's perks and potions.
+Function _castAs(Actor applier, Spell cast, Actor target)
+    if SKSE.GetPluginVersion("MagicTattoosUI") >= CAST_AS_MIN_UI_VERSION
+        MagicTattoosUI.CastAs(applier, cast, target)
+    else
+        applier.DoCombatSpellApply(cast, target)
+    endif
+EndFunction
+
 bool Function _isHarmful(Spell candidate)
     MagicEffect costliest = candidate.GetNthEffectMagicEffect(candidate.GetCostliestEffectIndex())
     return costliest != None && costliest.IsEffectFlagSet(EFFECT_FLAG_HOSTILE)
@@ -1813,7 +1826,7 @@ Function _auraPulse(Actor wearer, string instKey, Actor[] nearby)
     float radius = StorageUtil.GetFloatValue(wearer, instKey) * UNITS_PER_METRE
     bool harmful = _isHarmful(cast)
     if !harmful
-        applier.DoCombatSpellApply(cast, wearer)
+        _castAs(applier, cast, wearer)
     endif
     if nearby
         int i = 0
@@ -1837,5 +1850,5 @@ Function _auraHit(Actor applier, Actor wearer, Actor other, Spell cast, bool har
     elseif other != applier && other.IsHostileToActor(applier)
         return
     endif
-    applier.DoCombatSpellApply(cast, other)
+    _castAs(applier, cast, other)
 EndFunction
