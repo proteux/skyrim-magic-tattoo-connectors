@@ -10,7 +10,7 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  spell.cast and spell.aura credit the actor stored in the shared key mtf.applier.<preset> on the wearer, which
  any mod that applies presets may set, and fall back to the wearer. With Magic Tattoos UI 1.8.3 or later, the
  spell lands through its MagicTattoosUI.CastAs, so it is as strong as the applier casting it. With 1.8.6 or later,
- Spell aura fire-and-forget hits use CastAsScaled at half strength, and concentration pulses use it at ten seconds
+ Cast an aura fire-and-forget hits use CastAsScaled at half strength, and concentration pulses use it at ten seconds
  of strength. When a pulse pays magicka, it charges the applier if one is set and alive (for example the
  caster of a Magic Tattoos Tactical hex), otherwise the wearer. Concentration always pays once per second.
 
@@ -19,12 +19,12 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.6" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.9" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
 int Property DISEASE_SPELL_TYPE = 1 AutoReadOnly Hidden
-; RE::FormType::ActorCharacter — used by FindAllReferencesOfFormType for Spell aura scans.
+; RE::FormType::ActorCharacter — used by FindAllReferencesOfFormType for Cast an aura scans.
 int Property FORM_TYPE_ACTOR = 62 AutoReadOnly Hidden
 ; The largest Seconds and At least the Just made a kill catalog entry allows.
 float Property KILL_WINDOW_MAX = 120.0 AutoReadOnly Hidden
@@ -42,7 +42,7 @@ int Property CAST_AS_MIN_UI_VERSION = 0x01080030 AutoReadOnly Hidden
 int Property CAST_AS_SCALED_MIN_UI_VERSION = 0x01080060 AutoReadOnly Hidden
 ; Its spells put presets on, so a tier casting one could keep putting its own preset back on.
 string Property TACTICAL_PLUGIN = "MagicTattoosTactical.esp" AutoReadOnly Hidden
-; On each wearer, the instance keys of its shown spell auras / repeating casts. On the player, every wearer with one.
+; On each wearer, the instance keys of its shown cast an auras / repeating casts. On the player, every wearer with one.
 string Property SPELL_AURA_KEYS = "proteux-mtf.skyrim.spellaura.keys" AutoReadOnly Hidden
 string Property SPELL_AURA_WEARERS = "proteux-mtf.skyrim.spellaura.wearers" AutoReadOnly Hidden
 string Property SPELL_CAST_KEYS = "proteux-mtf.skyrim.spellcast.keys" AutoReadOnly Hidden
@@ -50,13 +50,15 @@ string Property SPELL_CAST_WEARERS = "proteux-mtf.skyrim.spellcast.wearers" Auto
 string Property SPELL_TICK = "proteux-mtf.skyrim.spell.tick" AutoReadOnly Hidden
 ; How often the player alias wakes to check due casts and auras.
 float Property SPELL_TICK_INTERVAL = 0.25 AutoReadOnly Hidden
-; Spell aura pulses at this spacing; cast intervals use the spell's cast time (floored below).
+; Concentration Cast a spell / Cast an aura pulse spacing. Fire-and-forget intervals use effect duration or cast time.
 float Property SPELL_AURA_INTERVAL = 1.0 AutoReadOnly Hidden
 float Property SPELL_CAST_MIN_INTERVAL = 0.5 AutoReadOnly Hidden
 float Property SPELL_AURA_FF_SCALE = 0.5 AutoReadOnly Hidden
-; Concentration Cast a spell / Spell aura: each pulse is this many seconds of the spell (CastAsScaled magnitude).
+; Concentration Cast a spell / Cast an aura: each pulse is this many seconds of the spell (CastAsScaled magnitude).
 float Property SPELL_CONC_SCALE = 10.0 AutoReadOnly Hidden
 int Property EFFECT_FLAG_HOSTILE = 0x00000001 AutoReadOnly Hidden
+; MagicEffect flag: effect has no duration (instant). Matches RE::EffectSetting::kNoDuration.
+int Property EFFECT_FLAG_NO_DURATION = 0x00000200 AutoReadOnly Hidden
 ; MagicEffect.GetCastingType / GetDeliveryType.
 int Property CASTING_FIRE_AND_FORGET = 1 AutoReadOnly Hidden
 int Property CASTING_CONCENTRATION = 2 AutoReadOnly Hidden
@@ -1131,7 +1133,7 @@ EndFunction
 
 ; Sleeping replaces the rested bonuses and they expire on their own, and dialogue or combat resets the
 ; face, so both are put back while their effect is shown. The game doesn't save shaders, so an aura last
-; played before the latest load is played again. A spell aura or repeating cast is listed again, which
+; played before the latest load is played again. A cast an aura or repeating cast is listed again, which
 ; restarts its tick if it stopped. A tier undone as stale while MTF still shows it gets no new onActivate,
 ; so it applies again here.
 Function onTick(Actor target, int param, int param2, string eid, int slot, int effectIdx, bool useScratch, int baseSlot, int area, string presetName)
@@ -1766,7 +1768,7 @@ Actor Function _applier(Actor wearer, string presetName)
 EndFunction
 
 ; Lands the spell on the target as if the applier cast it. afScale multiplies magnitude when Magic Tattoos UI
-; 1.8.6 or later is present (Spell aura fire-and-forget uses 0.5; concentration uses SPELL_CONC_SCALE).
+; 1.8.6 or later is present (Cast an aura fire-and-forget uses 0.5; concentration uses SPELL_CONC_SCALE).
 ; DoCombatSpellApply, without the UI, may leave out the applier's perks and potions and ignores afScale.
 Function _castAs(Actor applier, Spell cast, Actor target, float afScale)
     if afScale <= 0.0
@@ -1817,16 +1819,40 @@ Actor Function _payPayer(Actor wearer, string presetName)
     return _applier(wearer, presetName)
 EndFunction
 
-; Concentration pulses every second; fire-and-forget uses the spell's cast time, floored so a 0 charge can't spin.
-float Function _castInterval(Spell candidate)
+; Longest lasting effect duration in seconds; 0 when every effect is instant or flagged NoDuration.
+float Function _longestEffectDuration(Spell candidate)
+    float longest = 0.0
+    int n = candidate.GetNumEffects()
+    int i = 0
+    while i < n
+        MagicEffect fx = candidate.GetNthEffectMagicEffect(i)
+        if fx != None && !fx.IsEffectFlagSet(EFFECT_FLAG_NO_DURATION)
+            float d = candidate.GetNthEffectDuration(i)
+            if d > longest
+                longest = d
+            endif
+        endif
+        i += 1
+    endwhile
+    return longest
+EndFunction
+
+; Spacing between Cast a spell / Cast an aura pulses. Concentration every second. Fire-and-forget waits for the
+; effect to end when it has a duration (so Fear and similar don't flash); instant spells use cast time. Floored
+; so a 0 charge can't spin.
+float Function _spellInterval(Spell candidate)
     if _isConcentration(candidate)
         return SPELL_AURA_INTERVAL
     endif
-    float charge = candidate.GetCastTime()
-    if charge < SPELL_CAST_MIN_INTERVAL
+    float interval = candidate.GetCastTime()
+    float lasting = _longestEffectDuration(candidate)
+    if lasting > interval
+        interval = lasting
+    endif
+    if interval < SPELL_CAST_MIN_INTERVAL
         return SPELL_CAST_MIN_INTERVAL
     endif
-    return charge
+    return interval
 EndFunction
 
 ; Takes the spell's cost from payer's magicka. False, taking nothing, when they don't have enough.
@@ -1844,7 +1870,7 @@ bool Function _pay(Actor payer, Spell cast)
     return true
 EndFunction
 
-; ── Spell cast (repeating on wearer) and Spell aura ─────────────────────────
+; ── Spell cast (repeating on wearer) and Cast an aura ─────────────────────────
 
 ; Each shown instance keeps, under its instance key on the wearer, the spell as a string, whether the wearer
 ; pays as an int, and for auras the radius in metres as a float / for casts the next due real time as a float.
@@ -1911,7 +1937,7 @@ bool Function _auraTick()
     return _spellTick()
 EndFunction
 
-; One wake of every shown spell cast and spell aura. False once none are left, which stops the tick.
+; One wake of every shown spell cast and cast an aura. False once none are left, which stops the tick.
 bool Function _spellTick()
     int auras = StorageUtil.FormListCount(PlayerRef, SPELL_AURA_WEARERS)
     int casts = StorageUtil.FormListCount(PlayerRef, SPELL_CAST_WEARERS)
@@ -1986,21 +2012,21 @@ Function _castPulseDue(Actor wearer, string instKey, float now)
     endif
     Actor applier = _applier(wearer, presetName)
     _castAs(applier, cast, wearer, _concScale(cast))
-    StorageUtil.SetFloatValue(wearer, instKey, now + _castInterval(cast))
+    StorageUtil.SetFloatValue(wearer, instKey, now + _spellInterval(cast))
 EndFunction
 
-; True when other is fighting applier, or their factions are enemies. IsHostileToActor alone misses
+; True when other is fighting sideRef, or their factions are enemies. IsHostileToActor alone misses
 ; Unaggressive faction-enemies (training dummies, calmed bandits) who never drew weapons.
-bool Function _isEnemyOf(Actor other, Actor applier)
-    if other == None || applier == None
+bool Function _isEnemyOf(Actor other, Actor sideRef)
+    if other == None || sideRef == None
         return false
     endif
     ; GetFactionReaction: 0 Neutral, 1 Enemy, 2 Ally, 3 Friend.
-    return other.IsHostileToActor(applier) || other.GetFactionReaction(applier) == 1
+    return other.IsHostileToActor(sideRef) || other.GetFactionReaction(sideRef) == 1
 EndFunction
 
-; A helpful spell lands on the wearer and everyone near them who isn't an enemy of the applier. A harmful one lands
-; on everyone near them who is, never on the wearer or the player's teammates when the player applied it.
+; Helpful and harmful both land on the wearer's side (anyone nearby who isn't an enemy of the wearer). Helpful
+; also hits the wearer; harmful never does. Credit, aggro and kill credit stay with the applier via _castAs.
 ; Fire-and-forget spells use half magnitude when Magic Tattoos UI 1.8.6 or later is present.
 ; Neighbours come from a radius scan (FindAllReferencesOfFormType), not GetActorsByProcessingLevel(0): pinned or
 ; restrained actors such as training dummies can be 3D-loaded next to the player and still missing from high process.
@@ -2010,13 +2036,16 @@ Function _auraPulse(Actor wearer, string instKey, float now)
         StorageUtil.StringListRemove(wearer, SPELL_AURA_KEYS, instKey, true)
         return
     endif
-    float last = StorageUtil.GetFloatValue(wearer, _spellAuraPulseKey(instKey))
-    if last > 0.0 && now - last < SPELL_AURA_INTERVAL
+    Spell cast = _resolveSpell(spellText)
+    if cast == None
         return
     endif
-    Spell cast = _resolveSpell(spellText)
+    float last = StorageUtil.GetFloatValue(wearer, _spellAuraPulseKey(instKey))
+    if last > 0.0 && now - last < _spellInterval(cast)
+        return
+    endif
     string presetName = StorageUtil.GetStringValue(wearer, _spellAuraPresetKey(instKey))
-    if cast == None || (_spellPays(wearer, instKey, cast) && !_pay(_payPayer(wearer, presetName), cast))
+    if _spellPays(wearer, instKey, cast) && !_pay(_payPayer(wearer, presetName), cast)
         return
     endif
     StorageUtil.SetFloatValue(wearer, _spellAuraPulseKey(instKey), now)
@@ -2039,25 +2068,22 @@ Function _auraPulse(Actor wearer, string instKey, float now)
             if other == PlayerRef
                 sawPlayer = true
             endif
-            _auraHit(applier, wearer, other, cast, harmful, radius, scale)
+            _auraHit(applier, wearer, other, cast, radius, scale)
             i += 1
         endwhile
     endif
-    ; Without Papyrus Extender (or an empty scan), still try the player for helpful auras.
+    ; Without Papyrus Extender (or an empty scan), still try the player when they're on the wearer's side.
     if !sawPlayer
-        _auraHit(applier, wearer, PlayerRef, cast, harmful, radius, scale)
+        _auraHit(applier, wearer, PlayerRef, cast, radius, scale)
     endif
 EndFunction
 
-Function _auraHit(Actor applier, Actor wearer, Actor other, Spell cast, bool harmful, float radius, float scale)
+Function _auraHit(Actor applier, Actor wearer, Actor other, Spell cast, float radius, float scale)
     if other == None || other == wearer || other.IsDead() || other.GetDistance(wearer) > radius
         return
     endif
-    if harmful
-        if other == applier || !_isEnemyOf(other, applier) || (applier == PlayerRef && other.IsPlayerTeammate())
-            return
-        endif
-    elseif other != applier && _isEnemyOf(other, applier)
+    ; Same side as the wearer for both helpful and harmful. Harmful still skips the wearer above.
+    if _isEnemyOf(other, wearer)
         return
     endif
     _castAs(applier, cast, other, scale)

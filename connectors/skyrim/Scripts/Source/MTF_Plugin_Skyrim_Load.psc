@@ -1,7 +1,7 @@
 ; Copyright (C) 2026 Jack Whitehouse (proteux). Licensed under the GNU General Public License v3.0 or later; see LICENSE.
 Scriptname MTF_Plugin_Skyrim_Load extends ReferenceAlias
 {On the player alias of MTF_Plugin_Skyrim's quest. Quest scripts never receive OnPlayerLoadGame or the
- player's OnSpellCast. Also runs the spell cast / spell aura tick, since the quest's own updates belong to
+ player's OnSpellCast. Also runs the spell cast / cast an aura tick, since the quest's own updates belong to
  MTF's registration.}
 
 Event OnPlayerLoadGame()

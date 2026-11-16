@@ -1,34 +1,47 @@
 # Changelog
 
+## 0.3.9
+
+- Cast an aura fire-and-forget uses the same pulse spacing as Cast a spell: the longer of effect duration and cast time (at least 0.5 s). Lasting spells such as Fear no longer flash on the aura ring; instant spells such as Firebolt pulse on cast time at half strength. Concentration still pulses every second.
+
+## 0.3.8
+
+- Renamed the Spell aura effect label to Cast an aura so it sits next to Cast a spell in the menu. The effect id (`spell.aura`) is unchanged, so existing presets keep working.
+
+## 0.3.7
+
+- Cast a spell fire-and-forget repeats at the longer of the spell's effect duration and its cast time (at least 0.5 s), so lasting spells such as Fear are not re-applied while they would still be running. Instant spells such as Firebolt still pulse on cast time. Concentration and Cast an aura are unchanged.
+- Cast an aura picks targets from the wearer's side for both helpful and harmful spells: anyone nearby who isn't an enemy of the wearer (faction enemies and hostiles still count). Helpful still hits the wearer; harmful never does. Whoever applied the tattoo still gets the damage, aggro, and kill credit.
+
 ## 0.3.6
 
-- When Cast a spell or Spell aura pays magicka, it charges the applier if one is set and alive (for example the caster of a Magic Tattoos Tactical hex or blessing), otherwise the wearer. Concentration still always pays once per second; the optional pay flag still gates fire-and-forget and self buffs.
+- When Cast a spell or Cast an aura pays magicka, it charges the applier if one is set and alive (for example the caster of a Magic Tattoos Tactical hex or blessing), otherwise the wearer. Concentration still always pays once per second; the optional pay flag still gates fire-and-forget and self buffs.
 
 ## 0.3.5
 
-- Concentration Cast a spell and Spell aura pulses land about ten seconds of the spell each second (needs Magic Tattoos UI 1.8.6 or later for the scaled hit). The wearer always pays one second of magicka per pulse, even when Magicka is set to Free; when they can't afford it the pulse pauses and resumes when magicka recovers. Fire-and-forget and self buffs are unchanged.
+- Concentration Cast a spell and Cast an aura pulses land about ten seconds of the spell each second (needs Magic Tattoos UI 1.8.6 or later for the scaled hit). The wearer always pays one second of magicka per pulse, even when Magicka is set to Free; when they can't afford it the pulse pauses and resumes when magicka recovers. Fire-and-forget and self buffs are unchanged.
 
 ## 0.3.4
 
-- Spell aura finds neighbours with a radius scan instead of `GetActorsByProcessingLevel(0)`. Pinned or restrained actors such as Enemy training dummies can stand next to the wearer and still be missing from high process, so the old scan returned nobody and the aura never hit them.
+- Cast an aura finds neighbours with a radius scan instead of `GetActorsByProcessingLevel(0)`. Pinned or restrained actors such as Enemy training dummies can stand next to the wearer and still be missing from high process, so the old scan returned nobody and the aura never hit them.
 
 ## 0.3.3
 
-- Spell aura now treats faction enemies as enemies even when they aren't in combat. `IsHostileToActor` alone skipped Unaggressive targets such as Enemy training dummies and calmed bandits; harmful auras also use `GetFactionReaction == Enemy`, and helpful auras skip those same targets.
+- Cast an aura now treats faction enemies as enemies even when they aren't in combat. `IsHostileToActor` alone skipped Unaggressive targets such as Enemy training dummies and calmed bandits; harmful auras also use `GetFactionReaction == Enemy`, and helpful auras skip those same targets.
 
 ## 0.3.2
 
 - Cast a spell repeats on the wearer while the tier is shown: fire-and-forget spells at their cast time (at least 0.5 s), concentration every second. Self buffs such as Oakflesh still land once.
-- Spell aura fire-and-forget hits (Firebolt, Ice Spike) use half strength when Magic Tattoos UI 1.8.6 or later is present; concentration auras stay at full strength per second.
+- Cast an aura fire-and-forget hits (Firebolt, Ice Spike) use half strength when Magic Tattoos UI 1.8.6 or later is present; concentration auras stay at full strength per second.
 
 ## 0.3.1
 
-- Cast a spell and Spell aura hit as hard as the applier casting the spell themselves, counting their perks (such as Augmented Flames) and Fortify (School) potions, so a Magic Tattoos Tactical hex with Firebolt does a real Firebolt's damage. This needs Magic Tattoos UI 1.8.3 or later; without it, spells land as before.
+- Cast a spell and Cast an aura hit as hard as the applier casting the spell themselves, counting their perks (such as Augmented Flames) and Fortify (School) potions, so a Magic Tattoos Tactical hex with Firebolt does a real Firebolt's damage. This needs Magic Tattoos UI 1.8.3 or later; without it, spells land as before.
 
 ## 0.3.0
 
 - New effect, Cast a spell: when the tier shows, any spell from the game or another mod lands on the actor once, free or paid for with their magicka.
-- New effect, Spell aura: while shown, a spell lands every second on actors within 1 to 50 metres. A harmful spell such as Flames hits the actor's enemies; a helpful one such as Healing reaches the actor and their side. It needs Papyrus Extender for anyone but the actor and the player.
+- New effect, Cast an aura: while shown, a spell lands every second on actors within 1 to 50 metres. A harmful spell such as Flames hits the actor's enemies; a helpful one such as Healing reaches the actor and their side. It needs Papyrus Extender for anyone but the actor and the player.
 - Both credit whoever applied the tattoo, read from the shared `mtf.applier.<preset>` key that Magic Tattoos Tactical sets, so a hex's damage and kill credit go to the caster. Without it, the wearer counts as the applier.
 - Magic Tattoos UI 1.8.0 picks the spell from a searchable list. In MTF's own menu, type `Plugin.esp|0xFormID` or the name of a spell the player knows.
 

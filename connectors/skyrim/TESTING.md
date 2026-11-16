@@ -103,36 +103,38 @@ pms 0005d608
 sms 0005d608
 ```
 
-## Cast a spell and Spell aura
+## Cast a spell and Cast an aura
 
 Pick the spells from the list in Magic Tattoos UI 1.8.0 or later. In MTF's own menu, type `Skyrim.esm|0x012FCC` for Healing, `Skyrim.esm|0x012FCD` for Flames, and `Skyrim.esm|0x02F3B8` for Fast Healing, or the spell's name if the player knows it.
 
 1. **Self heal:** on the player, a tier with **Cast a spell: Fast Healing** and a Health below 50% condition. Take damage (`player.damageav health 200`); the tier shows and health keeps climbing about every half second while it stays up. With Applier pays (else wearer), magicka drops each cast; empty it first (`player.damageav magicka 500`) and further heals are skipped until magicka recovers.
 2. **Self buff once:** **Cast a spell: Oakflesh**. The flesh buff applies once when the tier shows, not every half second.
-3. **Spell aura, helpful:** on the player, **Spell aura: Healing**, 8 m. Damage the player and a follower standing close: both heal each second (about ten seconds of Healing per pulse with UI 1.8.6+). Magicka drains from the wearer (no separate applier) even if Magicka is Free. A follower 20 m away doesn't. Stop the tier and the healing stops within a second.
-4. **Spell aura, harmful:** on the player, **Spell aura: Flames**, 8 m. Start a fight with bandits: those within 8 m burn hard every second, and the follower next to you doesn't. A chicken or a guard near you doesn't burn, since neither is hostile to you. Empty magicka (`player.damageav magicka 500`): pulses pause; let it regen and they resume.
-5. **A hex with Magic Tattoos Tactical:** make a Hex whose preset has a tier with **Cast a spell: Flames** (or a harmful **Spell aura**) and cast it on a bandit. Magicka drains from you (the applier), not the bandit; empty the bandit's magicka first and the pulses still run while yours lasts. The bandit burns and turns on you. Their friends near them burn with an aura, you and your follower don't. Kill one with it and the kill counts as yours (People Killed rises on the General Stats page).
-6. **A blessing:** a Blessing whose preset has **Spell aura: Healing**, cast on your follower. The follower and you heal while near them; the bandits fighting you don't. Magicka drains from you.
+2b. **Lasting fire-and-forget:** **Cast a spell: Fear**. The Fear visual lands once and stays for the spell's duration without flashing; the next cast waits until that duration ends (about 30 s for vanilla Fear). Instant spells such as Firebolt still pulse on cast time. The same spacing applies to **Cast an aura: Fear** on nearby same-side actors (half strength).
+3. **Cast an aura, helpful:** on the player, **Cast an aura: Healing**, 8 m. Damage the player and a follower standing close: both heal each second (about ten seconds of Healing per pulse with UI 1.8.6+). Magicka drains from the wearer (no separate applier) even if Magicka is Free. A follower 20 m away doesn't. Stop the tier and the healing stops within a second.
+4. **Cast an aura, harmful:** on the player, **Cast an aura: Flames**, 8 m. Stand near a follower or an Ally training dummy: they burn each second (same side as you), and bandits fighting you don't. Empty magicka (`player.damageav magicka 500`): pulses pause; let it regen and they resume.
+5. **A hex with Magic Tattoos Tactical:** make a Hex whose preset has a tier with **Cast a spell: Flames** (or a harmful **Cast an aura**) and cast it on a bandit. Magicka drains from you (the applier), not the bandit; empty the bandit's magicka first and the pulses still run while yours lasts. With Cast a spell the bandit burns and turns on you. With a harmful aura their friends near them burn, you and your follower don't. Kill one with it and the kill counts as yours (People Killed rises on the General Stats page).
+5b. **Helpful hex aura:** same setup with **Cast an aura: Healing** on the hex. The marked bandit and nearby bandits heal; you and your follower don't.
+6. **A blessing:** a Blessing whose preset has **Cast an aura: Healing**, cast on your follower. The follower and you heal while near them; the bandits fighting you don't. Magicka drains from you.
 
 7. **After a load:** save and reload while an aura or repeating Cast a spell shows. It keeps pulsing within a couple of seconds.
-8. **Without Papyrus Extender:** the helpful aura still heals the actor and the player, and nobody else.
+8. **Without Papyrus Extender:** the aura still hits the wearer (helpful only) and tries the player when they're on the wearer's side; nobody else.
 
 ### Strength against a real cast
 
-A Cast a spell hit should match the applier casting it; a Spell aura fire-and-forget hit should be about half. Use the ready-made presets **Firebolt Hex Test** and **Firebolt Aura Hex Test** (`presets/` next to this file, and in your Data presets folder if you installed from source). Each has an always-on tier and a fire Magic aura so you can see the hit.
+A Cast a spell hit should match the applier casting it; a Cast an aura fire-and-forget hit should be about half. Use the ready-made presets **Firebolt Hex Test** and **Firebolt Aura Hex Test** (`presets/` next to this file, and in your Data presets folder if you installed from source). Each has an always-on tier and a fire Magic aura so you can see the hit.
 
 1. In Magic Tattoos UI, Spells tab: make a Hex, set its preset to Firebolt Hex Test (under Tests), learn it, and leave its decay long enough to see a few ticks, about 10 seconds.
 2. Spawn a target with `player.placeatme 00023ab4` (a Bandit Marauder; any bandit works), click it in the console, and note `getav health`.
 3. Hit it once with Firebolt (`player.addspell 0001c789`) and read `getav health` again. Spawn a fresh one, cast the Hex on it, and read the health after the first fire-aura flash (before a second tick). The drop should match the real Firebolt. Leave the hex on: further ticks land about every half second at full strength.
 4. Repeat with Augmented Flames (`help "augmented flames" 4` lists both ranks, add them with `player.addperk`), then again while a Fortify Destruction potion is active (`help "fortify destruction" 4`, `player.additem`).
-5. For the aura: use Firebolt Aura Hex Test (8 m Spell aura: Firebolt). Spawn two bandits close together, hex one, and compare health. The hexed wearer should not take Firebolt damage from the aura; the neighbour should lose about half a Firebolt each second. You and a follower next to them should not.
+5. For the aura: use Firebolt Aura Hex Test (8 m Cast an aura: Firebolt). Spawn two bandits close together, hex one, and compare health. The hexed wearer should not take Firebolt damage from the aura; the neighbour should lose about half a Firebolt each pulse (on Firebolt's cast time, at least half a second). You and a follower next to them should not.
 
-With Magic Tattoos UI 1.8.6 or later, Magic Tattoos Tactical 0.1.2 or later, and this connector 0.3.5 or later, Cast a spell matches a real Firebolt and the aura neighbour takes about half. Hits land in place: no Firebolt flies from the player. Without the UI, spells fall back to the old way and may skip perk, potion, and half-strength. Without Tactical 0.1.2, the first hit may credit the target. Without UI 1.8.4, a bolt may still fly from the player. Two Enemy training dummies also work for the aura neighbour check (0.3.3 treats faction enemies; 0.3.4 finds them with a radius scan so pinned dummies outside high process still count). Concentration Flames/Healing pulses at about ten seconds of strength per second and always pay magicka (from the applier when set, else the wearer; 0.3.6+).
+With Magic Tattoos UI 1.8.6 or later, Magic Tattoos Tactical 0.1.2 or later, and this connector 0.3.9 or later, Cast a spell matches a real Firebolt and the aura neighbour takes about half. Hits land in place: no Firebolt flies from the player. Without the UI, spells fall back to the old way and may skip perk, potion, and half-strength. Without Tactical 0.1.2, the first hit may credit the target. Without UI 1.8.4, a bolt may still fly from the player. Two Enemy training dummies also work for a harmful hex aura neighbour check (0.3.8 hits the wearer's side; 0.3.4 finds them with a radius scan so pinned dummies outside high process still count). For a Flames aura on the player, use Ally/Friend dummies instead. Concentration Flames/Healing pulses at about ten seconds of strength per second and always pay magicka (from the applier when set, else the wearer; 0.3.6+).
 
 ## Reset
 
-1. Show Shout recovery at 50%, Night vision, a Magic aura and a Spell aura on the player, and Facial mood on an NPC. Note `getav ShoutRecoveryMult` on the player.
-2. Enter `setpqv MTF_Plugin_Skyrim ResetOnLoad 1`, save, and load that save. `getav ShoutRecoveryMult` is back to its value before the tier, Night vision, the Magic aura and the Spell aura are gone, the NPC's face relaxes, and the log shows `[MTF_Plugin_Skyrim] reset 2 actor(s)`.
+1. Show Shout recovery at 50%, Night vision, a Magic aura and a Cast an aura on the player, and Facial mood on an NPC. Note `getav ShoutRecoveryMult` on the player.
+2. Enter `setpqv MTF_Plugin_Skyrim ResetOnLoad 1`, save, and load that save. `getav ShoutRecoveryMult` is back to its value before the tier, Night vision, the Magic aura and the Cast an aura are gone, the NPC's face relaxes, and the log shows `[MTF_Plugin_Skyrim] reset 2 actor(s)`.
 3. `sqv MTF_Plugin_Skyrim` shows `::ResetOnLoad_var = 0`. Load again: nothing resets.
 4. Stop the tiers and start them again. The changes come back, and stopping them clears them as usual.
 
@@ -151,10 +153,10 @@ With Magic Tattoos UI 1.8.6 or later, Magic Tattoos Tactical 0.1.2 or later, and
 
 ## Registration
 
-The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.3.6 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
+The first session after the plugin is added, the Papyrus log shows `[MTF_Main] Registered 'proteux-mtf.skyrim'` and `[MTF_Plugin_Skyrim] 0.3.9 registered` a few seconds after loading. The save remembers the registration, so later sessions log nothing; check the connector's state directly instead:
 
 ```
 sqv MTF_Plugin_Skyrim
 ```
 
-It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.3.6`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.
+It should show the quest running, `::_registered_var = True`, and `ResolvedVersion` set to `0.3.9`. If MTF lists the plugin as "Catalog Only", the catalog loaded but the script didn't register; check that `MTF_Plugin_Skyrim.esp` is enabled in the load order.
