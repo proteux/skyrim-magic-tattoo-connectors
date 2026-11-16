@@ -500,7 +500,7 @@
         "default": "free",
         "menu": [
           { "id": "free", "label": "Free (not concentration)" },
-          { "id": "wearer", "label": "Wearer pays each cast" }
+          { "id": "wearer", "label": "Applier pays each cast (else wearer)" }
         ]
       }
     },
@@ -515,7 +515,7 @@
         "default": "free",
         "menu": [
           { "id": "free", "label": "Free (not concentration)" },
-          { "id": "wearer", "label": "Wearer pays each second" }
+          { "id": "wearer", "label": "Applier pays each second (else wearer)" }
         ]
       }
     }

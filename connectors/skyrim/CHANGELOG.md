@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.6
+
+- When Cast a spell or Spell aura pays magicka, it charges the applier if one is set and alive (for example the caster of a Magic Tattoos Tactical hex or blessing), otherwise the wearer. Concentration still always pays once per second; the optional pay flag still gates fire-and-forget and self buffs.
+
 ## 0.3.5
 
 - Concentration Cast a spell and Spell aura pulses land about ten seconds of the spell each second (needs Magic Tattoos UI 1.8.6 or later for the scaled hit). The wearer always pays one second of magicka per pulse, even when Magicka is set to Free; when they can't afford it the pulse pauses and resumes when magicka recovers. Fire-and-forget and self buffs are unchanged.
