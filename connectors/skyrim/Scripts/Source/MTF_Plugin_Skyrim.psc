@@ -11,15 +11,16 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  any mod that applies presets may set, and fall back to the wearer. With Magic Tattoos UI 1.8.3 or later, the
  spell lands through its MagicTattoosUI.CastAs, so it is as strong as the applier casting it. With 1.8.6 or later,
  Cast an aura fire-and-forget hits use CastAsScaled at half strength, and concentration pulses use it at ten seconds
- of strength. When a pulse pays magicka, it charges the applier if one is set and alive (for example the
- caster of a Magic Tattoos Tactical hex), otherwise the wearer. Concentration always pays once per second.
+ of strength. When a pulse pays magicka, it charges the recorded applier if one is set (for example the
+ caster of a Magic Tattoos Tactical hex); only that actor pays, never the wearer as a fallback. With no
+ applier recorded, the wearer pays. Concentration always pays once per second.
 
  MTF does not replay effects after a load, so MTF_Plugin_Skyrim_Load, on the player alias,
  calls _onGameLoaded to restore state the game does not save (the Night Eye image space, expressions)
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.9" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.11" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -1031,7 +1032,7 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
             return
         endif
         if _isSelfBuff(cast)
-            if pays && !_pay(_applier(target, presetName), cast)
+            if pays && !_pay(_payPayer(target, presetName), cast)
                 return
             endif
             _castAs(_applier(target, presetName), cast, target, 1.0)
@@ -1814,9 +1815,19 @@ bool Function _spellPays(Actor wearer, string instKey, Spell cast)
     return _isConcentration(cast) || StorageUtil.GetIntValue(wearer, instKey) == 1
 EndFunction
 
-; Who loses magicka for this pulse: the credited applier if alive, else the wearer.
+; Who loses magicka for this pulse. A recorded applier is the only payer: dead or empty magicka pauses the
+; pulse; the wearer is never charged as a fallback. With no applier key, the wearer pays (self-applied).
 Actor Function _payPayer(Actor wearer, string presetName)
-    return _applier(wearer, presetName)
+    if presetName != ""
+        Actor applier = StorageUtil.GetFormValue(wearer, APPLIER_PREFIX + presetName) as Actor
+        if applier != None
+            if applier.IsDead()
+                return None
+            endif
+            return applier
+        endif
+    endif
+    return wearer
 EndFunction
 
 ; Longest lasting effect duration in seconds; 0 when every effect is instant or flagged NoDuration.
@@ -2025,8 +2036,8 @@ bool Function _isEnemyOf(Actor other, Actor sideRef)
     return other.IsHostileToActor(sideRef) || other.GetFactionReaction(sideRef) == 1
 EndFunction
 
-; Helpful and harmful both land on the wearer's side (anyone nearby who isn't an enemy of the wearer). Helpful
-; also hits the wearer; harmful never does. Credit, aggro and kill credit stay with the applier via _castAs.
+; Helpful and harmful both land on the wearer's side (anyone nearby who isn't an enemy of the wearer). Neither
+; hits the wearer. Credit, aggro and kill credit stay with the applier via _castAs.
 ; Fire-and-forget spells use half magnitude when Magic Tattoos UI 1.8.6 or later is present.
 ; Neighbours come from a radius scan (FindAllReferencesOfFormType), not GetActorsByProcessingLevel(0): pinned or
 ; restrained actors such as training dummies can be 3D-loaded next to the player and still missing from high process.
@@ -2051,15 +2062,11 @@ Function _auraPulse(Actor wearer, string instKey, float now)
     StorageUtil.SetFloatValue(wearer, _spellAuraPulseKey(instKey), now)
     Actor applier = _applier(wearer, presetName)
     float radius = StorageUtil.GetFloatValue(wearer, instKey) * UNITS_PER_METRE
-    bool harmful = _isHarmful(cast)
     float scale = SPELL_CONC_SCALE
     if !_isConcentration(cast)
         scale = SPELL_AURA_FF_SCALE
     endif
     ObjectReference[] nearby = PO3_SKSEFunctions.FindAllReferencesOfFormType(wearer, FORM_TYPE_ACTOR, radius)
-    if !harmful
-        _castAs(applier, cast, wearer, scale)
-    endif
     bool sawPlayer = false
     if nearby
         int i = 0
@@ -2082,7 +2089,7 @@ Function _auraHit(Actor applier, Actor wearer, Actor other, Spell cast, float ra
     if other == None || other == wearer || other.IsDead() || other.GetDistance(wearer) > radius
         return
     endif
-    ; Same side as the wearer for both helpful and harmful. Harmful still skips the wearer above.
+    ; Same side as the wearer for both helpful and harmful; neither hits the wearer (above).
     if _isEnemyOf(other, wearer)
         return
     endif

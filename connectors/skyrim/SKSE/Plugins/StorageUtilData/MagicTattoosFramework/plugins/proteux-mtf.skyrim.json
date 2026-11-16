@@ -493,21 +493,21 @@
     {
       "id": "spell.cast",
       "label": "Cast a spell",
-      "description": "While shown, {param1} lands on the actor: fire-and-forget at their effect duration or cast time (whichever is longer), concentration every second at about ten seconds of strength. Self buffs land once. Magicka: {param2} (concentration always costs the wearer).",
+      "description": "While shown, {param1} lands on the actor: fire-and-forget at their effect duration or cast time (whichever is longer), concentration every second at about ten seconds of strength. Self buffs land once. Magicka: {param2} (concentration always costs the applier; with no applier, the wearer).",
       "param1": { "label": "Spell", "text": true, "lookup": "spell", "default": "Skyrim.esm|0x012FCD" },
       "param2": {
         "label": "Magicka",
         "default": "free",
         "menu": [
           { "id": "free", "label": "Free (not concentration)" },
-          { "id": "wearer", "label": "Applier pays each cast (else wearer)" }
+          { "id": "wearer", "label": "Applier pays each cast" }
         ]
       }
     },
     {
       "id": "spell.aura",
       "label": "Cast an aura",
-      "description": "While shown, {param1} lands on actors within {param2} of the actor who share their side (not enemies of them): helpful hits the actor too, harmful skips them. Fire-and-forget at half strength on their effect duration or cast time; concentration every second at about ten seconds of strength. Magicka: {param3} (concentration always costs the wearer once per second for the ring).",
+      "description": "While shown, {param1} lands on actors within {param2} of the actor who share their side (not enemies of them): neither hits the actor. Fire-and-forget at half strength on their effect duration or cast time; concentration every second at about ten seconds of strength. Magicka: {param3} (concentration always costs the applier once per second for the ring; with no applier, the wearer).",
       "param1": { "label": "Spell", "text": true, "lookup": "spell", "default": "Skyrim.esm|0x012FCC" },
       "param2": { "label": "Radius", "min": 1, "max": 50, "default": 8, "format": "{0} m" },
       "param3": {
@@ -515,7 +515,7 @@
         "default": "free",
         "menu": [
           { "id": "free", "label": "Free (not concentration)" },
-          { "id": "wearer", "label": "Applier pays each second (else wearer)" }
+          { "id": "wearer", "label": "Applier pays each second" }
         ]
       }
     }

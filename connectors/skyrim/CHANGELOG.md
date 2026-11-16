@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.11
+
+- When Cast a spell or Cast an aura pays magicka and an applier is recorded (for example a Magic Tattoos Tactical hex or blessing), only that applier is charged. If they are dead or out of magicka, the pulse pauses; the wearer's magicka is never used as a fallback. With no applier recorded, the wearer still pays.
+
+## 0.3.10
+
+- Cast an aura no longer hits the wearer for helpful spells. Helpful and harmful both reach only nearby actors on the wearer's side.
+
 ## 0.3.9
 
 - Cast an aura fire-and-forget uses the same pulse spacing as Cast a spell: the longer of effect duration and cast time (at least 0.5 s). Lasting spells such as Fear no longer flash on the aura ring; instant spells such as Firebolt pulse on cast time at half strength. Concentration still pulses every second.
