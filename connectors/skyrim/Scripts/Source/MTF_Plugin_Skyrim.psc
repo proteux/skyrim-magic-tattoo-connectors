@@ -20,7 +20,7 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.17" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.18" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -307,9 +307,6 @@ bool Function checkCondition(Actor target, int param, string cid)
         if minRel == ""
             minRel = "ally"
         endif
-        ; #region agent log
-        _debugAlliesLog("A", "checkCondition", "allies.near invoked min=" + minRel, target, meters as float, -1, -1, -1, -1, -1, false)
-        ; #endregion
         return _alliesNear(target, meters as float, minRel)
     endif
     return false
@@ -613,59 +610,22 @@ bool Function _alliesNear(Actor target, float meters, string minRelId)
     float radius = meters * UNITS_PER_METRE
     int minLevel = _reactionLevelMin(minRelId)
     if target == None || radius <= 0.0
-        ; #region agent log
-        _debugAlliesLog("E", "_alliesNear", "bad target or radius", target, meters, radius as int, -1, -1, -1, -1, false)
-        ; #endregion
         return false
     endif
     ObjectReference[] nearby = PO3_SKSEFunctions.FindAllReferencesOfFormType(target, FORM_TYPE_ACTOR, radius)
-    int scanCount = -1
-    if nearby
-        scanCount = nearby.Length
-    endif
-    Actor[] highProc = PO3_SKSEFunctions.GetActorsByProcessingLevel(0)
-    int highCount = -1
-    if highProc
-        highCount = highProc.Length
-    endif
     if !nearby
-        ; #region agent log
-        _debugAlliesLog("B", "_alliesNear", "FindAllReferences empty", target, meters, radius as int, scanCount, highCount, -1, -1, false)
-        ; #endregion
         return false
     endif
     int i = 0
-    int livingNear = 0
-    int maxReaction = -1
-    int maxLevel = -1
     while i < nearby.Length
         Actor other = nearby[i] as Actor
         if other != None && other != target && !other.IsDead() && !other.IsBleedingOut() && other.GetDistance(target) <= radius
-            livingNear += 1
-            int reaction = other.GetFactionReaction(target)
-            int level = _reactionLevel(reaction)
-            if reaction > maxReaction
-                maxReaction = reaction
-            endif
-            if level > maxLevel
-                maxLevel = level
-            endif
-            if level >= minLevel
-                ; #region agent log
-                _debugAlliesLog("C", "_alliesNear", "ally by reaction min=" + minRelId + " other=" + other.GetDisplayName(), target, meters, radius as int, scanCount, highCount, livingNear, reaction, true)
-                ; #endregion
+            if _reactionLevel(other.GetFactionReaction(target)) >= minLevel
                 return true
             endif
         endif
         i += 1
     endwhile
-    ; #region agent log
-    string missMsg = "no ally in scan min=" + minRelId + " maxLevel=" + maxLevel
-    if livingNear == 0
-        missMsg = "no living candidates"
-    endif
-    _debugAlliesLog("C", "_alliesNear", missMsg, target, meters, radius as int, scanCount, highCount, livingNear, maxReaction, false)
-    ; #endregion
     return false
 EndFunction
 
@@ -693,19 +653,6 @@ int Function _reactionLevelMin(string minRelId) global
     endif
     return 2 ; ally (default): strictly above Neutral
 EndFunction
-
-; #region agent log
-Function _debugAlliesLog(string hypothesisId, string where, string message, Actor target, float meters, int radiusUnits, int scanCount, int highCount, int livingNear, int reaction, bool result)
-    string name = "?"
-    if target != None
-        name = target.GetDisplayName()
-    endif
-    int ts = (Utility.GetCurrentRealTime() * 1000.0) as int
-    string line = "{\"sessionId\":\"6d18cb\",\"runId\":\"post-fix\",\"hypothesisId\":\"" + hypothesisId + "\",\"location\":\"" + where + "\",\"message\":\"" + message + "\",\"data\":{\"target\":\"" + name + "\",\"meters\":" + meters + ",\"radiusUnits\":" + radiusUnits + ",\"scanCount\":" + scanCount + ",\"highCount\":" + highCount + ",\"livingNear\":" + livingNear + ",\"reaction\":" + reaction + ",\"result\":" + (result as int) + ",\"version\":\"" + MOD_VERSION + "\"},\"timestamp\":" + ts + "}"
-    MiscUtil.WriteToFile("M:/Repositories/personal (github)/skyrim-training-dummy/.cursor/debug-6d18cb.log", line + "\n", true, false)
-    Debug.Trace("[MTF_Plugin_Skyrim][debug-6d18cb] " + message + " target=" + name + " meters=" + meters + " scan=" + scanCount + " high=" + highCount + " living=" + livingNear + " reaction=" + reaction + " result=" + result)
-EndFunction
-; #endregion
 
 ; Any living actor in high process that has detected the target. The player's followers do not count.
 ; Without Papyrus Extender the list is None and the target never counts as hidden.

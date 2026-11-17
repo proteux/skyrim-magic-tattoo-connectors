@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.18
+
+- Removed temporary Allies nearby debug logging.
+
 ## 0.3.17
 
 - Cast a spell / Cast an aura leave out Magic Tattoos Spellbook's own spells (`MagicTattoosSpellbook.esp`), matching the rename from Magic Tattoos Tactical.
