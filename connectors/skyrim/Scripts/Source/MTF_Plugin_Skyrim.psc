@@ -11,16 +11,16 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  any mod that applies presets may set, and fall back to the wearer. With Magic Tattoos UI 1.8.3 or later, the
  spell lands through its MagicTattoosUI.CastAs, so it is as strong as the applier casting it. With 1.8.6 or later,
  Cast an aura fire-and-forget hits use CastAsScaled at half strength, and concentration pulses use it at ten seconds
- of strength. When a pulse pays magicka, it charges the recorded applier if one is set (for example the
- caster of a Magic Tattoos Spellbook hex); only that actor pays, never the wearer as a fallback. With no
- applier recorded, the wearer pays. Concentration always pays once per second.
+ of strength. Magicka is Free, Paid by applier, or Paid by wearer. Free still charges concentration
+ (applier if set, otherwise the wearer). Paid by applier pauses when no living applier is recorded;
+ Paid by wearer always charges the marked actor.
 
  MTF does not replay effects after a load, so MTF_Plugin_Skyrim_Load, on the player alias,
  calls _onGameLoaded to restore state the game does not save (the Night Eye image space, expressions)
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.20" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.22" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -1069,7 +1069,7 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         endif
     elseif eid == "spell.cast"
         string spellText = _paramNStrEx(slot, effectIdx, useScratch, presetName, 1)
-        bool pays = _paramNStrEx(slot, effectIdx, useScratch, presetName, 2) == "wearer"
+        string payMode = _spellPayModeId(_paramNStrEx(slot, effectIdx, useScratch, presetName, 2))
         if spellText == "" || StorageUtil.HasStringValue(target, instKey)
             return
         endif
@@ -1078,29 +1078,29 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
             return
         endif
         if _isSelfBuff(cast)
-            if pays && !_pay(_payPayer(target, presetName), cast)
+            if _spellModePays(payMode, cast) && !_pay(_payPayer(target, presetName, payMode), cast)
                 return
             endif
             _castAs(_applier(target, presetName), cast, target, 1.0)
             return
         endif
         StorageUtil.SetStringValue(target, instKey, spellText)
-        StorageUtil.SetIntValue(target, instKey, pays as int)
         StorageUtil.SetFloatValue(target, instKey, 0.0)
+        StorageUtil.SetStringValue(target, _spellPayModeKey(instKey), payMode)
         StorageUtil.SetStringValue(target, _spellCastPresetKey(instKey), presetName)
         _listSpellCast(target, instKey)
         _castPulse(target, instKey)
     elseif eid == "spell.aura"
         ; All read before the claim below, so a second dispatch of this instance can't claim it in between.
         string spellText = _paramNStrEx(slot, effectIdx, useScratch, presetName, 1)
-        bool pays = _paramNStrEx(slot, effectIdx, useScratch, presetName, 3) == "wearer"
+        string payMode = _spellPayModeId(_paramNStrEx(slot, effectIdx, useScratch, presetName, 3))
         string filter = _auraFilterId(_paramNStrEx(slot, effectIdx, useScratch, presetName, 4))
         if spellText == "" || StorageUtil.HasStringValue(target, instKey)
             return
         endif
         StorageUtil.SetStringValue(target, instKey, spellText)
         StorageUtil.SetFloatValue(target, instKey, param2 as float)
-        StorageUtil.SetIntValue(target, instKey, pays as int)
+        StorageUtil.SetStringValue(target, _spellPayModeKey(instKey), payMode)
         StorageUtil.SetStringValue(target, _spellAuraFilterKey(instKey), filter)
         StorageUtil.SetStringValue(target, _spellAuraPresetKey(instKey), presetName)
         StorageUtil.UnsetFloatValue(target, _spellAuraPulseKey(instKey))
@@ -1282,8 +1282,7 @@ Function _resetActor(Actor target)
         elseif StringUtil.Find(keys[i], KEY_PREFIX + "spell.aura.") == 0 || StringUtil.Find(keys[i], KEY_PREFIX + "spell.cast.") == 0
             StorageUtil.UnsetStringValue(target, keys[i])
             StorageUtil.UnsetFloatValue(target, keys[i])
-            StorageUtil.UnsetIntValue(target, keys[i])
-        elseif StringUtil.Find(keys[i], KEY_PREFIX + "spellaura.") == 0 || StringUtil.Find(keys[i], KEY_PREFIX + "spellcast.") == 0
+        elseif StringUtil.Find(keys[i], KEY_PREFIX + "spellaura.") == 0 || StringUtil.Find(keys[i], KEY_PREFIX + "spellcast.") == 0 || StringUtil.Find(keys[i], KEY_PREFIX + "spell.pay.") == 0
             StorageUtil.UnsetStringValue(target, keys[i])
             StorageUtil.UnsetFloatValue(target, keys[i])
         endif
@@ -1857,15 +1856,20 @@ float Function _concScale(Spell candidate)
     return 1.0
 EndFunction
 
-; Concentration always pays; fire-and-forget / self buffs only when the effect's "Wearer pays" flag is on.
-; The payer is the applier when set (see _payPayer), otherwise the wearer.
-bool Function _spellPays(Actor wearer, string instKey, Spell cast)
-    return _isConcentration(cast) || StorageUtil.GetIntValue(wearer, instKey) == 1
+; Free: only concentration pays. Paid by applier / wearer: every pulse pays.
+bool Function _spellModePays(string mode, Spell cast)
+    if mode == "applier" || mode == "wearer"
+        return true
+    endif
+    return _isConcentration(cast)
 EndFunction
 
-; Who loses magicka for this pulse. A recorded applier is the only payer: dead or empty magicka pauses the
-; pulse; the wearer is never charged as a fallback. With no applier key, the wearer pays (self-applied).
-Actor Function _payPayer(Actor wearer, string presetName)
+; Who loses magicka. wearer → marked actor. applier → recorded applier only (dead/missing pauses).
+; free (concentration) → applier if set and alive, otherwise the wearer.
+Actor Function _payPayer(Actor wearer, string presetName, string mode)
+    if mode == "wearer"
+        return wearer
+    endif
     if presetName != ""
         Actor applier = StorageUtil.GetFormValue(wearer, APPLIER_PREFIX + presetName) as Actor
         if applier != None
@@ -1874,6 +1878,9 @@ Actor Function _payPayer(Actor wearer, string presetName)
             endif
             return applier
         endif
+    endif
+    if mode == "applier"
+        return None
     endif
     return wearer
 EndFunction
@@ -1931,9 +1938,9 @@ EndFunction
 
 ; ── Spell cast (repeating on wearer) and Cast an aura ─────────────────────────
 
-; Each shown instance keeps, under its instance key on the wearer, the spell as a string, whether the wearer
-; pays as an int, and for auras the radius in metres as a float / for casts the next due real time as a float.
-; Presets, aura pulse times, and aura target filters sit under prefixes no reset scan mistakes for an instance.
+; Each shown instance keeps, under its instance key on the wearer, the spell as a string and for auras the
+; radius in metres as a float / for casts the next due real time as a float. Pay mode, presets, aura pulse
+; times, and aura target filters sit under prefixes no reset scan mistakes for an instance.
 string Function _spellAuraPresetKey(string instKey)
     return KEY_PREFIX + "spellaura.preset." + instKey
 EndFunction
@@ -1948,6 +1955,18 @@ EndFunction
 
 string Function _spellCastPresetKey(string instKey)
     return KEY_PREFIX + "spellcast.preset." + instKey
+EndFunction
+
+string Function _spellPayModeKey(string instKey)
+    return KEY_PREFIX + "spell.pay." + instKey
+EndFunction
+
+; free / applier / wearer. Anything else → free.
+string Function _spellPayModeId(string raw) global
+    if raw == "applier" || raw == "wearer" || raw == "free"
+        return raw
+    endif
+    return "free"
 EndFunction
 
 ; everyone / allies / enemies. Anything else (empty, old numeric 0) → allies.
@@ -1968,7 +1987,7 @@ Function _dropSpellAura(Actor wearer, string instKey)
     StorageUtil.StringListRemove(wearer, SPELL_AURA_KEYS, instKey, true)
     StorageUtil.UnsetStringValue(wearer, instKey)
     StorageUtil.UnsetFloatValue(wearer, instKey)
-    StorageUtil.UnsetIntValue(wearer, instKey)
+    StorageUtil.UnsetStringValue(wearer, _spellPayModeKey(instKey))
     StorageUtil.UnsetStringValue(wearer, _spellAuraPresetKey(instKey))
     StorageUtil.UnsetFloatValue(wearer, _spellAuraPulseKey(instKey))
     StorageUtil.UnsetStringValue(wearer, _spellAuraFilterKey(instKey))
@@ -1984,7 +2003,7 @@ Function _dropSpellCast(Actor wearer, string instKey)
     StorageUtil.StringListRemove(wearer, SPELL_CAST_KEYS, instKey, true)
     StorageUtil.UnsetStringValue(wearer, instKey)
     StorageUtil.UnsetFloatValue(wearer, instKey)
-    StorageUtil.UnsetIntValue(wearer, instKey)
+    StorageUtil.UnsetStringValue(wearer, _spellPayModeKey(instKey))
     StorageUtil.UnsetStringValue(wearer, _spellCastPresetKey(instKey))
 EndFunction
 
@@ -2078,8 +2097,9 @@ Function _castPulseDue(Actor wearer, string instKey, float now)
         return
     endif
     string presetName = StorageUtil.GetStringValue(wearer, _spellCastPresetKey(instKey))
-    ; Pay fail: leave due as-is so the next tick retries when magicka recovers (concentration always pays).
-    if _spellPays(wearer, instKey, cast) && !_pay(_payPayer(wearer, presetName), cast)
+    string payMode = _spellPayModeId(StorageUtil.GetStringValue(wearer, _spellPayModeKey(instKey)))
+    ; Pay fail: leave due as-is so the next tick retries when magicka recovers.
+    if _spellModePays(payMode, cast) && !_pay(_payPayer(wearer, presetName, payMode), cast)
         return
     endif
     Actor applier = _applier(wearer, presetName)
@@ -2128,7 +2148,8 @@ Function _auraPulse(Actor wearer, string instKey, float now)
         return
     endif
     string presetName = StorageUtil.GetStringValue(wearer, _spellAuraPresetKey(instKey))
-    if _spellPays(wearer, instKey, cast) && !_pay(_payPayer(wearer, presetName), cast)
+    string payMode = _spellPayModeId(StorageUtil.GetStringValue(wearer, _spellPayModeKey(instKey)))
+    if _spellModePays(payMode, cast) && !_pay(_payPayer(wearer, presetName, payMode), cast)
         return
     endif
     StorageUtil.SetFloatValue(wearer, _spellAuraPulseKey(instKey), now)

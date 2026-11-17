@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.22
+
+- Cast a spell and Cast an aura Magicka default is Paid by applier.
+
+## 0.3.21
+
+- Cast a spell and Cast an aura Magicka options are Free, Paid by applier, and Paid by wearer. Free still charges concentration (applier if set, otherwise the wearer). Paid by applier pauses when no living applier is recorded. Presets that used the old "Applier pays" option (id `wearer`) need to be set to Paid by applier.
+
 ## 0.3.20
 
 - Allies nearby is now **Faction reaction nearby**: Radius, then Who (Everyone / Allies / Enemies) — the same filter as Cast an aura. Default Allies matches the old Ally-or-friendlier behaviour.
