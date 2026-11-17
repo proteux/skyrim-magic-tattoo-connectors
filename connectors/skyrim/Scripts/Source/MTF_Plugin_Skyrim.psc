@@ -12,7 +12,7 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  spell lands through its MagicTattoosUI.CastAs, so it is as strong as the applier casting it. With 1.8.6 or later,
  Cast an aura fire-and-forget hits use CastAsScaled at half strength, and concentration pulses use it at ten seconds
  of strength. When a pulse pays magicka, it charges the recorded applier if one is set (for example the
- caster of a Magic Tattoos Tactical hex); only that actor pays, never the wearer as a fallback. With no
+ caster of a Magic Tattoos Spellbook hex); only that actor pays, never the wearer as a fallback. With no
  applier recorded, the wearer pays. Concentration always pays once per second.
 
  MTF does not replay effects after a load, so MTF_Plugin_Skyrim_Load, on the player alias,
@@ -20,7 +20,7 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.15" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.17" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -42,7 +42,7 @@ int Property CAST_AS_MIN_UI_VERSION = 0x01080030 AutoReadOnly Hidden
 ; 1.8.6, the first with CastAsScaled.
 int Property CAST_AS_SCALED_MIN_UI_VERSION = 0x01080060 AutoReadOnly Hidden
 ; Its spells put presets on, so a tier casting one could keep putting its own preset back on.
-string Property TACTICAL_PLUGIN = "MagicTattoosTactical.esp" AutoReadOnly Hidden
+string Property SPELLBOOK_PLUGIN = "MagicTattoosSpellbook.esp" AutoReadOnly Hidden
 ; On each wearer, the instance keys of its shown cast an auras / repeating casts. On the player, every wearer with one.
 string Property SPELL_AURA_KEYS = "proteux-mtf.skyrim.spellaura.keys" AutoReadOnly Hidden
 string Property SPELL_AURA_WEARERS = "proteux-mtf.skyrim.spellaura.wearers" AutoReadOnly Hidden
@@ -298,10 +298,19 @@ bool Function checkCondition(Actor target, int param, string cid)
         string[] noNames
         return _castWithin(target, noNames, false, school, windowSec)
     elseif cid == "allies.near"
+        string minRel = _host().GetEvalParamStr()
+        int meters = _host().GetEvalParam2()
+        ; Legacy presets stored radius in param with no menu string.
+        if meters <= 0
+            meters = param
+        endif
+        if minRel == ""
+            minRel = "ally"
+        endif
         ; #region agent log
-        _debugAlliesLog("A", "checkCondition", "allies.near invoked", target, param as float, -1, -1, -1, -1, -1, false)
+        _debugAlliesLog("A", "checkCondition", "allies.near invoked min=" + minRel, target, meters as float, -1, -1, -1, -1, -1, false)
         ; #endregion
-        return _alliesNear(target, param as float)
+        return _alliesNear(target, meters as float, minRel)
     endif
     return false
 EndFunction
@@ -596,13 +605,13 @@ bool Function _wantedAnywhere(int atLeast)
     return false
 EndFunction
 
-; True when at least one living ally of the target is within meters: Ally/Friend faction
-; reaction, or sharing any faction (packs that GetFactionReaction still calls Neutral).
-; Dead and bleeding-out actors (essential knockdown) and the target themselves do not count.
-; Uses a radius scan so pinned actors still match; without Papyrus Extender the scan is empty
-; and the condition is false.
-bool Function _alliesNear(Actor target, float meters)
+; True when a living neighbour's GetFactionReaction is at least minRelId (enemy < neutral <
+; ally < friend). Same-faction alone is Neutral in the engine — packs need a cross-faction
+; Ally relation (training dummies use Safe+Pack). Shared-faction matching was removed: it
+; counted town guards. Dead / bleeding-out / self do not count. Needs Papyrus Extender.
+bool Function _alliesNear(Actor target, float meters, string minRelId)
     float radius = meters * UNITS_PER_METRE
+    int minLevel = _reactionLevelMin(minRelId)
     if target == None || radius <= 0.0
         ; #region agent log
         _debugAlliesLog("E", "_alliesNear", "bad target or radius", target, meters, radius as int, -1, -1, -1, -1, false)
@@ -614,7 +623,6 @@ bool Function _alliesNear(Actor target, float meters)
     if nearby
         scanCount = nearby.Length
     endif
-    ; Compare high-process scan for hypothesis B.
     Actor[] highProc = PO3_SKSEFunctions.GetActorsByProcessingLevel(0)
     int highCount = -1
     if highProc
@@ -629,23 +637,22 @@ bool Function _alliesNear(Actor target, float meters)
     int i = 0
     int livingNear = 0
     int maxReaction = -1
+    int maxLevel = -1
     while i < nearby.Length
         Actor other = nearby[i] as Actor
         if other != None && other != target && !other.IsDead() && !other.IsBleedingOut() && other.GetDistance(target) <= radius
             livingNear += 1
             int reaction = other.GetFactionReaction(target)
+            int level = _reactionLevel(reaction)
             if reaction > maxReaction
                 maxReaction = reaction
             endif
-            bool byReaction = reaction == 2 || reaction == 3
-            bool byShare = !byReaction && _sharesFaction(other, target)
-            if byReaction || byShare
+            if level > maxLevel
+                maxLevel = level
+            endif
+            if level >= minLevel
                 ; #region agent log
-                string how = "ally by reaction"
-                if byShare
-                    how = "ally by shared faction"
-                endif
-                _debugAlliesLog("C", "_alliesNear", how, target, meters, radius as int, scanCount, highCount, livingNear, reaction, true)
+                _debugAlliesLog("C", "_alliesNear", "ally by reaction min=" + minRelId + " other=" + other.GetDisplayName(), target, meters, radius as int, scanCount, highCount, livingNear, reaction, true)
                 ; #endregion
                 return true
             endif
@@ -653,13 +660,38 @@ bool Function _alliesNear(Actor target, float meters)
         i += 1
     endwhile
     ; #region agent log
-    string missMsg = "no ally in scan"
+    string missMsg = "no ally in scan min=" + minRelId + " maxLevel=" + maxLevel
     if livingNear == 0
         missMsg = "no living candidates"
     endif
     _debugAlliesLog("C", "_alliesNear", missMsg, target, meters, radius as int, scanCount, highCount, livingNear, maxReaction, false)
     ; #endregion
     return false
+EndFunction
+
+; GetFactionReaction order is not friendliness order (Enemy=1, Neutral=0). Map to Enemy < Neutral < Ally < Friend.
+int Function _reactionLevel(int reaction) global
+    if reaction == 1
+        return 0
+    elseif reaction == 0
+        return 1
+    elseif reaction == 2
+        return 2
+    elseif reaction == 3
+        return 3
+    endif
+    return 1
+EndFunction
+
+int Function _reactionLevelMin(string minRelId) global
+    if minRelId == "enemy"
+        return 0
+    elseif minRelId == "neutral"
+        return 1
+    elseif minRelId == "friend"
+        return 3
+    endif
+    return 2 ; ally (default): strictly above Neutral
 EndFunction
 
 ; #region agent log
@@ -1790,16 +1822,16 @@ Spell Function _resolveSpell(string spellText)
     endif
     if found == None
         Debug.Trace("[MTF_Plugin_Skyrim] no spell found for '" + text + "'")
-    elseif _isTacticalSpell(found)
-        Debug.Trace("[MTF_Plugin_Skyrim] '" + text + "' is a Magic Tattoos Tactical spell, which tattoos can't cast")
+    elseif _isSpellbookSpell(found)
+        Debug.Trace("[MTF_Plugin_Skyrim] '" + text + "' is a Magic Tattoos Spellbook spell, which tattoos can't cast")
         found = None
     endif
     return found
 EndFunction
 
-; Tactical is ESL-flagged, so its forms are 0xFE, then its light index, then the local ID.
-bool Function _isTacticalSpell(Spell candidate)
-    int light = Game.GetLightModByName(TACTICAL_PLUGIN)
+; Spellbook is ESL-flagged, so its forms are 0xFE, then its light index, then the local ID.
+bool Function _isSpellbookSpell(Spell candidate)
+    int light = Game.GetLightModByName(SPELLBOOK_PLUGIN)
     if light < 0 || light > 0xFFF
         return false
     endif
@@ -2118,43 +2150,6 @@ bool Function _isEnemyOf(Actor other, Actor sideRef)
     endif
     ; GetFactionReaction: 0 Neutral, 1 Enemy, 2 Ally, 3 Friend.
     return other.IsHostileToActor(sideRef) || other.GetFactionReaction(sideRef) == 1
-EndFunction
-
-; Ally/Friend reaction, or any shared faction. Training dummies (and some packs) share a
-; faction but GetFactionReaction still reports Neutral between members.
-bool Function _isAllyOf(Actor other, Actor sideRef)
-    if other == None || sideRef == None
-        return false
-    endif
-    ; GetFactionReaction: 0 Neutral, 1 Enemy, 2 Ally, 3 Friend.
-    int reaction = other.GetFactionReaction(sideRef)
-    if reaction == 2 || reaction == 3
-        return true
-    endif
-    return _sharesFaction(other, sideRef)
-EndFunction
-
-bool Function _sharesFaction(Actor a, Actor b)
-    Faction[] fa = a.GetFactions(-128, 127)
-    Faction[] fb = b.GetFactions(-128, 127)
-    if !fa || !fb
-        return false
-    endif
-    int i = 0
-    while i < fa.Length
-        Faction f = fa[i]
-        if f != None
-            int j = 0
-            while j < fb.Length
-                if fb[j] == f
-                    return true
-                endif
-                j += 1
-            endwhile
-        endif
-        i += 1
-    endwhile
-    return false
 EndFunction
 
 ; Helpful and harmful both land on the wearer's side (anyone nearby who isn't an enemy of the wearer). Neither

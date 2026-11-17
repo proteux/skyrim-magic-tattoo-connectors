@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.17
+
+- Cast a spell / Cast an aura leave out Magic Tattoos Spellbook's own spells (`MagicTattoosSpellbook.esp`), matching the rename from Magic Tattoos Tactical.
+
+## 0.3.16
+
+- Allies nearby now takes a minimum faction reaction (Enemy / Neutral / Ally / Friend, default Ally) plus radius. Dropped shared-faction matching, which counted town guards. Same-faction alone is Neutral in the engine; Ally means a real cross-faction Ally/Friend reaction.
+
 ## 0.3.15
 
 - Allies nearby no longer counts bleeding-out actors (essential knockdown). Enemy training dummies stay "alive" for IsDead when downed, so a lone hexed dummy kept matching its knocked-out packmate.
