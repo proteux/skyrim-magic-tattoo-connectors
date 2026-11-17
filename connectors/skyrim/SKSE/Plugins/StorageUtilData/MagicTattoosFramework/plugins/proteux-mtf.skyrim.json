@@ -310,19 +310,18 @@
     },
     {
       "id": "allies.near",
-      "label": "Allies nearby",
-      "description": "Triggers while at least one living neighbour within {param2} has a faction reaction of {param1} or friendlier (Enemy < Neutral < Ally < Friend). Dead and bleeding-out actors do not count.",
-      "param": {
-        "label": "At least",
-        "default": "ally",
+      "label": "Faction reaction nearby",
+      "description": "Triggers while at least one living neighbour within {param1} matches {param2}: Everyone, Allies (Ally/Friend faction reaction), or Enemies. Dead and bleeding-out actors do not count.",
+      "param": { "label": "Radius", "min": 1, "max": 100, "step": 5, "default": 25, "format": "{0} m" },
+      "param2": {
+        "label": "Who",
+        "default": "allies",
         "menu": [
-          { "id": "enemy", "label": "Enemy" },
-          { "id": "neutral", "label": "Neutral" },
-          { "id": "ally", "label": "Ally" },
-          { "id": "friend", "label": "Friend" }
+          { "id": "everyone", "label": "Everyone" },
+          { "id": "allies", "label": "Allies" },
+          { "id": "enemies", "label": "Enemies" }
         ]
-      },
-      "param2": { "label": "Radius", "min": 1, "max": 100, "step": 5, "default": 25, "format": "{0} m" }
+      }
     }
   ],
   "effects": [
@@ -523,7 +522,7 @@
     {
       "id": "spell.aura",
       "label": "Cast an aura",
-      "description": "While shown, {param1} lands on actors within {param2} of the actor who share their side (not enemies of them): neither hits the actor. Fire-and-forget at half strength on their effect duration or cast time; concentration every second at about ten seconds of strength. Magicka: {param3} (concentration always costs the applier once per second for the ring; with no applier, the wearer).",
+      "description": "While shown, {param1} lands on actors within {param2} of the actor ({param4}): never the actor. Fire-and-forget at half strength on their effect duration or cast time; concentration every second at about ten seconds of strength. Magicka: {param3} (concentration always costs the applier once per second for the ring; with no applier, the wearer).",
       "param1": { "label": "Spell", "text": true, "lookup": "spell", "default": "Skyrim.esm|0x012FCC" },
       "param2": { "label": "Radius", "min": 1, "max": 50, "default": 8, "format": "{0} m" },
       "param3": {
@@ -532,6 +531,15 @@
         "menu": [
           { "id": "free", "label": "Free (not concentration)" },
           { "id": "wearer", "label": "Applier pays each second" }
+        ]
+      },
+      "param4": {
+        "label": "Targets",
+        "default": "allies",
+        "menu": [
+          { "id": "everyone", "label": "Everyone" },
+          { "id": "allies", "label": "Allies" },
+          { "id": "enemies", "label": "Enemies" }
         ]
       }
     }

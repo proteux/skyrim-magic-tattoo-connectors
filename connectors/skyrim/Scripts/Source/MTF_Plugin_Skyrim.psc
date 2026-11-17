@@ -4,8 +4,8 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  No soft dependency: everything here is Skyrim, its DLC, and SKSE.
  Catalog: SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/proteux-mtf.skyrim.json
 
- Optional: powerofthree's Papyrus Extender (hidden, diseased, disease.cure, calm, allies.near, and the nearby
- actors of spell.aura via FindAllReferencesOfFormType). Without it those entries do nothing; everything else still works.
+ Optional: powerofthree's Papyrus Extender (hidden, diseased, disease.cure, calm, allies.near / Faction reaction nearby,
+ and the nearby actors of spell.aura via FindAllReferencesOfFormType). Without it those entries do nothing; everything else still works.
 
  spell.cast and spell.aura credit the actor stored in the shared key mtf.applier.<preset> on the wearer, which
  any mod that applies presets may set, and fall back to the wearer. With Magic Tattoos UI 1.8.3 or later, the
@@ -20,7 +20,7 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.18" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.20" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -298,16 +298,12 @@ bool Function checkCondition(Actor target, int param, string cid)
         string[] noNames
         return _castWithin(target, noNames, false, school, windowSec)
     elseif cid == "allies.near"
-        string minRel = _host().GetEvalParamStr()
-        int meters = _host().GetEvalParam2()
-        ; Legacy presets stored radius in param with no menu string.
+        int meters = param
         if meters <= 0
-            meters = param
+            meters = 25
         endif
-        if minRel == ""
-            minRel = "ally"
-        endif
-        return _alliesNear(target, meters as float, minRel)
+        string filter = _auraFilterId(_host().GetEvalParam2Str())
+        return _alliesNear(target, meters as float, filter)
     endif
     return false
 EndFunction
@@ -602,13 +598,11 @@ bool Function _wantedAnywhere(int atLeast)
     return false
 EndFunction
 
-; True when a living neighbour's GetFactionReaction is at least minRelId (enemy < neutral <
-; ally < friend). Same-faction alone is Neutral in the engine — packs need a cross-faction
-; Ally relation (training dummies use Safe+Pack). Shared-faction matching was removed: it
-; counted town guards. Dead / bleeding-out / self do not count. Needs Papyrus Extender.
-bool Function _alliesNear(Actor target, float meters, string minRelId)
+; True when a living neighbour within radius matches the same Everyone / Allies / Enemies filter as
+; Cast an aura. Allies = Ally/Friend faction reaction (above Neutral). Enemies = hostile or faction
+; Enemy. Dead / bleeding-out / self do not count. Needs Papyrus Extender.
+bool Function _alliesNear(Actor target, float meters, string filter)
     float radius = meters * UNITS_PER_METRE
-    int minLevel = _reactionLevelMin(minRelId)
     if target == None || radius <= 0.0
         return false
     endif
@@ -620,7 +614,7 @@ bool Function _alliesNear(Actor target, float meters, string minRelId)
     while i < nearby.Length
         Actor other = nearby[i] as Actor
         if other != None && other != target && !other.IsDead() && !other.IsBleedingOut() && other.GetDistance(target) <= radius
-            if _reactionLevel(other.GetFactionReaction(target)) >= minLevel
+            if _auraFilterAllows(other, target, filter)
                 return true
             endif
         endif
@@ -641,17 +635,6 @@ int Function _reactionLevel(int reaction) global
         return 3
     endif
     return 1
-EndFunction
-
-int Function _reactionLevelMin(string minRelId) global
-    if minRelId == "enemy"
-        return 0
-    elseif minRelId == "neutral"
-        return 1
-    elseif minRelId == "friend"
-        return 3
-    endif
-    return 2 ; ally (default): strictly above Neutral
 EndFunction
 
 ; Any living actor in high process that has detected the target. The player's followers do not count.
@@ -1111,12 +1094,14 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         ; All read before the claim below, so a second dispatch of this instance can't claim it in between.
         string spellText = _paramNStrEx(slot, effectIdx, useScratch, presetName, 1)
         bool pays = _paramNStrEx(slot, effectIdx, useScratch, presetName, 3) == "wearer"
+        string filter = _auraFilterId(_paramNStrEx(slot, effectIdx, useScratch, presetName, 4))
         if spellText == "" || StorageUtil.HasStringValue(target, instKey)
             return
         endif
         StorageUtil.SetStringValue(target, instKey, spellText)
         StorageUtil.SetFloatValue(target, instKey, param2 as float)
         StorageUtil.SetIntValue(target, instKey, pays as int)
+        StorageUtil.SetStringValue(target, _spellAuraFilterKey(instKey), filter)
         StorageUtil.SetStringValue(target, _spellAuraPresetKey(instKey), presetName)
         StorageUtil.UnsetFloatValue(target, _spellAuraPulseKey(instKey))
         _listSpellAura(target, instKey)
@@ -1948,7 +1933,7 @@ EndFunction
 
 ; Each shown instance keeps, under its instance key on the wearer, the spell as a string, whether the wearer
 ; pays as an int, and for auras the radius in metres as a float / for casts the next due real time as a float.
-; Presets and aura pulse times sit under prefixes no reset scan mistakes for an instance.
+; Presets, aura pulse times, and aura target filters sit under prefixes no reset scan mistakes for an instance.
 string Function _spellAuraPresetKey(string instKey)
     return KEY_PREFIX + "spellaura.preset." + instKey
 EndFunction
@@ -1957,8 +1942,20 @@ string Function _spellAuraPulseKey(string instKey)
     return KEY_PREFIX + "spellaura.pulse." + instKey
 EndFunction
 
+string Function _spellAuraFilterKey(string instKey)
+    return KEY_PREFIX + "spellaura.filter." + instKey
+EndFunction
+
 string Function _spellCastPresetKey(string instKey)
     return KEY_PREFIX + "spellcast.preset." + instKey
+EndFunction
+
+; everyone / allies / enemies. Anything else (empty, old numeric 0) → allies.
+string Function _auraFilterId(string raw) global
+    if raw == "everyone" || raw == "enemies" || raw == "allies"
+        return raw
+    endif
+    return "allies"
 EndFunction
 
 Function _listSpellAura(Actor wearer, string instKey)
@@ -1974,6 +1971,7 @@ Function _dropSpellAura(Actor wearer, string instKey)
     StorageUtil.UnsetIntValue(wearer, instKey)
     StorageUtil.UnsetStringValue(wearer, _spellAuraPresetKey(instKey))
     StorageUtil.UnsetFloatValue(wearer, _spellAuraPulseKey(instKey))
+    StorageUtil.UnsetStringValue(wearer, _spellAuraFilterKey(instKey))
 EndFunction
 
 Function _listSpellCast(Actor wearer, string instKey)
@@ -2099,8 +2097,19 @@ bool Function _isEnemyOf(Actor other, Actor sideRef)
     return other.IsHostileToActor(sideRef) || other.GetFactionReaction(sideRef) == 1
 EndFunction
 
-; Helpful and harmful both land on the wearer's side (anyone nearby who isn't an enemy of the wearer). Neither
-; hits the wearer. Credit, aggro and kill credit stay with the applier via _castAs.
+; Targets filter: everyone, allies (Ally/Friend faction reaction), or enemies. Wearer never hit.
+bool Function _auraFilterAllows(Actor other, Actor wearer, string filter)
+    if filter == "everyone"
+        return true
+    elseif filter == "enemies"
+        return _isEnemyOf(other, wearer)
+    endif
+    ; allies (default): strictly above Neutral, same bar as Faction reaction nearby → Allies.
+    return _reactionLevel(other.GetFactionReaction(wearer)) >= 2
+EndFunction
+
+; Lands on neighbours matching the instance's Targets filter. Neither hits the wearer.
+; Credit, aggro and kill credit stay with the applier via _castAs.
 ; Fire-and-forget spells use half magnitude when Magic Tattoos UI 1.8.6 or later is present.
 ; Neighbours come from a radius scan (FindAllReferencesOfFormType), not GetActorsByProcessingLevel(0): pinned or
 ; restrained actors such as training dummies can be 3D-loaded next to the player and still missing from high process.
@@ -2129,6 +2138,7 @@ Function _auraPulse(Actor wearer, string instKey, float now)
     if !_isConcentration(cast)
         scale = SPELL_AURA_FF_SCALE
     endif
+    string filter = _auraFilterId(StorageUtil.GetStringValue(wearer, _spellAuraFilterKey(instKey)))
     ObjectReference[] nearby = PO3_SKSEFunctions.FindAllReferencesOfFormType(wearer, FORM_TYPE_ACTOR, radius)
     bool sawPlayer = false
     if nearby
@@ -2138,22 +2148,21 @@ Function _auraPulse(Actor wearer, string instKey, float now)
             if other == PlayerRef
                 sawPlayer = true
             endif
-            _auraHit(applier, wearer, other, cast, radius, scale)
+            _auraHit(applier, wearer, other, cast, radius, scale, filter)
             i += 1
         endwhile
     endif
-    ; Without Papyrus Extender (or an empty scan), still try the player when they're on the wearer's side.
+    ; Without Papyrus Extender (or an empty scan), still try the player when the filter allows.
     if !sawPlayer
-        _auraHit(applier, wearer, PlayerRef, cast, radius, scale)
+        _auraHit(applier, wearer, PlayerRef, cast, radius, scale, filter)
     endif
 EndFunction
 
-Function _auraHit(Actor applier, Actor wearer, Actor other, Spell cast, float radius, float scale)
+Function _auraHit(Actor applier, Actor wearer, Actor other, Spell cast, float radius, float scale, string filter)
     if other == None || other == wearer || other.IsDead() || other.IsBleedingOut() || other.GetDistance(wearer) > radius
         return
     endif
-    ; Same side as the wearer for both helpful and harmful; neither hits the wearer (above).
-    if _isEnemyOf(other, wearer)
+    if !_auraFilterAllows(other, wearer, filter)
         return
     endif
     _castAs(applier, cast, other, scale)

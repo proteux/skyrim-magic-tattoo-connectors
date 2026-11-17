@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.20
+
+- Allies nearby is now **Faction reaction nearby**: Radius, then Who (Everyone / Allies / Enemies) — the same filter as Cast an aura. Default Allies matches the old Ally-or-friendlier behaviour.
+
+## 0.3.19
+
+- Cast an aura takes a Targets filter: Everyone, Allies (Ally/Friend faction reaction, default), or Enemies. Skips the wearer in every mode. Allies skips town guards and other Neutrals; Enemies is the classic hostile ring.
+
 ## 0.3.18
 
 - Removed temporary Allies nearby debug logging.
