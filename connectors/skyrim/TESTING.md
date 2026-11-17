@@ -26,6 +26,10 @@ That date is Saturalia (Evening Star 25), in winter. Days passed of 24.6 puts th
 
 **Hidden:** sneak behind an NPC who hasn't seen you; the tier shows while the eye is closed. Step in front of them and it should stop once the eye opens. A follower watching you doesn't count. Without Papyrus Extender, the tier never shows.
 
+## Allies nearby
+
+Put a tattoo with **Allies nearby** (25 m) on a bandit standing with other bandits; the tier should show. Kill or move the others out of range and it should fall back to Default. A lone bandit never matches. Two Enemy training dummies next to each other also match (they share the dummy factions even when GetFactionReaction is Neutral); knock the other one down and the tier should drop while they bleed out. Without Papyrus Extender, the tier never shows.
+
 ## Bounty in this hold and Wanted anywhere
 
 In Whiterun, steal something in front of a guard, or set a bounty with Whiterun's crime faction:
@@ -114,6 +118,7 @@ Pick the spells from the list in Magic Tattoos UI 1.8.0 or later. In MTF's own m
 4. **Cast an aura, harmful:** on the player, **Cast an aura: Flames**, 8 m. Stand near a follower or an Ally training dummy: they burn each second (same side as you), and bandits fighting you don't. Empty magicka (`player.damageav magicka 500`): pulses pause; let it regen and they resume.
 5. **A hex with Magic Tattoos Tactical:** make a Hex whose preset has a tier with **Cast a spell: Flames** (or a harmful **Cast an aura**) and cast it on a bandit. Magicka drains from you (the applier), not the bandit; empty the bandit's magicka first and the pulses still run while yours lasts. Empty yours (`player.damageav magicka 500`): pulses pause and the bandit's magicka stays put. With Cast a spell the bandit burns and turns on you. With a harmful aura their friends near them burn, you and your follower don't. Kill one with it and the kill counts as yours (People Killed rises on the General Stats page).
 5b. **Helpful hex aura:** same setup with **Cast an aura: Healing** on the hex. Nearby bandits heal; the marked bandit, you, and your follower don't.
+5c. **Bleedout pause:** hex an essential training dummy with Cast a spell: Flames (or a harmful Cast an aura). When it goes down, pulses stop; neighbours who are bleeding out are not hit either. When it stands back up, pulses resume.
 6. **A blessing:** a Blessing whose preset has **Cast an aura: Healing**, cast on your follower. You heal while near them; the follower wearing it does not, and the bandits fighting you don't. Magicka drains from you.
 
 7. **After a load:** save and reload while an aura or repeating Cast a spell shows. It keeps pulsing within a couple of seconds.

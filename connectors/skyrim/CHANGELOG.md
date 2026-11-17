@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.15
+
+- Allies nearby no longer counts bleeding-out actors (essential knockdown). Enemy training dummies stay "alive" for IsDead when downed, so a lone hexed dummy kept matching its knocked-out packmate.
+
+## 0.3.14
+
+- Allies nearby also matches actors that share any faction with the wearer. GetFactionReaction alone stayed Neutral for packs such as Enemy training dummies that share a faction, so the condition never fired next to their friends.
+
+## 0.3.13
+
+- Cast a spell and Cast an aura pause while the wearer is bleeding out (essential / protected knockdown), and resume when they stand up. Aura neighbours who are bleeding out are skipped too, same as dead targets.
+
+## 0.3.12
+
+- Added Allies nearby: true while at least one living Ally or Friend of the actor (faction reaction) is within the radius. Dead actors do not count. Needs Papyrus Extender for the radius scan.
+
 ## 0.3.11
 
 - When Cast a spell or Cast an aura pays magicka and an applier is recorded (for example a Magic Tattoos Tactical hex or blessing), only that applier is charged. If they are dead or out of magicka, the pulse pauses; the wearer's magicka is never used as a fallback. With no applier recorded, the wearer still pays.

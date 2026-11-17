@@ -307,6 +307,12 @@
         ]
       },
       "param2": { "label": "Seconds", "min": 1, "max": 120, "default": 10, "format": "{0} s" }
+    },
+    {
+      "id": "allies.near",
+      "label": "Allies nearby",
+      "description": "Triggers while at least one living ally of the actor is within {param1}: Ally/Friend faction reaction, or sharing any faction with them. Dead and bleeding-out actors do not count.",
+      "param": { "label": "Radius", "min": 1, "max": 100, "step": 5, "default": 25, "format": "{0} m" }
     }
   ],
   "effects": [

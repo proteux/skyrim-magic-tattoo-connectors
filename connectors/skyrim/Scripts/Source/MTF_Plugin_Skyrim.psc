@@ -4,8 +4,8 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  No soft dependency: everything here is Skyrim, its DLC, and SKSE.
  Catalog: SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/proteux-mtf.skyrim.json
 
- Optional: powerofthree's Papyrus Extender (hidden, diseased, disease.cure, calm, and the nearby actors of
- spell.aura via FindAllReferencesOfFormType). Without it those entries do nothing; everything else still works.
+ Optional: powerofthree's Papyrus Extender (hidden, diseased, disease.cure, calm, allies.near, and the nearby
+ actors of spell.aura via FindAllReferencesOfFormType). Without it those entries do nothing; everything else still works.
 
  spell.cast and spell.aura credit the actor stored in the shared key mtf.applier.<preset> on the wearer, which
  any mod that applies presets may set, and fall back to the wearer. With Magic Tattoos UI 1.8.3 or later, the
@@ -20,7 +20,7 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.3.11" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.15" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
@@ -297,6 +297,11 @@ bool Function checkCondition(Actor target, int param, string cid)
         endif
         string[] noNames
         return _castWithin(target, noNames, false, school, windowSec)
+    elseif cid == "allies.near"
+        ; #region agent log
+        _debugAlliesLog("A", "checkCondition", "allies.near invoked", target, param as float, -1, -1, -1, -1, -1, false)
+        ; #endregion
+        return _alliesNear(target, param as float)
     endif
     return false
 EndFunction
@@ -590,6 +595,85 @@ bool Function _wantedAnywhere(int atLeast)
     endwhile
     return false
 EndFunction
+
+; True when at least one living ally of the target is within meters: Ally/Friend faction
+; reaction, or sharing any faction (packs that GetFactionReaction still calls Neutral).
+; Dead and bleeding-out actors (essential knockdown) and the target themselves do not count.
+; Uses a radius scan so pinned actors still match; without Papyrus Extender the scan is empty
+; and the condition is false.
+bool Function _alliesNear(Actor target, float meters)
+    float radius = meters * UNITS_PER_METRE
+    if target == None || radius <= 0.0
+        ; #region agent log
+        _debugAlliesLog("E", "_alliesNear", "bad target or radius", target, meters, radius as int, -1, -1, -1, -1, false)
+        ; #endregion
+        return false
+    endif
+    ObjectReference[] nearby = PO3_SKSEFunctions.FindAllReferencesOfFormType(target, FORM_TYPE_ACTOR, radius)
+    int scanCount = -1
+    if nearby
+        scanCount = nearby.Length
+    endif
+    ; Compare high-process scan for hypothesis B.
+    Actor[] highProc = PO3_SKSEFunctions.GetActorsByProcessingLevel(0)
+    int highCount = -1
+    if highProc
+        highCount = highProc.Length
+    endif
+    if !nearby
+        ; #region agent log
+        _debugAlliesLog("B", "_alliesNear", "FindAllReferences empty", target, meters, radius as int, scanCount, highCount, -1, -1, false)
+        ; #endregion
+        return false
+    endif
+    int i = 0
+    int livingNear = 0
+    int maxReaction = -1
+    while i < nearby.Length
+        Actor other = nearby[i] as Actor
+        if other != None && other != target && !other.IsDead() && !other.IsBleedingOut() && other.GetDistance(target) <= radius
+            livingNear += 1
+            int reaction = other.GetFactionReaction(target)
+            if reaction > maxReaction
+                maxReaction = reaction
+            endif
+            bool byReaction = reaction == 2 || reaction == 3
+            bool byShare = !byReaction && _sharesFaction(other, target)
+            if byReaction || byShare
+                ; #region agent log
+                string how = "ally by reaction"
+                if byShare
+                    how = "ally by shared faction"
+                endif
+                _debugAlliesLog("C", "_alliesNear", how, target, meters, radius as int, scanCount, highCount, livingNear, reaction, true)
+                ; #endregion
+                return true
+            endif
+        endif
+        i += 1
+    endwhile
+    ; #region agent log
+    string missMsg = "no ally in scan"
+    if livingNear == 0
+        missMsg = "no living candidates"
+    endif
+    _debugAlliesLog("C", "_alliesNear", missMsg, target, meters, radius as int, scanCount, highCount, livingNear, maxReaction, false)
+    ; #endregion
+    return false
+EndFunction
+
+; #region agent log
+Function _debugAlliesLog(string hypothesisId, string where, string message, Actor target, float meters, int radiusUnits, int scanCount, int highCount, int livingNear, int reaction, bool result)
+    string name = "?"
+    if target != None
+        name = target.GetDisplayName()
+    endif
+    int ts = (Utility.GetCurrentRealTime() * 1000.0) as int
+    string line = "{\"sessionId\":\"6d18cb\",\"runId\":\"post-fix\",\"hypothesisId\":\"" + hypothesisId + "\",\"location\":\"" + where + "\",\"message\":\"" + message + "\",\"data\":{\"target\":\"" + name + "\",\"meters\":" + meters + ",\"radiusUnits\":" + radiusUnits + ",\"scanCount\":" + scanCount + ",\"highCount\":" + highCount + ",\"livingNear\":" + livingNear + ",\"reaction\":" + reaction + ",\"result\":" + (result as int) + ",\"version\":\"" + MOD_VERSION + "\"},\"timestamp\":" + ts + "}"
+    MiscUtil.WriteToFile("M:/Repositories/personal (github)/skyrim-training-dummy/.cursor/debug-6d18cb.log", line + "\n", true, false)
+    Debug.Trace("[MTF_Plugin_Skyrim][debug-6d18cb] " + message + " target=" + name + " meters=" + meters + " scan=" + scanCount + " high=" + highCount + " living=" + livingNear + " reaction=" + reaction + " result=" + result)
+EndFunction
+; #endregion
 
 ; Any living actor in high process that has detected the target. The player's followers do not count.
 ; Without Papyrus Extender the list is None and the target never counts as hidden.
@@ -1969,7 +2053,7 @@ bool Function _spellTick()
             endif
             if n <= 0
                 StorageUtil.FormListRemoveAt(PlayerRef, SPELL_AURA_WEARERS, w)
-            elseif !wearer.IsDead() && wearer.Is3DLoaded()
+            elseif !wearer.IsDead() && !wearer.IsBleedingOut() && wearer.Is3DLoaded()
                 while n > 0
                     n -= 1
                     _auraPulse(wearer, StorageUtil.StringListGet(wearer, SPELL_AURA_KEYS, n), now)
@@ -1987,7 +2071,7 @@ bool Function _spellTick()
         endif
         if n <= 0
             StorageUtil.FormListRemoveAt(PlayerRef, SPELL_CAST_WEARERS, c)
-        elseif !wearer.IsDead() && wearer.Is3DLoaded()
+        elseif !wearer.IsDead() && !wearer.IsBleedingOut() && wearer.Is3DLoaded()
             while n > 0
                 n -= 1
                 _castPulseDue(wearer, StorageUtil.StringListGet(wearer, SPELL_CAST_KEYS, n), now)
@@ -2034,6 +2118,43 @@ bool Function _isEnemyOf(Actor other, Actor sideRef)
     endif
     ; GetFactionReaction: 0 Neutral, 1 Enemy, 2 Ally, 3 Friend.
     return other.IsHostileToActor(sideRef) || other.GetFactionReaction(sideRef) == 1
+EndFunction
+
+; Ally/Friend reaction, or any shared faction. Training dummies (and some packs) share a
+; faction but GetFactionReaction still reports Neutral between members.
+bool Function _isAllyOf(Actor other, Actor sideRef)
+    if other == None || sideRef == None
+        return false
+    endif
+    ; GetFactionReaction: 0 Neutral, 1 Enemy, 2 Ally, 3 Friend.
+    int reaction = other.GetFactionReaction(sideRef)
+    if reaction == 2 || reaction == 3
+        return true
+    endif
+    return _sharesFaction(other, sideRef)
+EndFunction
+
+bool Function _sharesFaction(Actor a, Actor b)
+    Faction[] fa = a.GetFactions(-128, 127)
+    Faction[] fb = b.GetFactions(-128, 127)
+    if !fa || !fb
+        return false
+    endif
+    int i = 0
+    while i < fa.Length
+        Faction f = fa[i]
+        if f != None
+            int j = 0
+            while j < fb.Length
+                if fb[j] == f
+                    return true
+                endif
+                j += 1
+            endwhile
+        endif
+        i += 1
+    endwhile
+    return false
 EndFunction
 
 ; Helpful and harmful both land on the wearer's side (anyone nearby who isn't an enemy of the wearer). Neither
@@ -2086,7 +2207,7 @@ Function _auraPulse(Actor wearer, string instKey, float now)
 EndFunction
 
 Function _auraHit(Actor applier, Actor wearer, Actor other, Spell cast, float radius, float scale)
-    if other == None || other == wearer || other.IsDead() || other.GetDistance(wearer) > radius
+    if other == None || other == wearer || other.IsDead() || other.IsBleedingOut() || other.GetDistance(wearer) > radius
         return
     endif
     ; Same side as the wearer for both helpful and harmful; neither hits the wearer (above).
