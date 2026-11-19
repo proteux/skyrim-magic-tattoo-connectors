@@ -2,7 +2,7 @@
 
 [size=5][b]Description[/b][/size]
 
-This patch adds base game conditions and effects to [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF), on top of the ones built into MTF. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, with Flames in hand, or for a few seconds after a kill or a cast of Fireball. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, grant experience, wrap the actor in one of 80 magic auras, cast any spell on the actor, or give them a spell aura that heals or burns their own side every second.
+This patch adds base game conditions and effects to [url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] (MTF), on top of the ones built into MTF. A tattoo tier can show once the player has picked a hundred locks, under a full moon, on Saturalia, while they have a bounty in the hold they're standing in, while hidden in a shadow, at a forge, with Flames in hand, near allies or enemies, or for a few seconds after a kill or a cast of Fireball. A tier can also grant night vision, shorten shout cooldowns, cure diseases, keep the Well Rested bonus, set the actor's facial expression, calm nearby enemies, prevent fall damage, change the weather, grant experience, wrap the actor in one of 80 magic auras, cast any spell on the actor, or cast an aura that heals or burns neighbours every second.
 
 It adds a [b]Skyrim[/b] plugin to MTF's menu and to [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos UI[/url]. It doesn't edit any game records.
 
@@ -11,8 +11,8 @@ It adds a [b]Skyrim[/b] plugin to MTF's menu and to [url=https://www.nexusmods.c
 [list]
 [*][url=https://www.nexusmods.com/skyrimspecialedition/mods/180775]Magic Tattoos Framework[/url] 0.7.0 or later, and its requirements
 [*][url=https://skse.silverlock.org/]SKSE[/url] and [url=https://www.nexusmods.com/skyrimspecialedition/mods/13048]PapyrusUtil SE[/url]
-[*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url] for Hidden, Diseased, Cure disease, Calm enemies, and the nearby actors of Spell aura. Without it, the first four do nothing, and Spell aura only reaches the actor and the player.
-[*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos Framework - SKSE UI[/url], an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers with these conditions and effects far easier, and 1.8.0 or later picks the spell for Cast a spell and Spell aura from a searchable list. With 1.8.3 or later, those spells are as strong as if whoever applied the tattoo cast them. With 1.8.6 or later, Spell aura fire-and-forget hits land at half strength, and the picker hides awkward spells unless you turn them back on.
+[*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/22854]powerofthree's Papyrus Extender[/url] for Hidden, Diseased, Cure disease, Calm enemies, Faction reaction nearby, and Cast an aura's neighbours. Without it, those five do nothing, and Cast an aura only reaches the actor and the player.
+[*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/196803]Magic Tattoos Framework - SKSE UI[/url], an editor in the SKSE Menu Framework menu, with live previews. It makes setting up tiers far easier, and 1.8.0+ picks the spell for Cast a spell and Cast an aura from a searchable list. With 1.8.3+, those spells hit as hard as the applier's own cast. With 1.8.6+, Cast an aura fire-and-forget hits land at half strength, and the picker hides awkward spells unless you turn them back on.
 [/list]
 
 Dawnguard and Dragonborn come with Skyrim Special Edition. The connector uses a few of their forms: the Aetherium Forge, the Staff Enchanter, Solstheim's bounty, the Black Book perk behind No fall damage, and some of the magic auras.
@@ -44,6 +44,7 @@ Conditions marked "player" are always false on an NPC, because the game keeps th
 [*][b]Just cast a spell[/b]: for 1 to 120 seconds after the actor casts a spell whose name is or contains one of a list
 [*][b]Spell school in hand[/b]: the actor has an Alteration, Conjuration, Destruction, Illusion, or Restoration spell equipped in either hand, or a spell of any of them
 [*][b]Just cast from a spell school[/b]: for 1 to 120 seconds after the actor casts a spell of that spell school, or of any spell school
+[*][b]Faction reaction nearby[/b]: at least one living neighbour within 1 to 100 metres matching Everyone, Allies (default; Ally/Friend), or Enemies — same filter as Cast an aura. Dead and bleeding-out actors do not count
 [/list]
 
 The General Stats page has no "dragons killed", so use Dragon souls collected for that. The moon phase follows the moons drawn in the sky: a 24-day cycle with three days per phase, starting full. Seasons go by month: Evening Star to Sun's Dawn is winter, First Seed to Second Seed is spring, Midyear to Last Seed is summer, and Hearthfire to Frostfall is autumn.
@@ -53,6 +54,8 @@ Bounty in this hold uses the hold of the actor's current location. Unnamed wilde
 Spell in hand and Just cast a spell take spell names as they appear in game, in any case, with commas between several: [font=Courier New]Flames, Frostbite, Sparks[/font] matches any of the three. Match picks whether the name must be the whole spell name (is) or only part of it (contains): with contains, [font=Courier New]fire[/font] matches Fireball, Firebolt, and Fire Rune, and also any spell from another mod with "fire" anywhere in its name. A game in another language, or a mod that renames a spell, needs the name it shows. Pair Spell in hand with MTF's Weapon Drawn condition to need the hands raised. For the player, Just cast a spell counts every spell the game casts, powers included, but not scrolls or staffs. For an NPC it counts spells cast from either hand, starting from the first time MTF checks the condition on them, so a cast before that doesn't count.
 
 Spell school in hand and Just cast from a spell school go by the spell's costliest effect, the same spell school the game gives the skill experience to, and work with spells from other mods without any setup. Powers have no spell school, so only Just cast a spell can match them, by name and on the player. The two cast conditions watch NPCs the same way.
+
+Faction reaction nearby uses the same Who filter as Cast an aura (Everyone / Allies / Enemies; default Allies). Allies means Ally or Friend — above Neutral — so town guards do not match. Needs Papyrus Extender; without it the condition is always false.
 
 [size=5][b]Effects[/b][/size]
 
@@ -67,8 +70,8 @@ Spell school in hand and Just cast from a spell school go by the spell's costlie
 [*][b]Change the weather[/b] ([i]once[/i]): (player) the weather turns clear, cloudy, foggy, rainy, stormy, snowy, or to a blizzard
 [*][b]Grant experience[/b] ([i]once[/i]): (player) gains 1 to 100% of the experience their current level needs
 [*][b]Magic aura[/b] ([i]while shown[/i]): the actor wears one of 80 visual effects, listed below
-[*][b]Cast a spell[/b] ([i]while shown[/i]): any spell lands on the actor (fire-and-forget at effect duration or cast time, whichever is longer; concentration every second at about ten seconds of strength; self buffs once); concentration always costs magicka, other spells optionally (applier only when set; wearer only when none)
-[*][b]Cast an aura[/b] ([i]while shown[/i]): a spell lands on actors within 1 to 50 metres who share the wearer's side (not enemies of them): neither hits the wearer; fire-and-forget at half strength on effect duration or cast time, concentration every second at about ten seconds of strength (applier only when set; wearer only when none)
+[*][b]Cast a spell[/b] ([i]while shown[/i]): any spell lands on the actor (FnF on duration or cast time; concentration every second at ~10s strength; self buffs once). Magicka: Free / Paid by applier / Paid by wearer (concentration still costs on Free)
+[*][b]Cast an aura[/b] ([i]while shown[/i]): a spell lands on actors within 1 to 50 metres matching Targets — Everyone, Allies (default), or Enemies; never the wearer. FnF at half strength; concentration every second at ~10s strength. Same Magicka options
 [/list]
 
 How the effects behave:
@@ -84,7 +87,7 @@ How the effects behave:
 [*][b]Change the weather.[/b] The new weather lasts until the climate changes it again on its own.
 [*][b]Grant experience.[/b] The amount is a share of the current level, so 10% is always a tenth of a level, at level 5 or level 50. It goes to the character level, not to any skill, and is granted each time the tier appears.
 [*][b]Magic aura.[/b] These are the game's own spell and power visuals, picked from the ones MTF's Shader effect doesn't already offer. Different auras stack. Two tiers with the same aura show it once, and it stays until both stop. The game doesn't save auras, so after a load each one comes back within a few seconds. When the tier stops it removes its aura from the actor, including the same visual from a real spell: Oakflesh cast while an Oakflesh tier shows loses its glow early when the tier goes.
-[*][b]Cast a spell and Cast an aura.[/b] These work with any spell, from the game or from other mods. Pick it from the searchable list in Magic Tattoos UI (awkward spells such as cloaks, wards, and summons are hidden unless you turn on Show awkward spells). In MTF's own menu, type it as [font=Courier New]Plugin.esp|0xFormID[/font], such as [font=Courier New]Skyrim.esm|0x012FCD[/font] for Flames, or as the name of a spell the player knows. The spell's effects land straight on the target, with no casting animation or projectile, so pair a Magic aura with it for something to see. With Magic Tattoos UI 1.8.3 or later, the spell is as strong as if whoever applied the tattoo cast it, with their perks and Fortify (School) potions; without it, those may not count. Cast a spell keeps hitting the wearer while the tier is shown: fire-and-forget spells wait for their effect duration when they have one (Fear and similar), otherwise use cast time (Firebolt), at least half a second; concentration such as Flames every second at about ten seconds of strength when UI 1.8.6 or later is present; self buffs such as Oakflesh land once. Cast an aura uses the same fire-and-forget spacing on nearby actors (half strength with UI 1.8.6+); concentration pulses every second at the same ten-second strength. A spell counts as harmful when its main effect is hostile, as with Flames or Frostbite. Both helpful and harmful auras hit everyone nearby who isn't an enemy of the wearer; neither hits the wearer. So a Flames hex on a bandit burns the bandits around them, and a Healing aura on that same bandit heals those bandits. The tattoo's own wearer counts as having applied it, unless a mod such as Magic Tattoos Spellbook says otherwise. The game treats the applier as the caster, so the damage, the anger it causes, kill credit, and skill experience go to them. Concentration always costs one second of the spell's magicka per pulse (one payment for a whole aura ring); other spells use the pay option when it is on. Magicka comes only from whoever applied the tattoo when that actor is recorded; the wearer is never charged as a fallback. With no applier recorded, the wearer pays. When the payer can't afford it, the pulse pauses and resumes when magicka recovers.
+[*][b]Cast a spell and Cast an aura.[/b] Any spell from the game or other mods (Spellbook's own spells are left out). Pick it in Magic Tattoos UI, or type [font=Courier New]Plugin.esp|0xFormID[/font] / a known spell name in MTF's menu. Effects land with no animation or projectile — pair a Magic aura for something to see. With UI 1.8.3+, strength matches the applier's perks and Fortify School. Cast a spell repeats on the wearer (FnF on duration or cast time; concentration ~10s/sec with UI 1.8.6+; self buffs once). Cast an aura uses the same spacing on neighbours (FnF half strength with UI 1.8.6+). Targets: Allies (Ally/Friend, default), Enemies, or Everyone; never the wearer. Damage, aggro, kill credit, and skill XP go to the recorded applier (e.g. Spellbook), else the wearer. Magicka is Free, Paid by applier, or Paid by wearer; concentration still costs on Free. Pulses pause when the payer is empty or the wearer is bleeding out.
 [/list]
 
 The auras, by group:
@@ -105,7 +108,7 @@ Some were made for one creature or scene and may look different on a person.
 
 [size=5][b]Resetting[/b][/size]
 
-If a change from Shout recovery, Rested bonus, Facial mood, Night vision, No fall damage, Magic aura, or Spell aura ever stays after its tattoo is gone, you can undo everything those effects have changed. Open the console and enter:
+If a change from Shout recovery, Rested bonus, Facial mood, Night vision, No fall damage, Magic aura, or Cast an aura ever stays after its tattoo is gone, you can undo everything those effects have changed. Open the console and enter:
 
 [code]setpqv MTF_Plugin_Skyrim ResetOnLoad 1[/code]
 
@@ -113,7 +116,7 @@ Then save and load that save. The player and every actor MTF tracks lose those c
 
 [size=5][b]Uninstalling[/b][/size]
 
-Take off any tattoo whose tiers use Shout recovery, Rested bonus, Facial mood, Night vision, No fall damage, Magic aura, or Spell aura, so their changes are undone, or use the reset above. Then save, quit, and disable the plugin.
+Take off any tattoo whose tiers use Shout recovery, Rested bonus, Facial mood, Night vision, No fall damage, Magic aura, or Cast an aura, so their changes are undone, or use the reset above. Then save, quit, and disable the plugin.
 
 If you play on without the plugin and later add it back, its leftover changes are undone on the first load, and any tier still showing applies again a few seconds later.
 
