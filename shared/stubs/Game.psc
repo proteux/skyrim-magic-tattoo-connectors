@@ -14,3 +14,5 @@ float Function GetPlayerExperience() native global
 Function SetPlayerExperience(float exp) native global
 
 float Function GetExperienceForLevel(int currentLevel) native global
+
+int Function GetLightModByName(string name) native global

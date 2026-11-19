@@ -26,6 +26,7 @@ int Function FormListCount(Form ObjKey, string KeyName) global native
 Form Function FormListGet(Form ObjKey, string KeyName, int index) global native
 int function FormListAdd(Form ObjKey, string KeyName, Form value, bool allowDuplicate = true) global native
 bool function FormListRemoveAt(Form ObjKey, string KeyName, int index) global native
+int function FormListRemove(Form ObjKey, string KeyName, Form value, bool allInstances = false) global native
 int function FormListClear(Form ObjKey, string KeyName) global native
 
 int function FloatListAdd(Form ObjKey, string KeyName, float value, bool allowDuplicate = true) global native

@@ -4,19 +4,29 @@ Scriptname MTF_Plugin_Skyrim extends MTF_Plugin
  No soft dependency: everything here is Skyrim, its DLC, and SKSE.
  Catalog: SKSE/Plugins/StorageUtilData/MagicTattoosFramework/plugins/proteux-mtf.skyrim.json
 
- Optional: powerofthree's Papyrus Extender (hidden, diseased, disease.cure, calm).
- Without it those entries do nothing; everything else still works.
+ Optional: powerofthree's Papyrus Extender (hidden, diseased, disease.cure, calm, allies.near / Faction reaction nearby,
+ and the nearby actors of spell.aura via FindAllReferencesOfFormType). Without it those entries do nothing; everything else still works.
+
+ spell.cast and spell.aura credit the actor stored in the shared key mtf.applier.<preset> on the wearer, which
+ any mod that applies presets may set, and fall back to the wearer. With Magic Tattoos UI 1.8.3 or later, the
+ spell lands through its MagicTattoosUI.CastAs, so it is as strong as the applier casting it. With 1.8.6 or later,
+ Cast an aura fire-and-forget hits use CastAsScaled at half strength, and concentration pulses use it at ten seconds
+ of strength. Magicka is Free, Paid by applier, or Paid by wearer. Free still charges concentration
+ (applier if set, otherwise the wearer). Paid by applier pauses when no living applier is recorded;
+ Paid by wearer always charges the marked actor.
 
  MTF does not replay effects after a load, so MTF_Plugin_Skyrim_Load, on the player alias,
  calls _onGameLoaded to restore state the game does not save (the Night Eye image space, expressions)
  and to start a new session, which makes onTick play magic auras again.
  It also passes on the player's OnSpellCast. NPC casts come from their cast animation events instead.}
 
-string Property MOD_VERSION = "0.2.1" AutoReadOnly Hidden
+string Property MOD_VERSION = "0.3.22" AutoReadOnly Hidden
 string Property KEY_PREFIX = "proteux-mtf.skyrim." AutoReadOnly Hidden
 float Property UNITS_PER_METRE = 70.0 AutoReadOnly Hidden
 float Property MIN_SHOUT_MULT = 0.05 AutoReadOnly Hidden
 int Property DISEASE_SPELL_TYPE = 1 AutoReadOnly Hidden
+; RE::FormType::ActorCharacter — used by FindAllReferencesOfFormType for Cast an aura scans.
+int Property FORM_TYPE_ACTOR = 62 AutoReadOnly Hidden
 ; The largest Seconds and At least the Just made a kill catalog entry allows.
 float Property KILL_WINDOW_MAX = 120.0 AutoReadOnly Hidden
 int Property KILL_LOG_MAX = 20 AutoReadOnly Hidden
@@ -26,6 +36,34 @@ int Property CAST_LOG_MAX = 10 AutoReadOnly Hidden
 int Property CAST_WATCH_MAX = 32 AutoReadOnly Hidden
 string Property INSTALL_KEY = "proteux-mtf.skyrim.install" AutoReadOnly Hidden
 string Property HEAL_LIST = "proteux-mtf.skyrim.heal" AutoReadOnly Hidden
+string Property APPLIER_PREFIX = "mtf.applier." AutoReadOnly Hidden
+; SKSE's packed form of 1.8.3, the first Magic Tattoos UI with MagicTattoosUI.CastAs: major << 24 | minor << 16 | patch << 4.
+int Property CAST_AS_MIN_UI_VERSION = 0x01080030 AutoReadOnly Hidden
+; 1.8.6, the first with CastAsScaled.
+int Property CAST_AS_SCALED_MIN_UI_VERSION = 0x01080060 AutoReadOnly Hidden
+; Its spells put presets on, so a tier casting one could keep putting its own preset back on.
+string Property SPELLBOOK_PLUGIN = "MagicTattoosSpellbook.esp" AutoReadOnly Hidden
+; On each wearer, the instance keys of its shown cast an auras / repeating casts. On the player, every wearer with one.
+string Property SPELL_AURA_KEYS = "proteux-mtf.skyrim.spellaura.keys" AutoReadOnly Hidden
+string Property SPELL_AURA_WEARERS = "proteux-mtf.skyrim.spellaura.wearers" AutoReadOnly Hidden
+string Property SPELL_CAST_KEYS = "proteux-mtf.skyrim.spellcast.keys" AutoReadOnly Hidden
+string Property SPELL_CAST_WEARERS = "proteux-mtf.skyrim.spellcast.wearers" AutoReadOnly Hidden
+string Property SPELL_TICK = "proteux-mtf.skyrim.spell.tick" AutoReadOnly Hidden
+; How often the player alias wakes to check due casts and auras.
+float Property SPELL_TICK_INTERVAL = 0.25 AutoReadOnly Hidden
+; Concentration Cast a spell / Cast an aura pulse spacing. Fire-and-forget intervals use effect duration or cast time.
+float Property SPELL_AURA_INTERVAL = 1.0 AutoReadOnly Hidden
+float Property SPELL_CAST_MIN_INTERVAL = 0.5 AutoReadOnly Hidden
+float Property SPELL_AURA_FF_SCALE = 0.5 AutoReadOnly Hidden
+; Concentration Cast a spell / Cast an aura: each pulse is this many seconds of the spell (CastAsScaled magnitude).
+float Property SPELL_CONC_SCALE = 10.0 AutoReadOnly Hidden
+int Property EFFECT_FLAG_HOSTILE = 0x00000001 AutoReadOnly Hidden
+; MagicEffect flag: effect has no duration (instant). Matches RE::EffectSetting::kNoDuration.
+int Property EFFECT_FLAG_NO_DURATION = 0x00000200 AutoReadOnly Hidden
+; MagicEffect.GetCastingType / GetDeliveryType.
+int Property CASTING_FIRE_AND_FORGET = 1 AutoReadOnly Hidden
+int Property CASTING_CONCENTRATION = 2 AutoReadOnly Hidden
+int Property DELIVERY_SELF = 0 AutoReadOnly Hidden
 
 Actor Property PlayerRef Auto Hidden
 ; Set to 1 from the console (setpqv MTF_Plugin_Skyrim ResetOnLoad 1); the next save load undoes every
@@ -177,6 +215,10 @@ Function _onGameLoaded()
         endif
     endwhile
     StorageUtil.FormListClear(PlayerRef, watchKey)
+    StorageUtil.UnsetFloatValue(PlayerRef, SPELL_TICK)
+    if StorageUtil.FormListCount(PlayerRef, SPELL_AURA_WEARERS) > 0 || StorageUtil.FormListCount(PlayerRef, SPELL_CAST_WEARERS) > 0
+        _startSpellTick()
+    endif
 EndFunction
 
 ; ── Conditions ──────────────────────────────────────────────────────────────
@@ -255,6 +297,13 @@ bool Function checkCondition(Actor target, int param, string cid)
         endif
         string[] noNames
         return _castWithin(target, noNames, false, school, windowSec)
+    elseif cid == "allies.near"
+        int meters = param
+        if meters <= 0
+            meters = 25
+        endif
+        string filter = _auraFilterId(_host().GetEvalParam2Str())
+        return _alliesNear(target, meters as float, filter)
     endif
     return false
 EndFunction
@@ -547,6 +596,45 @@ bool Function _wantedAnywhere(int atLeast)
         i += 1
     endwhile
     return false
+EndFunction
+
+; True when a living neighbour within radius matches the same Everyone / Allies / Enemies filter as
+; Cast an aura. Allies = Ally/Friend faction reaction (above Neutral). Enemies = hostile or faction
+; Enemy. Dead / bleeding-out / self do not count. Needs Papyrus Extender.
+bool Function _alliesNear(Actor target, float meters, string filter)
+    float radius = meters * UNITS_PER_METRE
+    if target == None || radius <= 0.0
+        return false
+    endif
+    ObjectReference[] nearby = PO3_SKSEFunctions.FindAllReferencesOfFormType(target, FORM_TYPE_ACTOR, radius)
+    if !nearby
+        return false
+    endif
+    int i = 0
+    while i < nearby.Length
+        Actor other = nearby[i] as Actor
+        if other != None && other != target && !other.IsDead() && !other.IsBleedingOut() && other.GetDistance(target) <= radius
+            if _auraFilterAllows(other, target, filter)
+                return true
+            endif
+        endif
+        i += 1
+    endwhile
+    return false
+EndFunction
+
+; GetFactionReaction order is not friendliness order (Enemy=1, Neutral=0). Map to Enemy < Neutral < Ally < Friend.
+int Function _reactionLevel(int reaction) global
+    if reaction == 1
+        return 0
+    elseif reaction == 0
+        return 1
+    elseif reaction == 2
+        return 2
+    elseif reaction == 3
+        return 3
+    endif
+    return 1
 EndFunction
 
 ; Any living actor in high process that has detected the target. The player's followers do not count.
@@ -979,6 +1067,44 @@ Function onActivate(Actor target, int param, int param2, string eid, int slot, i
         if StorageUtil.AdjustIntValue(target, _auraKey(auraId, "count"), 1) == 1
             _playAura(target, auraId, shader)
         endif
+    elseif eid == "spell.cast"
+        string spellText = _paramNStrEx(slot, effectIdx, useScratch, presetName, 1)
+        string payMode = _spellPayModeId(_paramNStrEx(slot, effectIdx, useScratch, presetName, 2))
+        if spellText == "" || StorageUtil.HasStringValue(target, instKey)
+            return
+        endif
+        Spell cast = _resolveSpell(spellText)
+        if cast == None
+            return
+        endif
+        if _isSelfBuff(cast)
+            if _spellModePays(payMode, cast) && !_pay(_payPayer(target, presetName, payMode), cast)
+                return
+            endif
+            _castAs(_applier(target, presetName), cast, target, 1.0)
+            return
+        endif
+        StorageUtil.SetStringValue(target, instKey, spellText)
+        StorageUtil.SetFloatValue(target, instKey, 0.0)
+        StorageUtil.SetStringValue(target, _spellPayModeKey(instKey), payMode)
+        StorageUtil.SetStringValue(target, _spellCastPresetKey(instKey), presetName)
+        _listSpellCast(target, instKey)
+        _castPulse(target, instKey)
+    elseif eid == "spell.aura"
+        ; All read before the claim below, so a second dispatch of this instance can't claim it in between.
+        string spellText = _paramNStrEx(slot, effectIdx, useScratch, presetName, 1)
+        string payMode = _spellPayModeId(_paramNStrEx(slot, effectIdx, useScratch, presetName, 3))
+        string filter = _auraFilterId(_paramNStrEx(slot, effectIdx, useScratch, presetName, 4))
+        if spellText == "" || StorageUtil.HasStringValue(target, instKey)
+            return
+        endif
+        StorageUtil.SetStringValue(target, instKey, spellText)
+        StorageUtil.SetFloatValue(target, instKey, param2 as float)
+        StorageUtil.SetStringValue(target, _spellPayModeKey(instKey), payMode)
+        StorageUtil.SetStringValue(target, _spellAuraFilterKey(instKey), filter)
+        StorageUtil.SetStringValue(target, _spellAuraPresetKey(instKey), presetName)
+        StorageUtil.UnsetFloatValue(target, _spellAuraPulseKey(instKey))
+        _listSpellAura(target, instKey)
     endif
 EndFunction
 
@@ -1047,13 +1173,18 @@ Function onDeactivate(Actor target, int param, int param2, string eid, int slot,
                 shader.Stop(target)
             endif
         endif
+    elseif eid == "spell.cast"
+        _dropSpellCast(target, instKey)
+    elseif eid == "spell.aura"
+        _dropSpellAura(target, instKey)
     endif
 EndFunction
 
 ; Sleeping replaces the rested bonuses and they expire on their own, and dialogue or combat resets the
 ; face, so both are put back while their effect is shown. The game doesn't save shaders, so an aura last
-; played before the latest load is played again. A tier undone as stale while MTF still shows it gets no new
-; onActivate, so it applies again here.
+; played before the latest load is played again. A cast an aura or repeating cast is listed again, which
+; restarts its tick if it stopped. A tier undone as stale while MTF still shows it gets no new onActivate,
+; so it applies again here.
 Function onTick(Actor target, int param, int param2, string eid, int slot, int effectIdx, bool useScratch, int baseSlot, int area, string presetName)
     if target == None || PlayerRef == None
         return
@@ -1081,6 +1212,14 @@ Function onTick(Actor target, int param, int param2, string eid, int slot, int e
                     _playAura(target, auraId, shader)
                 endif
             endif
+        endif
+    elseif eid == "spell.cast"
+        if StorageUtil.HasStringValue(target, instKey)
+            _listSpellCast(target, instKey)
+        endif
+    elseif eid == "spell.aura"
+        if StorageUtil.HasStringValue(target, instKey)
+            _listSpellAura(target, instKey)
         endif
     endif
 EndFunction
@@ -1140,8 +1279,20 @@ Function _resetActor(Actor target)
             if shader != None
                 shader.Stop(target)
             endif
+        elseif StringUtil.Find(keys[i], KEY_PREFIX + "spell.aura.") == 0 || StringUtil.Find(keys[i], KEY_PREFIX + "spell.cast.") == 0
+            StorageUtil.UnsetStringValue(target, keys[i])
+            StorageUtil.UnsetFloatValue(target, keys[i])
+        elseif StringUtil.Find(keys[i], KEY_PREFIX + "spellaura.") == 0 || StringUtil.Find(keys[i], KEY_PREFIX + "spellcast.") == 0 || StringUtil.Find(keys[i], KEY_PREFIX + "spell.pay.") == 0
+            StorageUtil.UnsetStringValue(target, keys[i])
+            StorageUtil.UnsetFloatValue(target, keys[i])
         endif
     endwhile
+    StorageUtil.StringListClear(target, SPELL_AURA_KEYS)
+    StorageUtil.StringListClear(target, SPELL_CAST_KEYS)
+    if PlayerRef != None
+        StorageUtil.FormListRemove(PlayerRef, SPELL_AURA_WEARERS, target, true)
+        StorageUtil.FormListRemove(PlayerRef, SPELL_CAST_WEARERS, target, true)
+    endif
     i = RestedSpells.Length
     while i > 0
         i -= 1
@@ -1168,7 +1319,7 @@ Function _resetActor(Actor target)
 EndFunction
 
 bool Function _hasInstances(Actor target)
-    return StorageUtil.CountObjFloatValuePrefix(target, KEY_PREFIX + "shout.recovery.") > 0 || StorageUtil.CountObjStringValuePrefix(target, KEY_PREFIX + "aura.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "vision.night.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "rested.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "mood.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "fall.") > 0
+    return StorageUtil.CountObjFloatValuePrefix(target, KEY_PREFIX + "shout.recovery.") > 0 || StorageUtil.CountObjStringValuePrefix(target, KEY_PREFIX + "aura.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "vision.night.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "rested.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "mood.") > 0 || StorageUtil.CountObjIntValuePrefix(target, KEY_PREFIX + "fall.") > 0 || StorageUtil.CountObjStringValuePrefix(target, KEY_PREFIX + "spell.aura.") > 0 || StorageUtil.CountObjStringValuePrefix(target, KEY_PREFIX + "spell.cast.") > 0
 EndFunction
 
 int Function _installId()
@@ -1205,7 +1356,7 @@ Function _keepForHeal(Actor target, string[] keys)
     while i > 0
         i -= 1
         string k = keys[i]
-        if StringUtil.Find(k, KEY_PREFIX + "vision.night.") == 0 || StringUtil.Find(k, KEY_PREFIX + "shout.recovery.") == 0 || StringUtil.Find(k, KEY_PREFIX + "rested.") == 0 || StringUtil.Find(k, KEY_PREFIX + "mood.") == 0 || StringUtil.Find(k, KEY_PREFIX + "fall.nodamage.") == 0 || StringUtil.Find(k, KEY_PREFIX + "aura.") == 0
+        if StringUtil.Find(k, KEY_PREFIX + "vision.night.") == 0 || StringUtil.Find(k, KEY_PREFIX + "shout.recovery.") == 0 || StringUtil.Find(k, KEY_PREFIX + "rested.") == 0 || StringUtil.Find(k, KEY_PREFIX + "mood.") == 0 || StringUtil.Find(k, KEY_PREFIX + "fall.nodamage.") == 0 || StringUtil.Find(k, KEY_PREFIX + "aura.") == 0 || StringUtil.Find(k, KEY_PREFIX + "spell.aura.") == 0 || StringUtil.Find(k, KEY_PREFIX + "spell.cast.") == 0
             StorageUtil.StringListAdd(target, HEAL_LIST, k, false)
         endif
     endwhile
@@ -1572,4 +1723,468 @@ EndFunction
 
 string Function _instanceKey(string eid, int slot, int effectIdx)
     return KEY_PREFIX + eid + "." + slot + "." + effectIdx
+EndFunction
+
+; ── Spells from tattoos ─────────────────────────────────────────────────────
+
+; "Plugin.esp|0x012FCD", as the Magic Tattoos UI stores it, or the name of a spell the player knows, typed in
+; MTF's own menu.
+Spell Function _resolveSpell(string spellText)
+    string text = _trim(spellText)
+    if text == ""
+        return None
+    endif
+    Spell found = None
+    int bar = StringUtil.Find(text, "|")
+    if bar > 0
+        int formId = _parseHex(_trim(StringUtil.Substring(text, bar + 1)))
+        if formId > 0
+            found = Game.GetFormFromFile(formId, _trim(StringUtil.Substring(text, 0, bar))) as Spell
+        endif
+    elseif PlayerRef != None
+        int i = PlayerRef.GetSpellCount()
+        while i > 0 && found == None
+            i -= 1
+            Spell known = PlayerRef.GetNthSpell(i)
+            if known != None && known.GetName() == text
+                found = known
+            endif
+        endwhile
+    endif
+    if found == None
+        Debug.Trace("[MTF_Plugin_Skyrim] no spell found for '" + text + "'")
+    elseif _isSpellbookSpell(found)
+        Debug.Trace("[MTF_Plugin_Skyrim] '" + text + "' is a Magic Tattoos Spellbook spell, which tattoos can't cast")
+        found = None
+    endif
+    return found
+EndFunction
+
+; Spellbook is ESL-flagged, so its forms are 0xFE, then its light index, then the local ID.
+bool Function _isSpellbookSpell(Spell candidate)
+    int light = Game.GetLightModByName(SPELLBOOK_PLUGIN)
+    if light < 0 || light > 0xFFF
+        return false
+    endif
+    int id = candidate.GetFormID()
+    return Math.RightShift(id, 24) == 0xFE && Math.LogicalAnd(Math.RightShift(id, 12), 0xFFF) == light
+EndFunction
+
+; Hex digits with or without 0x. -1 when anything else is in the string.
+int Function _parseHex(string s) global
+    int n = StringUtil.GetLength(s)
+    int i = 0
+    if n >= 2 && StringUtil.GetNthChar(s, 0) == "0" && StringUtil.GetNthChar(s, 1) == "x"
+        i = 2
+    endif
+    if i >= n
+        return -1
+    endif
+    int value = 0
+    while i < n
+        int digit = _hexDigit(StringUtil.GetNthChar(s, i))
+        if digit < 0
+            return -1
+        endif
+        value = value * 16 + digit
+        i += 1
+    endwhile
+    return value
+EndFunction
+
+; Papyrus compares strings without case, so "a" matches "A".
+int Function _hexDigit(string c) global
+    int d = 0
+    while d < 16
+        if StringUtil.GetNthChar("0123456789ABCDEF", d) == c
+            return d
+        endif
+        d += 1
+    endwhile
+    return -1
+EndFunction
+
+; The actor credited with a spell from this preset: the one in the shared mtf.applier.<preset> key, or the wearer.
+Actor Function _applier(Actor wearer, string presetName)
+    if presetName != ""
+        Actor applier = StorageUtil.GetFormValue(wearer, APPLIER_PREFIX + presetName) as Actor
+        if applier != None && !applier.IsDead()
+            return applier
+        endif
+    endif
+    return wearer
+EndFunction
+
+; Lands the spell on the target as if the applier cast it. afScale multiplies magnitude when Magic Tattoos UI
+; 1.8.6 or later is present (Cast an aura fire-and-forget uses 0.5; concentration uses SPELL_CONC_SCALE).
+; DoCombatSpellApply, without the UI, may leave out the applier's perks and potions and ignores afScale.
+Function _castAs(Actor applier, Spell cast, Actor target, float afScale)
+    if afScale <= 0.0
+        return
+    endif
+    int ui = SKSE.GetPluginVersion("MagicTattoosUI")
+    if ui >= CAST_AS_SCALED_MIN_UI_VERSION
+        MagicTattoosUI.CastAsScaled(applier, cast, target, afScale)
+    elseif ui >= CAST_AS_MIN_UI_VERSION
+        MagicTattoosUI.CastAs(applier, cast, target)
+    else
+        applier.DoCombatSpellApply(cast, target)
+    endif
+EndFunction
+
+bool Function _isHarmful(Spell candidate)
+    MagicEffect costliest = candidate.GetNthEffectMagicEffect(candidate.GetCostliestEffectIndex())
+    return costliest != None && costliest.IsEffectFlagSet(EFFECT_FLAG_HOSTILE)
+EndFunction
+
+bool Function _isConcentration(Spell candidate)
+    MagicEffect costliest = candidate.GetNthEffectMagicEffect(candidate.GetCostliestEffectIndex())
+    return costliest != None && costliest.GetCastingType() == CASTING_CONCENTRATION
+EndFunction
+
+; Self delivery and not concentration: Oakflesh, Courage, and so on. Lands once when the tier shows.
+bool Function _isSelfBuff(Spell candidate)
+    MagicEffect costliest = candidate.GetNthEffectMagicEffect(candidate.GetCostliestEffectIndex())
+    return costliest != None && costliest.GetDeliveryType() == DELIVERY_SELF && costliest.GetCastingType() != CASTING_CONCENTRATION
+EndFunction
+
+; Concentration pulses land SPELL_CONC_SCALE seconds of the spell; fire-and-forget cast pulses use 1.0.
+float Function _concScale(Spell candidate)
+    if _isConcentration(candidate)
+        return SPELL_CONC_SCALE
+    endif
+    return 1.0
+EndFunction
+
+; Free: only concentration pays. Paid by applier / wearer: every pulse pays.
+bool Function _spellModePays(string mode, Spell cast)
+    if mode == "applier" || mode == "wearer"
+        return true
+    endif
+    return _isConcentration(cast)
+EndFunction
+
+; Who loses magicka. wearer → marked actor. applier → recorded applier only (dead/missing pauses).
+; free (concentration) → applier if set and alive, otherwise the wearer.
+Actor Function _payPayer(Actor wearer, string presetName, string mode)
+    if mode == "wearer"
+        return wearer
+    endif
+    if presetName != ""
+        Actor applier = StorageUtil.GetFormValue(wearer, APPLIER_PREFIX + presetName) as Actor
+        if applier != None
+            if applier.IsDead()
+                return None
+            endif
+            return applier
+        endif
+    endif
+    if mode == "applier"
+        return None
+    endif
+    return wearer
+EndFunction
+
+; Longest lasting effect duration in seconds; 0 when every effect is instant or flagged NoDuration.
+float Function _longestEffectDuration(Spell candidate)
+    float longest = 0.0
+    int n = candidate.GetNumEffects()
+    int i = 0
+    while i < n
+        MagicEffect fx = candidate.GetNthEffectMagicEffect(i)
+        if fx != None && !fx.IsEffectFlagSet(EFFECT_FLAG_NO_DURATION)
+            float d = candidate.GetNthEffectDuration(i)
+            if d > longest
+                longest = d
+            endif
+        endif
+        i += 1
+    endwhile
+    return longest
+EndFunction
+
+; Spacing between Cast a spell / Cast an aura pulses. Concentration every second. Fire-and-forget waits for the
+; effect to end when it has a duration (so Fear and similar don't flash); instant spells use cast time. Floored
+; so a 0 charge can't spin.
+float Function _spellInterval(Spell candidate)
+    if _isConcentration(candidate)
+        return SPELL_AURA_INTERVAL
+    endif
+    float interval = candidate.GetCastTime()
+    float lasting = _longestEffectDuration(candidate)
+    if lasting > interval
+        interval = lasting
+    endif
+    if interval < SPELL_CAST_MIN_INTERVAL
+        return SPELL_CAST_MIN_INTERVAL
+    endif
+    return interval
+EndFunction
+
+; Takes the spell's cost from payer's magicka. False, taking nothing, when they don't have enough.
+bool Function _pay(Actor payer, Spell cast)
+    if payer == None
+        return false
+    endif
+    float cost = cast.GetEffectiveMagickaCost(payer) as float
+    if cost <= 0.0
+        return true
+    elseif payer.GetActorValue("Magicka") < cost
+        return false
+    endif
+    payer.DamageActorValue("Magicka", cost)
+    return true
+EndFunction
+
+; ── Spell cast (repeating on wearer) and Cast an aura ─────────────────────────
+
+; Each shown instance keeps, under its instance key on the wearer, the spell as a string and for auras the
+; radius in metres as a float / for casts the next due real time as a float. Pay mode, presets, aura pulse
+; times, and aura target filters sit under prefixes no reset scan mistakes for an instance.
+string Function _spellAuraPresetKey(string instKey)
+    return KEY_PREFIX + "spellaura.preset." + instKey
+EndFunction
+
+string Function _spellAuraPulseKey(string instKey)
+    return KEY_PREFIX + "spellaura.pulse." + instKey
+EndFunction
+
+string Function _spellAuraFilterKey(string instKey)
+    return KEY_PREFIX + "spellaura.filter." + instKey
+EndFunction
+
+string Function _spellCastPresetKey(string instKey)
+    return KEY_PREFIX + "spellcast.preset." + instKey
+EndFunction
+
+string Function _spellPayModeKey(string instKey)
+    return KEY_PREFIX + "spell.pay." + instKey
+EndFunction
+
+; free / applier / wearer. Anything else → free.
+string Function _spellPayModeId(string raw) global
+    if raw == "applier" || raw == "wearer" || raw == "free"
+        return raw
+    endif
+    return "free"
+EndFunction
+
+; everyone / allies / enemies. Anything else (empty, old numeric 0) → allies.
+string Function _auraFilterId(string raw) global
+    if raw == "everyone" || raw == "enemies" || raw == "allies"
+        return raw
+    endif
+    return "allies"
+EndFunction
+
+Function _listSpellAura(Actor wearer, string instKey)
+    StorageUtil.StringListAdd(wearer, SPELL_AURA_KEYS, instKey, false)
+    StorageUtil.FormListAdd(PlayerRef, SPELL_AURA_WEARERS, wearer, false)
+    _startSpellTick()
+EndFunction
+
+Function _dropSpellAura(Actor wearer, string instKey)
+    StorageUtil.StringListRemove(wearer, SPELL_AURA_KEYS, instKey, true)
+    StorageUtil.UnsetStringValue(wearer, instKey)
+    StorageUtil.UnsetFloatValue(wearer, instKey)
+    StorageUtil.UnsetStringValue(wearer, _spellPayModeKey(instKey))
+    StorageUtil.UnsetStringValue(wearer, _spellAuraPresetKey(instKey))
+    StorageUtil.UnsetFloatValue(wearer, _spellAuraPulseKey(instKey))
+    StorageUtil.UnsetStringValue(wearer, _spellAuraFilterKey(instKey))
+EndFunction
+
+Function _listSpellCast(Actor wearer, string instKey)
+    StorageUtil.StringListAdd(wearer, SPELL_CAST_KEYS, instKey, false)
+    StorageUtil.FormListAdd(PlayerRef, SPELL_CAST_WEARERS, wearer, false)
+    _startSpellTick()
+EndFunction
+
+Function _dropSpellCast(Actor wearer, string instKey)
+    StorageUtil.StringListRemove(wearer, SPELL_CAST_KEYS, instKey, true)
+    StorageUtil.UnsetStringValue(wearer, instKey)
+    StorageUtil.UnsetFloatValue(wearer, instKey)
+    StorageUtil.UnsetStringValue(wearer, _spellPayModeKey(instKey))
+    StorageUtil.UnsetStringValue(wearer, _spellCastPresetKey(instKey))
+EndFunction
+
+; The tick runs on the player alias, since the quest's own updates belong to MTF's registration. A queued update
+; can be lost after a load or a script rebuild, so a tick that hasn't run for a while is started again; real time
+; restarts on load, so a time ahead of now counts as stopped too.
+Function _startSpellTick()
+    float now = Utility.GetCurrentRealTime()
+    float last = StorageUtil.GetFloatValue(PlayerRef, SPELL_TICK)
+    if last > 0.0 && last <= now && now - last < SPELL_TICK_INTERVAL * 2.5
+        return
+    endif
+    StorageUtil.SetFloatValue(PlayerRef, SPELL_TICK, now)
+    MTF_Plugin_Skyrim_Load ticker = GetAlias(0) as MTF_Plugin_Skyrim_Load
+    if ticker != None
+        ticker._startSpellTick()
+    endif
+EndFunction
+
+; Kept so an old Load.pex that still calls this name after a partial update keeps the tick running.
+bool Function _auraTick()
+    return _spellTick()
+EndFunction
+
+; One wake of every shown spell cast and cast an aura. False once none are left, which stops the tick.
+bool Function _spellTick()
+    int auras = StorageUtil.FormListCount(PlayerRef, SPELL_AURA_WEARERS)
+    int casts = StorageUtil.FormListCount(PlayerRef, SPELL_CAST_WEARERS)
+    if auras <= 0 && casts <= 0
+        StorageUtil.UnsetFloatValue(PlayerRef, SPELL_TICK)
+        return false
+    endif
+    float now = Utility.GetCurrentRealTime()
+    StorageUtil.SetFloatValue(PlayerRef, SPELL_TICK, now)
+    if auras > 0
+        int w = auras
+        while w > 0
+            w -= 1
+            Actor wearer = StorageUtil.FormListGet(PlayerRef, SPELL_AURA_WEARERS, w) as Actor
+            int n = 0
+            if wearer != None
+                n = StorageUtil.StringListCount(wearer, SPELL_AURA_KEYS)
+            endif
+            if n <= 0
+                StorageUtil.FormListRemoveAt(PlayerRef, SPELL_AURA_WEARERS, w)
+            elseif !wearer.IsDead() && !wearer.IsBleedingOut() && wearer.Is3DLoaded()
+                while n > 0
+                    n -= 1
+                    _auraPulse(wearer, StorageUtil.StringListGet(wearer, SPELL_AURA_KEYS, n), now)
+                endwhile
+            endif
+        endwhile
+    endif
+    int c = casts
+    while c > 0
+        c -= 1
+        Actor wearer = StorageUtil.FormListGet(PlayerRef, SPELL_CAST_WEARERS, c) as Actor
+        int n = 0
+        if wearer != None
+            n = StorageUtil.StringListCount(wearer, SPELL_CAST_KEYS)
+        endif
+        if n <= 0
+            StorageUtil.FormListRemoveAt(PlayerRef, SPELL_CAST_WEARERS, c)
+        elseif !wearer.IsDead() && !wearer.IsBleedingOut() && wearer.Is3DLoaded()
+            while n > 0
+                n -= 1
+                _castPulseDue(wearer, StorageUtil.StringListGet(wearer, SPELL_CAST_KEYS, n), now)
+            endwhile
+        endif
+    endwhile
+    return StorageUtil.FormListCount(PlayerRef, SPELL_AURA_WEARERS) > 0 || StorageUtil.FormListCount(PlayerRef, SPELL_CAST_WEARERS) > 0
+EndFunction
+
+; Fires now and schedules the next hit from the spell's cast interval.
+Function _castPulse(Actor wearer, string instKey)
+    _castPulseDue(wearer, instKey, Utility.GetCurrentRealTime())
+EndFunction
+
+Function _castPulseDue(Actor wearer, string instKey, float now)
+    string spellText = StorageUtil.GetStringValue(wearer, instKey)
+    if spellText == ""
+        StorageUtil.StringListRemove(wearer, SPELL_CAST_KEYS, instKey, true)
+        return
+    endif
+    float due = StorageUtil.GetFloatValue(wearer, instKey)
+    if due > now
+        return
+    endif
+    Spell cast = _resolveSpell(spellText)
+    if cast == None
+        return
+    endif
+    string presetName = StorageUtil.GetStringValue(wearer, _spellCastPresetKey(instKey))
+    string payMode = _spellPayModeId(StorageUtil.GetStringValue(wearer, _spellPayModeKey(instKey)))
+    ; Pay fail: leave due as-is so the next tick retries when magicka recovers.
+    if _spellModePays(payMode, cast) && !_pay(_payPayer(wearer, presetName, payMode), cast)
+        return
+    endif
+    Actor applier = _applier(wearer, presetName)
+    _castAs(applier, cast, wearer, _concScale(cast))
+    StorageUtil.SetFloatValue(wearer, instKey, now + _spellInterval(cast))
+EndFunction
+
+; True when other is fighting sideRef, or their factions are enemies. IsHostileToActor alone misses
+; Unaggressive faction-enemies (training dummies, calmed bandits) who never drew weapons.
+bool Function _isEnemyOf(Actor other, Actor sideRef)
+    if other == None || sideRef == None
+        return false
+    endif
+    ; GetFactionReaction: 0 Neutral, 1 Enemy, 2 Ally, 3 Friend.
+    return other.IsHostileToActor(sideRef) || other.GetFactionReaction(sideRef) == 1
+EndFunction
+
+; Targets filter: everyone, allies (Ally/Friend faction reaction), or enemies. Wearer never hit.
+bool Function _auraFilterAllows(Actor other, Actor wearer, string filter)
+    if filter == "everyone"
+        return true
+    elseif filter == "enemies"
+        return _isEnemyOf(other, wearer)
+    endif
+    ; allies (default): strictly above Neutral, same bar as Faction reaction nearby → Allies.
+    return _reactionLevel(other.GetFactionReaction(wearer)) >= 2
+EndFunction
+
+; Lands on neighbours matching the instance's Targets filter. Neither hits the wearer.
+; Credit, aggro and kill credit stay with the applier via _castAs.
+; Fire-and-forget spells use half magnitude when Magic Tattoos UI 1.8.6 or later is present.
+; Neighbours come from a radius scan (FindAllReferencesOfFormType), not GetActorsByProcessingLevel(0): pinned or
+; restrained actors such as training dummies can be 3D-loaded next to the player and still missing from high process.
+Function _auraPulse(Actor wearer, string instKey, float now)
+    string spellText = StorageUtil.GetStringValue(wearer, instKey)
+    if spellText == ""
+        StorageUtil.StringListRemove(wearer, SPELL_AURA_KEYS, instKey, true)
+        return
+    endif
+    Spell cast = _resolveSpell(spellText)
+    if cast == None
+        return
+    endif
+    float last = StorageUtil.GetFloatValue(wearer, _spellAuraPulseKey(instKey))
+    if last > 0.0 && now - last < _spellInterval(cast)
+        return
+    endif
+    string presetName = StorageUtil.GetStringValue(wearer, _spellAuraPresetKey(instKey))
+    string payMode = _spellPayModeId(StorageUtil.GetStringValue(wearer, _spellPayModeKey(instKey)))
+    if _spellModePays(payMode, cast) && !_pay(_payPayer(wearer, presetName, payMode), cast)
+        return
+    endif
+    StorageUtil.SetFloatValue(wearer, _spellAuraPulseKey(instKey), now)
+    Actor applier = _applier(wearer, presetName)
+    float radius = StorageUtil.GetFloatValue(wearer, instKey) * UNITS_PER_METRE
+    float scale = SPELL_CONC_SCALE
+    if !_isConcentration(cast)
+        scale = SPELL_AURA_FF_SCALE
+    endif
+    string filter = _auraFilterId(StorageUtil.GetStringValue(wearer, _spellAuraFilterKey(instKey)))
+    ObjectReference[] nearby = PO3_SKSEFunctions.FindAllReferencesOfFormType(wearer, FORM_TYPE_ACTOR, radius)
+    bool sawPlayer = false
+    if nearby
+        int i = 0
+        while i < nearby.Length
+            Actor other = nearby[i] as Actor
+            if other == PlayerRef
+                sawPlayer = true
+            endif
+            _auraHit(applier, wearer, other, cast, radius, scale, filter)
+            i += 1
+        endwhile
+    endif
+    ; Without Papyrus Extender (or an empty scan), still try the player when the filter allows.
+    if !sawPlayer
+        _auraHit(applier, wearer, PlayerRef, cast, radius, scale, filter)
+    endif
+EndFunction
+
+Function _auraHit(Actor applier, Actor wearer, Actor other, Spell cast, float radius, float scale, string filter)
+    if other == None || other == wearer || other.IsDead() || other.IsBleedingOut() || other.GetDistance(wearer) > radius
+        return
+    endif
+    if !_auraFilterAllows(other, wearer, filter)
+        return
+    endif
+    _castAs(applier, cast, other, scale)
 EndFunction

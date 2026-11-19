@@ -11,6 +11,10 @@ bool Function AddSpell(Spell akSpell, bool abVerbose=true) native
 
 Function ClearExpressionOverride() native
 
+Function DamageActorValue(string asValueName, float afDamage) native
+
+Function DoCombatSpellApply(Spell akSpell, ObjectReference akTarget) native
+
 float Function GetActorValue(string asValueName) native
 
 Actor Function GetCombatTarget() native
@@ -33,9 +37,17 @@ bool Function HasSpell(Form akForm) native
 
 bool Function IsDead() native
 
+bool Function IsBleedingOut() native
+
 bool Function IsDetectedBy(Actor akOther) native
 
 bool Function IsHostileToActor(Actor akActor) native
+
+; 0 Neutral, 1 Enemy, 2 Ally, 3 Friend.
+int Function GetFactionReaction(Actor akOther) native
+
+; SKSE — factions this actor belongs to whose rank is in [minRank, maxRank].
+Faction[] Function GetFactions(int minRank, int maxRank) native
 
 bool Function IsPlayerTeammate() native
 

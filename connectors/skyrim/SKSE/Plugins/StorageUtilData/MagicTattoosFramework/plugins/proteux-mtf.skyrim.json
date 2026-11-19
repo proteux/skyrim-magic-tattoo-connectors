@@ -307,6 +307,21 @@
         ]
       },
       "param2": { "label": "Seconds", "min": 1, "max": 120, "default": 10, "format": "{0} s" }
+    },
+    {
+      "id": "allies.near",
+      "label": "Faction reaction nearby",
+      "description": "Triggers while at least one living neighbour within {param1} matches {param2}: Everyone, Allies (Ally/Friend faction reaction), or Enemies. Dead and bleeding-out actors do not count.",
+      "param": { "label": "Radius", "min": 1, "max": 100, "step": 5, "default": 25, "format": "{0} m" },
+      "param2": {
+        "label": "Who",
+        "default": "allies",
+        "menu": [
+          { "id": "everyone", "label": "Everyone" },
+          { "id": "allies", "label": "Allies" },
+          { "id": "enemies", "label": "Enemies" }
+        ]
+      }
     }
   ],
   "effects": [
@@ -487,6 +502,46 @@
           { "id": "omen_of_danger", "label": "Omen of danger (Dragonborn)" },
           { "id": "apocrypha", "label": "Apocrypha magic (Dragonborn)" },
           { "id": "seeker", "label": "Seeker (Dragonborn)" }
+        ]
+      }
+    },
+    {
+      "id": "spell.cast",
+      "label": "Cast a spell",
+      "description": "While shown, {param1} lands on the actor: fire-and-forget at their effect duration or cast time (whichever is longer), concentration every second at about ten seconds of strength. Self buffs land once. Magicka: {param2} (concentration still costs when Free: applier if set, otherwise the wearer).",
+      "param1": { "label": "Spell", "text": true, "lookup": "spell", "default": "Skyrim.esm|0x012FCD" },
+      "param2": {
+        "label": "Magicka",
+        "default": "applier",
+        "menu": [
+          { "id": "free", "label": "Free" },
+          { "id": "applier", "label": "Paid by applier" },
+          { "id": "wearer", "label": "Paid by wearer" }
+        ]
+      }
+    },
+    {
+      "id": "spell.aura",
+      "label": "Cast an aura",
+      "description": "While shown, {param1} lands on actors within {param2} of the actor ({param4}): never the actor. Fire-and-forget at half strength on their effect duration or cast time; concentration every second at about ten seconds of strength. Magicka: {param3} (concentration still costs when Free: applier if set, otherwise the wearer).",
+      "param1": { "label": "Spell", "text": true, "lookup": "spell", "default": "Skyrim.esm|0x012FCC" },
+      "param2": { "label": "Radius", "min": 1, "max": 50, "default": 8, "format": "{0} m" },
+      "param3": {
+        "label": "Magicka",
+        "default": "applier",
+        "menu": [
+          { "id": "free", "label": "Free" },
+          { "id": "applier", "label": "Paid by applier" },
+          { "id": "wearer", "label": "Paid by wearer" }
+        ]
+      },
+      "param4": {
+        "label": "Targets",
+        "default": "allies",
+        "menu": [
+          { "id": "everyone", "label": "Everyone" },
+          { "id": "allies", "label": "Allies" },
+          { "id": "enemies", "label": "Enemies" }
         ]
       }
     }

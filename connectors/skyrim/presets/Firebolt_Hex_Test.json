@@ -1,0 +1,78 @@
+{
+	"displayname" : "Firebolt Hex Test",
+	"fadeondeath" : 
+	{
+		"durationms" : 2000,
+		"enabled" : 0,
+		"mode" : 0
+	},
+	"group" : "Tests",
+	"hidden" : 0,
+	"schemaversion" : 9,
+	"slot" : 
+	[
+		{
+			"cond" : 
+			{
+				"entryid" : "",
+				"packid" : ""
+			},
+			"cool" : 
+			{
+				"min" : 0
+			},
+			"effect" : 
+			[
+				{
+					"key" : "proteux-mtf.skyrim:spell.cast",
+					"param1" : "Skyrim.esm|0x01C789",
+					"param2" : "free",
+					"param3" : 0,
+					"param4" : 0,
+					"param5" : 0
+				},
+				{
+					"key" : "proteux-mtf.skyrim:aura",
+					"param1" : "ench_fire",
+					"param2" : 0,
+					"param3" : 0,
+					"param4" : 0,
+					"param5" : 0
+				}
+			],
+			"layer" : 
+			[
+				{
+					"alpha" : 0,
+					"emissive" : "#FFFFFF",
+					"emissivemult" : 0.0,
+					"tint" : "#FFFFFF"
+				},
+				{
+					"alpha" : 0,
+					"emissive" : "#FFFFFF",
+					"emissivemult" : 0.0,
+					"tint" : "#FFFFFF"
+				},
+				{
+					"alpha" : 0,
+					"emissive" : "#FFFFFF",
+					"emissivemult" : 0.0,
+					"tint" : "#FFFFFF"
+				},
+				{
+					"alpha" : 0,
+					"emissive" : "#FFFFFF",
+					"emissivemult" : 0.0,
+					"tint" : "#FFFFFF"
+				}
+			],
+			"name" : "hit",
+			"persist" : 
+			{
+				"allowOverride" : 1,
+				"min" : 0
+			}
+		}
+	]
+}
